@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
+import Button from '../components/Button';
 
 export default function Register() {
   const handleBack = () => {
@@ -94,12 +95,12 @@ export default function Register() {
         variants={fadeInOutVariants}
         className="flex flex-col items-center w-full max-w-sm mt-auto mb-4"
       >
-        <button
+        <Button
           className={`flex w-full items-center justify-center gap-1 rounded-lg bg-[#FF6F71] text-white py-3 text-lg font-semibold text-gray-900 mb-4 transition-opacity ${isCodeComplete ? '' : 'opacity-50 cursor-not-allowed'}`}
           disabled={!isCodeComplete}
         >
           완료
-        </button>
+        </Button>
       </motion.div>
     </div>
   );

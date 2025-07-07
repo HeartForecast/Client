@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import React from 'react';
 import { useRouter } from "next/navigation";
+import Button from '../components/Button';
 
 export default function Register() {
   const [currentDisplayStep, setCurrentDisplayStep] = useState(1); 
@@ -206,7 +207,7 @@ export default function Register() {
                     onChange={() => handleGenderSelect('male')}
                     className="form-radio h-5 w-5 text-[#FF6F71] focus:ring-[#FF6F71]"
                   />
-                  <span className="text-gray-600 text-xl font-medium">남자</span>
+                  <span className="text-black text-xl font-medium">남자</span>
                 </label>
                 <label className="flex items-center space-x-3">
                   <input
@@ -217,7 +218,7 @@ export default function Register() {
                     onChange={() => handleGenderSelect('female')}
                     className="form-radio h-5 w-5 text-[#FF6F71] focus:ring-[#FF6F71]"
                   />
-                  <span className="text-gray-600 text-xl font-medium">여자</span>
+                  <span className="text-black text-xl font-medium">여자</span>
                 </label>
               </div>
             </motion.div>
@@ -260,12 +261,7 @@ export default function Register() {
           variants={fadeInOutVariants}
           className="flex flex-col items-center w-full max-w-sm mt-auto mb-4"
         >
-          <button
-            className="flex w-full items-center justify-center gap-1 rounded-lg bg-[#FF6F71] text-white py-3 text-lg font-semibold text-gray-900 mb-4"
-            onClick={advanceStep}
-          >
-            완료
-          </button>
+          <Button onClick={advanceStep}>완료</Button>
         </motion.div>
       )}
     </div>
