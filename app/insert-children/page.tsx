@@ -60,7 +60,11 @@ export default function Register() {
   };
 
   const handleBack = () => {
-    setCurrentDisplayStep(prev => Math.max(1, prev - 1));
+    if (currentDisplayStep === 1) {
+      window.history.back();
+    } else {
+      setCurrentDisplayStep(prev => Math.max(1, prev - 1));
+    }
   };
 
   const fadeInOutVariants = {
@@ -69,15 +73,10 @@ export default function Register() {
     exit: { opacity: 0, y: -10, transition: { duration: 0.3 } },
   };
 
-  const checkmarkVariants = {
-    hidden: { scale: 0, opacity: 0 },
-    visible: { scale: 1, opacity: 1, transition: { type: "spring", stiffness: 200, damping: 10 } }
-  };
-
   return (
     <div className="min-h-screen flex flex-col items-center px-4 pt-10 pb-5 bg-white text-black">
       <div className="w-full max-w-sm mx-auto">
-        <button className="mb-4" onClick={handleBack}>
+        <button className="mb-4 cursor-pointer" onClick={handleBack}>
           <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
@@ -87,7 +86,7 @@ export default function Register() {
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
         <div className="w-full mb-8">
           <h1 className="text-2xl font-semibold mb-1">새로운 자녀 프로필을 생성할게요</h1>
-          <h1 className="text-base font-medium mb-4 text-gray-">올바른 자녀 프로필을 입력해주세요.</h1>
+          <h1 className="text-base font-medium mb-4 text-gray-">이미 등록한 자녀라면 여기를 클릭해주세요</h1>
         </div>
         <AnimatePresence mode="wait" initial={false}>
           {currentDisplayStep >= 1 && (
