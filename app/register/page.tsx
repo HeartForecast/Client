@@ -14,6 +14,7 @@ export default function Register() {
   const nameRef = useRef<HTMLInputElement>(null);
   const dobRef = useRef<HTMLInputElement>(null);
   const healthStatusRef = useRef<HTMLInputElement>(null);
+  const nameAdvanceTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     switch (currentDisplayStep) {
@@ -86,7 +87,7 @@ export default function Register() {
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
         <div className="w-full mb-8">
           <h1 className="text-2xl font-semibold mb-1">새로운 자녀 프로필을 생성할게요</h1>
-          <h1 className="text-base font-medium mb-4 text-gray-">입력을 완료하면 Enter를 눌려주세요.</h1>
+          <h1 className="text-base font-medium mb-4 text-gray-">올바른 자녀 프로필을 입력해주세요.</h1>
         </div>
         <AnimatePresence mode="wait" initial={false}>
           {currentDisplayStep >= 1 && (
@@ -109,7 +110,18 @@ export default function Register() {
                   className="w-full text-xl focus:outline-none placeholder-gray-400"
                   placeholder="이름을 입력해주세요."
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    const koreanCharCount = e.target.value.match(/[\uAC00-\uD7A3]/g)?.length || 0;
+                    if (nameAdvanceTimeout.current) {
+                      clearTimeout(nameAdvanceTimeout.current);
+                    }
+                    if (currentDisplayStep === 1 && koreanCharCount === 3) {
+                      nameAdvanceTimeout.current = setTimeout(() => {
+                        advanceStep();
+                      }, 500);
+                    }
+                  }}
                   onKeyDown={handleKeyDown}
                 />
               </div>
@@ -128,7 +140,7 @@ export default function Register() {
               className="w-full mb-12"
             >
               <label htmlFor="dob" className="text-gray-500 text-sm font-semibold mb-2 block">
-                생년월일 <span className="text-red-500">*</span>
+                생년월일 (8자리) <span className="text-red-500">*</span>
               </label>
               <div className="w-full border-b-2 border-gray-300 pb-2">
                 <input
@@ -149,6 +161,9 @@ export default function Register() {
                       formatted = value.slice(0, 4) + '-' + value.slice(4, 6) + '-' + value.slice(6);
                     }
                     setDob(formatted);
+                    if (currentDisplayStep === 2 && value.length === 8) {
+                      advanceStep();
+                    }
                   }}
                   onKeyDown={handleKeyDown}
                 />
