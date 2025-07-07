@@ -37,7 +37,7 @@ export default function Home() {
           />
         </div>
         <Image src="/logo.svg" alt="Logo" width={160} height={160} priority />
-        <p className="text-center text-gray-400 mt-3 text-lg">우리 아이의 마음 날씨는?</p>
+        <p className="text-center text-gray-400 mt-3 text-base">우리 아이의 마음 날씨는?</p>
       </div>
 
       <div className="flex flex-col items-center w-full max-w-sm mb-16">
