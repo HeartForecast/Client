@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import React from 'react';
+import { useRouter } from "next/navigation";
 
 export default function Register() {
   const [currentDisplayStep, setCurrentDisplayStep] = useState(1); 
@@ -15,6 +16,7 @@ export default function Register() {
   const dobRef = useRef<HTMLInputElement>(null);
   const healthStatusRef = useRef<HTMLInputElement>(null);
   const nameAdvanceTimeout = useRef<NodeJS.Timeout | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     switch (currentDisplayStep) {
@@ -85,8 +87,18 @@ export default function Register() {
 
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
         <div className="w-full mb-8">
-          <h1 className="text-2xl font-semibold mb-1">새로운 자녀 프로필을 생성할게요</h1>
-          <h1 className="text-base font-medium mb-4 text-gray-">이미 등록한 자녀라면 여기를 클릭해주세요</h1>
+          <h1 className="text-2xl font-semibold mb-[-6]">새로운 자녀 프로필을 생성할게요</h1>
+          <span className="text-base font-medium text-gray-500">
+            이미 등록한 자녀라면{' '}
+            <button
+              type="button"
+              className="underline cursor-pointer focus:outline-none text-[#FF6F71]"
+              style={{ background: 'none', border: 'none', padding: 0, font: 'inherit' }}
+              onClick={() => router.push('/insert-code')}
+            >
+              여기를 클릭해주세요
+            </button>
+          </span>
         </div>
         <AnimatePresence mode="wait" initial={false}>
           {currentDisplayStep >= 1 && (
