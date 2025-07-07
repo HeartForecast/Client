@@ -2,34 +2,34 @@ import Image from "next/image";
 
 export default function Home() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 overflow-y-auto">
-      <div className="flex flex-col items-center mt-70">
+    <div className="min-h-screen flex flex-col items-center justify-between px-4 overflow-y-auto">
+      <div className="flex flex-col items-center justify-center flex-grow">
         <div className="flex items-center gap-4 mb-4">
-          <Image 
-            src="/icon/morning.svg" 
-            alt="Morning" 
-            width={52} 
-            height={52} 
+          <Image
+            src="/icon/morning.svg"
+            alt="Morning"
+            width={52}
+            height={52}
             style={{
               animation: 'float 3s ease-in-out infinite',
               animationDelay: '0s'
             }}
           />
-          <Image 
-            src="/icon/lunch.svg" 
-            alt="Lunch" 
-            width={52} 
-            height={52} 
+          <Image
+            src="/icon/lunch.svg"
+            alt="Lunch"
+            width={52}
+            height={52}
             style={{
               animation: 'float 3s ease-in-out infinite',
               animationDelay: '1s'
             }}
           />
-          <Image 
-            src="/icon/nigh.svg" 
-            alt="Night" 
-            width={52} 
-            height={52} 
+          <Image
+            src="/icon/nigh.svg"
+            alt="Night"
+            width={52}
+            height={52}
             style={{
               animation: 'float 3s ease-in-out infinite',
               animationDelay: '2s'
@@ -39,10 +39,11 @@ export default function Home() {
         <Image src="/logo.svg" alt="Logo" width={160} height={160} priority />
         <p className="text-center text-gray-400 mt-3 text-lg">우리 아이의 마음 날씨는?</p>
       </div>
-      <div className="flex flex-col items-center w-full max-w-sm mt-80">
+
+      <div className="flex flex-col items-center w-full max-w-sm mb-16">
         <div className="flex flex-col gap-4 w-full">
-          <a 
-            className="flex w-full items-center justify-center gap-1 rounded-lg bg-[#ffcc00] py-3" 
+          <a
+            className="flex w-full items-center justify-center gap-1 rounded-lg bg-[#ffcc00] py-3"
             href="/"
           >
             <svg width="24" height="24" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">

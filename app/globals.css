@@ -25,6 +25,8 @@ body {
   font-family: 'Pretendard-Regular', sans-serif;
   margin: 0;
   padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .container {
@@ -59,4 +61,42 @@ body {
   50% {
     transform: translateY(-10px);
   }
+}
+
+/* Mobile-specific improvements */
+@media (max-width: 640px) {
+  body {
+    font-size: 14px;
+  }
+  
+  .container {
+    max-width: 100%;
+  }
+  
+  .app-content {
+    padding: 16px;
+  }
+}
+
+/* Prevent zoom on input focus for iOS */
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Smooth scrolling for better mobile experience */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Better touch targets for mobile */
+button, a {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Prevent horizontal scroll on mobile */
+* {
+  box-sizing: border-box;
 }
