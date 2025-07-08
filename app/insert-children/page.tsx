@@ -88,8 +88,9 @@ export default function Register() {
 
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
         <div className="w-full mb-8">
-          <h1 className="text-2xl font-semibold mb-[-6]">새로운 자녀 프로필을 생성할게요</h1>
-          <span className="text-base font-medium text-gray-500">
+          <span className="text-gray-500 font-medium text-sm mr-1">새로운 아이 프로필 추가</span>
+          <h1 className="text-2xl font-semibold mb-3">새로운 아이 프로필을 생성할게요</h1>
+          {/* <span className="text-base font-medium text-gray-500">
             이미 등록한 자녀라면{' '}
             <button
               type="button"
@@ -99,7 +100,7 @@ export default function Register() {
             >
               여기를 클릭해주세요
             </button>
-          </span>
+          </span> */}
         </div>
         <AnimatePresence mode="wait" initial={false}>
           {currentDisplayStep >= 1 && (
