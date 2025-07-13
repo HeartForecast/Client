@@ -10,7 +10,6 @@ export default function ChildrenListPage() {
   const [activeTab, setActiveTab] = useState('설정')
   const [openMenuId, setOpenMenuId] = useState<number | null>(null)
 
-  // 샘플 자녀 데이터
   const childrenData = [
     {
       id: 1,

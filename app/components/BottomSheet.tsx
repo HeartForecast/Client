@@ -51,7 +51,6 @@ const BottomSheet: React.FC<BottomSheetProps> = ({ open, onClose, children }) =>
     const currentY = e.touches[0].clientY
     const deltaY = currentY - startY
     
-    // 아래로만 드래그 가능하도록 제한
     if (deltaY > 0) {
       setDragY(deltaY)
     }
@@ -62,7 +61,6 @@ const BottomSheet: React.FC<BottomSheetProps> = ({ open, onClose, children }) =>
     
     setIsDragging(false)
     
-    // 드래그 거리가 100px 이상이면 닫기
     if (dragY > 100) {
       onClose()
     }
@@ -82,7 +80,6 @@ const BottomSheet: React.FC<BottomSheetProps> = ({ open, onClose, children }) =>
     const currentY = e.clientY
     const deltaY = currentY - startY
     
-    // 아래로만 드래그 가능하도록 제한
     if (deltaY > 0) {
       setDragY(deltaY)
     }
@@ -93,7 +90,6 @@ const BottomSheet: React.FC<BottomSheetProps> = ({ open, onClose, children }) =>
     
     setIsDragging(false)
     
-    // 드래그 거리가 100px 이상이면 닫기
     if (dragY > 100) {
       onClose()
     }
@@ -129,7 +125,6 @@ const BottomSheet: React.FC<BottomSheetProps> = ({ open, onClose, children }) =>
           transition: isDragging ? 'none' : 'transform 0.3s ease-out'
         }}
       >
-        {/* 드래그 핸들 */}
         <div 
           className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-4 cursor-grab active:cursor-grabbing"
           onTouchStart={handleTouchStart}

@@ -61,9 +61,6 @@ export default function Register() {
         <div className="w-full mb-8">
         <span className="text-gray-500 font-medium text-sm mr-1">등록된 아이 프로필 추가</span>
           <h1 className="text-2xl font-semibold mb-3">아이 코드를 입력해주세요.</h1>
-          {/* <h1 className="text-base font-medium mb-4 text-gray-500">
-            아이코드는 <span className="text-[#FF6F71] font-semibold">설정 &gt; 아이 코드</span>에서 확인할 수 있어요.
-          </h1> */}
           <div className="w-full flex justify-center items-center mt-8">
             <div className="flex gap-2 justify-center items-center w-full">
               {code.map((c, i) => (

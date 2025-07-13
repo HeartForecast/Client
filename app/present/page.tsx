@@ -5,14 +5,12 @@ import { useRouter } from "next/navigation"
 import Container from "../components/Container"
 import ParentNavigationBar from "../components/ParentNavigationBar"
 
-// 감정 카테고리 색상
 const EMOTION_COLORS = {
   즐거움: '#3DC8EF',
   슬픔: '#FF7B6F',
   중립: '#FFD340'
 };
 
-// 시간대별 일기 데이터 구조 (보호자용)
 const diaryData: Record<string, {
   morning: {
     predictedEmotions: Array<{emotion: string, category: string}>;
@@ -123,7 +121,6 @@ export default function Present() {
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<'morning' | 'afternoon' | 'evening'>('morning')
   const [currentMonth, setCurrentMonth] = useState(new Date())
 
-  // 현재 달의 날짜들을 생성
   const generateCalendarDays = () => {
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
@@ -185,7 +182,6 @@ export default function Present() {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1));
   };
 
-  // 감정 비교 분석 함수
   const analyzeEmotionComparison = (predicted: Array<{emotion: string, category: string}>, actual: Array<{emotion: string, category: string}>) => {
     const predictedCategories = predicted.map(p => p.category);
     const actualCategories = actual.map(a => a.category);
@@ -214,15 +210,12 @@ export default function Present() {
   return (
     <Container>
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
-        {/* 보호자 정보 */}
         <div className="flex items-center gap-2 rounded-lg px-2 mb-6">
           <div className="text-sm text-gray-500">보호자 모드</div>
           <span className="text-gray-900 font-semibold text-xl">{childName}의 감정 일기</span>
         </div>
 
-        {/* 달력 */}
         <div className="w-full bg-white rounded-2xl p-4 mb-4">
-          {/* 달력 헤더 */}
           <div className="flex items-center justify-between mb-4">
             <button onClick={handlePrevMonth} className="p-2 hover:bg-gray-100 rounded-lg">
               <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -239,7 +232,6 @@ export default function Present() {
             </button>
           </div>
 
-          {/* 요일 헤더 */}
           <div className="grid grid-cols-7 gap-1 mb-2">
             {['일', '월', '화', '수', '목', '금', '토'].map(day => (
               <div key={day} className="text-center text-sm font-medium text-gray-500 py-2">
@@ -248,7 +240,6 @@ export default function Present() {
             ))}
           </div>
 
-          {/* 날짜 그리드 */}
           <div className="grid grid-cols-7 gap-1">
             {calendarDays.map(date => (
               <button
@@ -272,7 +263,6 @@ export default function Present() {
           </div>
         </div>
 
-        {/* 시간대 선택 버튼 */}
         {selectedDate && selectedDiary && (
           <div className="w-full mb-4">
             <div className="flex bg-gray-100 rounded-xl p-1">
@@ -295,10 +285,8 @@ export default function Present() {
           </div>
         )}
 
-        {/* 선택된 날짜의 일기 비교 */}
         {selectedDate && selectedDiary && (
           <div className="w-full space-y-4">
-            {/* 날짜 정보 */}
             <div className="text-xs text-gray-400 mb-2">
               {new Date(selectedDate).toLocaleDateString('ko-KR', { 
                 year: 'numeric', 
@@ -308,7 +296,6 @@ export default function Present() {
               })}
             </div>
 
-            {/* 선택된 시간대 일기 */}
             <div className="w-full">
               <div className="text-lg font-semibold text-gray-800 mb-4">
                 {timeSlots.find(t => t.key === selectedTimeSlot)?.label} 시간대 분석
@@ -320,7 +307,6 @@ export default function Present() {
                 
                 return (
                   <div className="space-y-4">
-                    {/* 분석 결과 */}
                     <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
                       <div className="flex items-center justify-between mb-2">
                         <div className="text-sm font-semibold text-gray-700">예측 정확도</div>
@@ -330,9 +316,7 @@ export default function Present() {
                       </div>
                     </div>
 
-                    {/* 비교 카드 */}
                     <div className="space-y-3">
-                      {/* 예측 부분 */}
                       <div className="bg-white border-2 border-blue-200 rounded-xl p-4 shadow-sm">
                         <div className="flex items-start justify-between mb-3">
                           <div className="text-sm font-semibold text-blue-600">예측했던 감정</div>
@@ -355,7 +339,6 @@ export default function Present() {
                         </p>
                       </div>
 
-                      {/* 실제 기록 부분 */}
                       <div className="bg-white border-2 border-green-200 rounded-xl p-4 shadow-sm">
                         <div className="flex items-start justify-between mb-3">
                           <div className="text-sm font-semibold text-green-600">실제 느낀 감정</div>
@@ -385,7 +368,6 @@ export default function Present() {
           </div>
         )}
 
-        {/* 날짜 선택 안내 */}
         {!selectedDate && (
           <div className="w-full text-center py-8">
             <div className="text-gray-400 mb-2">

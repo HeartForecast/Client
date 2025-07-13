@@ -218,7 +218,7 @@ export default function Register() {
   ];
 
   return (
-    <Container>
+    <Container> 
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
         {/* 사용자 정보 */}
         <div className="flex items-end gap-1 rounded-lg px-2 mb-6">
@@ -346,7 +346,7 @@ export default function Register() {
                   const timeData = selectedDiary[selectedTimeSlot];
                   return (
                     <div className="space-y-4">
-                      {/* 예측 부분 */}
+
                       <div className="bg-white border-2 border-blue-200 rounded-xl p-4 shadow-sm">
                         <div className="flex items-start justify-between mb-3">
                           <div className="text-sm font-semibold text-blue-600">예상했던 감정과 생각</div>
@@ -367,10 +367,9 @@ export default function Register() {
                         <p className="text-gray-700 text-sm leading-relaxed">
                           {timeData.predictedText}
                         </p>
-                      </div>
+                    </div>
 
-                      {/* 실제 기록 부분 */}
-                      <div className="bg-white border-2 border-green-200 rounded-xl p-4 shadow-sm">
+                    <div className="bg-white border-2 border-green-200 rounded-xl p-4 shadow-sm">
                         <div className="flex items-start justify-between mb-3">
                           <div className="text-sm font-semibold text-green-600">실제로 느꼈던 감정과 경험</div>
                           <div className="flex flex-wrap gap-2 justify-end">
@@ -397,7 +396,6 @@ export default function Register() {
               </div>
             )}
 
-            {/* 미래 날짜인 경우 (내일 제외) - 아직 멀었다는 메시지 */}
             {!isPastDate(new Date(selectedDate)) && !isTomorrow(new Date(selectedDate)) && (
               <div className="w-full text-center py-8">
                 <div className="bg-white border-2 border-gray-200 rounded-xl p-6 shadow-sm">
@@ -413,7 +411,6 @@ export default function Register() {
           </div>
         )}
 
-        {/* 날짜 선택 안내 */}
         {!selectedDate && (
           <div className="w-full text-center py-8">
             <div className="text-gray-400 mb-2">

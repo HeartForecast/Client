@@ -90,17 +90,6 @@ export default function Register() {
         <div className="w-full mb-8">
           <span className="text-gray-500 font-medium text-sm mr-1">새로운 아이 프로필 추가</span>
           <h1 className="text-2xl font-semibold mb-3">새로운 아이 프로필을 생성할게요</h1>
-          {/* <span className="text-base font-medium text-gray-500">
-            이미 등록한 자녀라면{' '}
-            <button
-              type="button"
-              className="underline cursor-pointer focus:outline-none text-[#FF6F71]"
-              style={{ background: 'none', border: 'none', padding: 0, font: 'inherit' }}
-              onClick={() => router.push('/insert-code')}
-            >
-              여기를 클릭해주세요
-            </button>
-          </span> */}
         </div>
         <AnimatePresence mode="wait" initial={false}>
           {currentDisplayStep >= 1 && (
