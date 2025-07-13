@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Button from "../components/Button";
 
 const EMOTION_CATEGORIES = {
@@ -27,9 +27,24 @@ const CATEGORY_COLORS = {
   중립: '#FFD340'
 };
 
+const TIME_PERIODS = {
+  morning: { label: '오전', text: '오전에는 어떤 감정을' },
+  afternoon: { label: '오후', text: '오후에는 어떤 감정을' },
+  evening: { label: '저녁', text: '저녁에는 어떤 감정을' }
+};
+
 export default function InsertPage() {
   const [selected, setSelected] = useState<number[]>([]);
+  const [currentStep, setCurrentStep] = useState<'morning' | 'afternoon' | 'evening'>('morning');
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const step = searchParams.get('step') as 'morning' | 'afternoon' | 'evening';
+    if (step && ['morning', 'afternoon', 'evening'].includes(step)) {
+      setCurrentStep(step);
+    }
+  }, [searchParams]);
 
   const handleEmotionClick = (categoryIdx: number, emotionIdx: number) => {
     const globalIdx = categoryIdx * 1000 + emotionIdx;
@@ -62,6 +77,7 @@ export default function InsertPage() {
 
     const params = new URLSearchParams();
     params.set('emotions', JSON.stringify(selectedEmotions));
+    params.set('step', currentStep);
     router.push(`/insert/reason?${params.toString()}`);
   };
 
@@ -83,9 +99,9 @@ export default function InsertPage() {
         </button>
       </div>
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
-        <div className="text-xs text-gray-400 mb-2">7월 12일 토요일 오전</div>
+        <div className="text-xs text-gray-400 mb-2">7월 12일 토요일 {TIME_PERIODS[currentStep].label}</div>
         <div className="text-2xl font-bold leading-tight whitespace-pre-line mb-8">
-          오전에는 어떤 감정을{`\n`}느낄까요?
+          {TIME_PERIODS[currentStep].text}{`\n`}느낄까요?
         </div>
         <div className="w-full space-y-6">
           {Object.entries(EMOTION_CATEGORIES).map(([category, emotions], categoryIdx) => (

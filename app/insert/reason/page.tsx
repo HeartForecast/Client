@@ -11,18 +11,34 @@ interface SelectedEmotion {
   color: string;
 }
 
+interface EmotionData {
+  step: string;
+  emotions: SelectedEmotion[];
+  reason: string;
+}
+
+const TIME_PERIODS = {
+  morning: { label: '오전', text: '왜 이런 감정을' },
+  afternoon: { label: '오후', text: '왜 이런 감정을' },
+  evening: { label: '저녁', text: '왜 이런 감정을' }
+};
+
 export default function ReasonPage() {
   const [selectedEmotions, setSelectedEmotions] = useState<SelectedEmotion[]>([]);
   const [reason, setReason] = useState('');
+  const [currentStep, setCurrentStep] = useState<'morning' | 'afternoon' | 'evening'>('morning');
   const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
     const emotionsParam = searchParams.get('emotions');
-    if (emotionsParam) {
+    const stepParam = searchParams.get('step') as 'morning' | 'afternoon' | 'evening';
+    
+    if (emotionsParam && stepParam) {
       try {
         const emotions = JSON.parse(emotionsParam);
         setSelectedEmotions(emotions);
+        setCurrentStep(stepParam);
       } catch (error) {
         console.error('감정 데이터 파싱 오류:', error);
         router.push('/insert');
@@ -39,10 +55,33 @@ export default function ReasonPage() {
   const handleNext = () => {
     if (reason.trim().length === 0) return;
     
-    console.log('선택된 감정들:', selectedEmotions);
-    console.log('이유:', reason);
+    const currentData: EmotionData = {
+      step: currentStep,
+      emotions: selectedEmotions,
+      reason: reason
+    };
 
-    router.push('/home');
+    const existingData = localStorage.getItem('emotionData');
+    let allData: EmotionData[] = [];
+    
+    if (existingData) {
+      allData = JSON.parse(existingData);
+      allData = allData.filter(data => data.step !== currentStep);
+    }
+    
+    allData.push(currentData);
+    localStorage.setItem('emotionData', JSON.stringify(allData));
+
+    console.log(`${currentStep} 데이터 저장:`, currentData);
+
+    if (currentStep === 'morning') {
+      router.push('/insert?step=afternoon');
+    } else if (currentStep === 'afternoon') {
+      router.push('/insert?step=evening');
+    } else if (currentStep === 'evening') {
+      console.log('모든 단계 완료! 전체 데이터:', allData);
+      router.push('/home');
+    }
   };
 
   const isComplete = reason.trim().length > 0;
@@ -51,6 +90,11 @@ export default function ReasonPage() {
     hidden: { opacity: 0, y: 10 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
     exit: { opacity: 0, y: -10, transition: { duration: 0.3 } },
+  };
+
+  const getButtonText = () => {
+    if (currentStep === 'evening') return '완료';
+    return '다음으로';
   };
 
   return (
@@ -64,9 +108,9 @@ export default function ReasonPage() {
       </div>
       
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
-        <div className="text-xs text-gray-400 mb-2">7월 12일 토요일 오전</div>
+        <div className="text-xs text-gray-400 mb-2">7월 12일 토요일 {TIME_PERIODS[currentStep].label}</div>
         <div className="text-2xl font-bold leading-tight whitespace-pre-line mb-8">
-          왜 이런 감정을{`\n`}느낄 것 같나요?
+          {TIME_PERIODS[currentStep].text}{`\n`}느낄 것 같나요?
         </div>
         
         <div className="w-full flex-grow">
@@ -83,7 +127,7 @@ export default function ReasonPage() {
             </div>
           </div>
           <div className="mt-3 text-sm text-gray-500 text-center">
-          🫶 자세히 적을수록 더 좋아요
+            🫶 자세히 적을수록 더 좋아요
           </div>
         </div>
       </div>
@@ -100,7 +144,7 @@ export default function ReasonPage() {
           disabled={!isComplete}
           onClick={handleNext}
         >
-          완료
+          {getButtonText()}
         </Button>
       </motion.div>
     </div>
