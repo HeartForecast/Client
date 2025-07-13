@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import Button from "../components/Button";
 
 const EMOTION_CATEGORIES = {
@@ -28,6 +29,7 @@ const CATEGORY_COLORS = {
 
 export default function InsertPage() {
   const [selected, setSelected] = useState<number[]>([]);
+  const router = useRouter();
 
   const handleEmotionClick = (categoryIdx: number, emotionIdx: number) => {
     const globalIdx = categoryIdx * 1000 + emotionIdx;
@@ -42,6 +44,25 @@ export default function InsertPage() {
 
   const handleBack = () => {
     window.history.back();
+  };
+
+  const handleNext = () => {
+    if (selected.length === 0) return;
+    const selectedEmotions = selected.map(globalIdx => {
+      const categoryIdx = Math.floor(globalIdx / 1000);
+      const emotionIdx = globalIdx % 1000;
+      const categories = Object.entries(EMOTION_CATEGORIES);
+      const [categoryName, emotions] = categories[categoryIdx];
+      return {
+        category: categoryName,
+        emotion: emotions[emotionIdx],
+        color: CATEGORY_COLORS[categoryName as keyof typeof CATEGORY_COLORS]
+      };
+    });
+
+    const params = new URLSearchParams();
+    params.set('emotions', JSON.stringify(selectedEmotions));
+    router.push(`/insert/reason?${params.toString()}`);
   };
 
   const isCodeComplete = selected.length > 0;
@@ -62,7 +83,7 @@ export default function InsertPage() {
         </button>
       </div>
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
-        <div className="text-xs text-gray-400 mb-2">7월 12일 토요일</div>
+        <div className="text-xs text-gray-400 mb-2">7월 12일 토요일 오전</div>
         <div className="text-2xl font-bold leading-tight whitespace-pre-line mb-8">
           오전에는 어떤 감정을{`\n`}느낄까요?
         </div>
@@ -119,6 +140,7 @@ export default function InsertPage() {
         <Button
           className={`flex w-full items-center justify-center gap-1 rounded-lg bg-[#FF6F71] text-white py-3 text-lg font-semibold text-gray-900 mb-4 transition-opacity ${isCodeComplete ? '' : 'opacity-50 cursor-not-allowed'}`}
           disabled={!isCodeComplete}
+          onClick={handleNext}
         >
           다음으로
         </Button>
