@@ -73,7 +73,7 @@ export default function Settings() {
           ))}
         </div>
 
-        <div className="w-full mt-12">
+        <div className="w-full mt-38">
           <Button
             onClick={() => handleMenuClick('switch-mode-bottom')}
             className="flex w-full items-center justify-center gap-1 rounded-lg bg-[#FF6F71] text-white py-3 text-lg font-semibold mb-4 transition-opacity"
