@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Container from "../components/Container"
 import NavigationBar from "../components/NavigationBar"
+import Button from "../components/Button"
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState('설정')
@@ -54,7 +55,7 @@ export default function Settings() {
           <h1 className="text-2xl font-semibold mb-3">계정 설정 및 관리</h1>
         </div>
 
-        <div className="w-full space-y-6">
+        <div className="w-full space-y-9">
           {menuItems.map((item) => (
             <div
               key={item.id}
@@ -73,14 +74,21 @@ export default function Settings() {
         </div>
 
         <div className="w-full mt-12">
-          <div
+          <Button
             onClick={() => handleMenuClick('switch-mode-bottom')}
-            className="flex items-center justify-center gap-3 py-4 px-4 bg-[#FF6F71] rounded-lg cursor-pointer hover:bg-[#e55a5c] transition-colors"
+            className="flex w-full items-center justify-center gap-3 rounded-lg bg-[#FF6F71] text-white py-4 text-lg font-medium hover:bg-[#e55a5c] transition-colors mt-20"
           >
             <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
             </svg>
-            <span className="text-white font-medium">보호자 모드로 전환</span>
+            보호자 모드로 전환
+          </Button>
+        </div>
+
+        <div className="w-full mt-6 pb-4">
+          <div className="text-center text-xs text-gray-400 space-y-1">
+            <p>앱 버전 1.2.3</p>
+            <p>마지막 업데이트: 2024.07.12</p>
           </div>
         </div>
       </div>
