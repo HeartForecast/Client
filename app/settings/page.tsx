@@ -51,7 +51,7 @@ export default function Settings() {
 
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
         <div className="w-full mb-8">
-          <span className="text-gray-500 font-medium text-sm">마이페이지</span>
+          <span className="text-gray-500 font-medium text-sm">설정</span>
           <h1 className="text-2xl font-semibold mb-3">계정 설정 및 관리</h1>
         </div>
 
@@ -76,12 +76,12 @@ export default function Settings() {
         <div className="w-full mt-12">
           <Button
             onClick={() => handleMenuClick('switch-mode-bottom')}
-            className="flex w-full items-center justify-center gap-3 rounded-lg bg-[#FF6F71] text-white py-4 text-lg font-medium hover:bg-[#e55a5c] transition-colors mt-20"
+            className="flex w-full items-center justify-center gap-1 rounded-lg bg-[#FF6F71] text-white py-3 text-lg font-semibold mb-4 transition-opacity"
           >
             <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
             </svg>
-            보호자 모드로 전환
+            아이 모드로 전환
           </Button>
         </div>
 
