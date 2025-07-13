@@ -4,22 +4,40 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import Button from "../components/Button";
 
-const EMOTIONS = [
-  "신나는", "열정적인", "희망찬", "기대되는", "뿌듯한",
-  "황홀한", "설레는", "기쁜", "감동한", "대견한",
-  "즐거운", "영감을 받은", "행복한", "사랑하는", "만족스러운",
-  "감사한", "평온한", "여유로운", "자신감 있는", "든든한"
-];
+const EMOTION_CATEGORIES = {
+  즐거움: [
+    "신나는", "열정적인", "희망찬", "기대되는", "뿌듯한",
+    "황홀한", "설레는", "기쁜", "감동한", "대견한",
+    "즐거운", "영감을 받은", "행복한", "사랑하는", "만족스러운"
+  ],
+  슬픔: [
+    "우울한", "속상한", "실망한", "외로운", "불안한",
+    "화난", "짜증나는", "스트레스받는", "걱정되는", "답답한"
+  ],
+  중립: [
+    "감사한", "평온한", "여유로운", "자신감 있는", "든든한",
+    "차분한", "안정된", "집중된", "편안한", "고요한"
+  ]
+};
+
+const CATEGORY_COLORS = {
+  즐거움: '#3DC8EF',
+  슬픔: '#FF7B6F',
+  중립: '#FFD340'
+};
 
 export default function InsertPage() {
   const [selected, setSelected] = useState<number[]>([]);
 
-  const handleEmotionClick = (idx: number) => {
-    setSelected((prev) =>
-      prev.includes(idx)
-        ? prev.filter((i) => i !== idx)
-        : [...prev, idx]
-    );
+  const handleEmotionClick = (categoryIdx: number, emotionIdx: number) => {
+    const globalIdx = categoryIdx * 1000 + emotionIdx;
+    setSelected((prev) => {
+      if (prev.includes(globalIdx)) {
+        return prev.filter((i) => i !== globalIdx);
+      } else {
+        return [...prev, globalIdx];
+      }
+    });
   };
 
   const handleBack = () => {
@@ -48,34 +66,47 @@ export default function InsertPage() {
         <div className="text-2xl font-bold leading-tight whitespace-pre-line mb-8">
           오전에는 어떤 감정을{`\n`}느낄까요?
         </div>
-        <div className="w-full">
-          <div className="flex flex-wrap gap-3">
-            {EMOTIONS.map((emotion, idx) => (
-              <Button
-                key={idx}
-                type="button"
-                className={`rounded-full px-3 py-1 text-base font-medium transition-all duration-150
-                  border inline-flex items-center justify-center
-                  ${selected.includes(idx)
-                    ? "bg-blue-500 text-white border-blue-500"
-                    : "bg-white text-[#6B7A90] border-[#C7D0D9] hover:bg-blue-50 hover:border-blue-300"}
-                  shadow-none
-                `}
-                style={{
-                  fontFamily: 'inherit',
-                  fontWeight: 500,
-                  fontSize: '15px',
-                  letterSpacing: '0.01em',
-                  width: 'auto',
-                  minWidth: 'auto',
-                }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => handleEmotionClick(idx)}
-              >
-                {emotion}
-              </Button>
-            ))}
-          </div>
+        <div className="w-full space-y-6">
+          {Object.entries(EMOTION_CATEGORIES).map(([category, emotions], categoryIdx) => (
+            <div key={category} className="w-full">
+              <div className="text-sm font-medium text-gray-600 mb-3">{category}</div>
+              <div className="flex flex-wrap gap-2">
+                {emotions.map((emotion, emotionIdx) => {
+                  const globalIdx = categoryIdx * 1000 + emotionIdx;
+                  const isSelected = selected.includes(globalIdx);
+                  const categoryColor = CATEGORY_COLORS[category as keyof typeof CATEGORY_COLORS];
+                  
+                  return (
+                    <motion.button
+                      key={`${category}-${emotionIdx}`}
+                      type="button"
+                      className={`
+                        px-4 py-2 rounded-full text-sm font-medium transition-all duration-200
+                        border inline-flex items-center justify-center
+                        ${isSelected
+                          ? "text-white border-transparent"
+                          : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"
+                        }
+                        focus:outline-none
+                      `}
+                      style={{
+                        fontFamily: 'inherit',
+                        fontWeight: 500,
+                        fontSize: '14px',
+                        minHeight: '36px',
+                        whiteSpace: 'nowrap',
+                        backgroundColor: isSelected ? categoryColor : 'white'
+                      }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => handleEmotionClick(categoryIdx, emotionIdx)}
+                    >
+                      {emotion}
+                    </motion.button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
       <motion.div
@@ -89,7 +120,7 @@ export default function InsertPage() {
           className={`flex w-full items-center justify-center gap-1 rounded-lg bg-[#FF6F71] text-white py-3 text-lg font-semibold text-gray-900 mb-4 transition-opacity ${isCodeComplete ? '' : 'opacity-50 cursor-not-allowed'}`}
           disabled={!isCodeComplete}
         >
-          완료
+          다음으로
         </Button>
       </motion.div>
     </div>
