@@ -316,7 +316,7 @@ export default function Present() {
             {/* 내일인 경우 - 예측 버튼 */}
             {isTomorrow(new Date(selectedDate)) && (
               <div className="w-full text-center py-8">
-                <div className="bg-white border-2 border-purple-200 rounded-xl p-6 shadow-sm">
+                <div className="bg-white rounded-2xl p-5 border border-gray-100">
                   <div className="text-lg font-semibold text-gray-800 mb-4">
                     내일의 일을 예측해보세요!
                   </div>
@@ -337,55 +337,32 @@ export default function Present() {
             {selectedDiary && (
               <div className="w-full">
                 {/* 선택된 시간대 일기 */}
-                <div className="text-lg font-semibold text-gray-800 mb-4">
-                  {timeSlots.find(t => t.key === selectedTimeSlot)?.label} 일기
+                <div className="text-lg font-semibold text-gray-800 mb-2">
+                  {timeSlots.find(t => t.key === selectedTimeSlot)?.label} 기록
                 </div>
                 
                 {(() => {
                   const timeData = selectedDiary[selectedTimeSlot];
                   return (
-                    <div className="space-y-4">
-
-                      <div className="bg-white border-2 border-blue-200 rounded-xl p-4 shadow-sm">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="text-sm font-semibold text-blue-600">예상했던 감정과 생각</div>
-                          <div className="flex flex-wrap gap-2 justify-end">
-                            {timeData.predictedEmotions.map((emotion, index) => (
-                              <div
-                                key={index}
-                                className="px-3 py-1 rounded-full text-sm font-medium text-white"
-                                style={{
-                                  backgroundColor: EMOTION_COLORS[emotion.category as keyof typeof EMOTION_COLORS]
-                                }}
-                              >
-                                {emotion.emotion}
-                              </div>
-                            ))}
-                          </div>
+                    <div className="space-y-3">
+                      <div className="bg-white rounded-2xl p-5 border border-gray-100">
+                        <div className="mb-3">
+                          <span className="text-sm text-gray-400">
+                            {timeData.predictedEmotions.map(e => e.emotion).join(', ')}
+                          </span>
                         </div>
-                        <p className="text-gray-700 text-sm leading-relaxed">
+                        <p className="text-base text-gray-600 leading-normal">
                           {timeData.predictedText}
                         </p>
                       </div>
 
-                      <div className="bg-white border-2 border-green-200 rounded-xl p-4 shadow-sm">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="text-sm font-semibold text-green-600">실제로 느꼈던 감정과 경험</div>
-                          <div className="flex flex-wrap gap-2 justify-end">
-                            {timeData.actualEmotions.map((emotion, index) => (
-                              <div
-                                key={index}
-                                className="px-3 py-1 rounded-full text-sm font-medium text-white"
-                                style={{
-                                  backgroundColor: EMOTION_COLORS[emotion.category as keyof typeof EMOTION_COLORS]
-                                }}
-                              >
-                                {emotion.emotion}
-                              </div>
-                            ))}
-                          </div>
+                      <div className="bg-white rounded-2xl p-5 border border-gray-100">
+                        <div className="mb-3">
+                          <span className="text-sm text-gray-400">
+                            {timeData.actualEmotions.map(e => e.emotion).join(', ')}
+                          </span>
                         </div>
-                        <p className="text-gray-700 text-sm leading-relaxed">
+                        <p className="text-base text-gray-600 leading-normal">
                           {timeData.actualText}
                         </p>
                       </div>
@@ -397,7 +374,7 @@ export default function Present() {
 
             {!isPastDate(new Date(selectedDate)) && !isTomorrow(new Date(selectedDate)) && (
               <div className="w-full text-center py-8">
-                <div className="bg-white border-2 border-gray-200 rounded-xl p-6 shadow-sm">
+                <div className="bg-white rounded-2xl p-5 border border-gray-100">
                   <div className="text-lg font-semibold text-gray-800 mb-4">
                     감정 등록까지 멀었어요!!
                   </div>
