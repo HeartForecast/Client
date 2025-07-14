@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { API_BASE_URL } from '../../../../utils/api';
+import { getCookie, setTokens } from '../../../../utils/api';
 
 export default function KakaoOAuthCallback() {
   const router = useRouter();
@@ -10,13 +10,22 @@ export default function KakaoOAuthCallback() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('로그인 처리 중...');
 
+  const notifyAuthStateChange = () => {
+    window.dispatchEvent(new Event('authStateChanged'));
+  };
+
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // URL 파라미터에서 코드와 에러 확인
         const code = searchParams.get('code');
         const error = searchParams.get('error');
         const state = searchParams.get('state');
+
+        console.log('=== OAuth Callback Debug ===');
+        console.log('Current URL:', window.location.href);
+        console.log('Code:', code);
+        console.log('State:', state);
+        console.log('Error:', error);
 
         if (error) {
           setStatus('error');
@@ -31,57 +40,85 @@ export default function KakaoOAuthCallback() {
           return;
         }
 
-        // 먼저 백엔드의 기본 OAuth2 엔드포인트로 요청
-        try {
-          const response = await fetch(`${API_BASE_URL}/api/auth/callback`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              code,
-              state,
-              provider: 'kakao'
-            }),
-          });
+        // 쿠키에서 토큰 확인
+        const accessToken = getCookie('access_social');
+        const refreshToken = getCookie('refresh_social');
 
-          if (response.ok) {
-            const data = await response.json();
-            
-            if (data.success) {
-              setStatus('success');
-              setMessage('로그인 성공! 홈으로 이동합니다.');
-              
-              // 토큰을 로컬 스토리지에 저장
-              if (data.accessToken) {
-                localStorage.setItem('accessToken', data.accessToken);
-              }
-              if (data.refreshToken) {
-                localStorage.setItem('refreshToken', data.refreshToken);
-              }
-              
-              // 홈 페이지로 리다이렉트
-              setTimeout(() => {
-                router.push('/home');
-              }, 1500);
-              return;
+        console.log('=== Cookie Check ===');
+        console.log('Access Token from cookie:', accessToken ? 'Found' : 'Not found');
+        console.log('Refresh Token from cookie:', refreshToken ? 'Found' : 'Not found');
+
+        // 모든 쿠키 확인
+        console.log('=== All Cookies ===');
+        const allCookies = document.cookie.split(';');
+        allCookies.forEach(cookie => {
+          console.log('Cookie:', cookie.trim());
+        });
+
+        // 쿠키 파싱 함수
+        const parseCookies = () => {
+          const cookies: { [key: string]: string } = {};
+          document.cookie.split(';').forEach(cookie => {
+            const [name, value] = cookie.trim().split('=');
+            if (name && value) {
+              cookies[name] = value;
             }
+          });
+          return cookies;
+        };
+
+        const parsedCookies = parseCookies();
+        console.log('=== Parsed Cookies ===');
+        console.log(parsedCookies);
+
+        // 백엔드에서 설정한 쿠키들 확인
+        const backendCookies = [
+          'access_social',
+          'refresh_social', 
+          'JSESSIONID',
+          'SESSION'
+        ];
+
+        console.log('=== Backend Cookie Check ===');
+        backendCookies.forEach(cookieName => {
+          const value = parsedCookies[cookieName];
+          console.log(`${cookieName}:`, value ? 'Found' : 'Not found');
+          if (value) {
+            console.log(`${cookieName} length:`, value.length);
+            console.log(`${cookieName} preview:`, value.substring(0, 20) + '...');
           }
-        } catch (apiError) {
-          console.log('Custom API endpoint failed, trying default OAuth2 flow');
+        });
+
+        // 쿠키 읽기 함수 직접 테스트
+        console.log('=== Direct Cookie Test ===');
+        const testAccessToken = document.cookie
+          .split('; ')
+          .find(row => row.startsWith('access_social='))
+          ?.split('=')[1];
+        console.log('Direct access_social test:', testAccessToken ? 'Found' : 'Not found');
+
+        const testRefreshToken = document.cookie
+          .split('; ')
+          .find(row => row.startsWith('refresh_social='))
+          ?.split('=')[1];
+        console.log('Direct refresh_social test:', testRefreshToken ? 'Found' : 'Not found');
+
+        if (accessToken && refreshToken) {
+          console.log('✅ JWT tokens found in cookies - authentication successful');
+          setTokens(accessToken, refreshToken);
+          setStatus('success');
+          setMessage('로그인 성공! 홈으로 이동합니다.');
+          notifyAuthStateChange();
+          setTimeout(() => {
+            router.push('/home');
+          }, 1500);
+          return;
         }
 
-        // 커스텀 API가 실패하면 Spring Security OAuth2의 기본 동작 사용
-        // 백엔드에서 자동으로 세션을 생성하고 리다이렉트할 것으로 예상
-        setStatus('success');
-        setMessage('로그인 성공! 홈으로 이동합니다.');
-        
-        // 임시로 로그인 성공으로 처리 (백엔드에서 세션 관리)
-        localStorage.setItem('isLoggedIn', 'true');
-        
-        setTimeout(() => {
-          router.push('/home');
-        }, 1500);
+        // JWT 토큰이 없으면 에러
+        console.log('❌ No JWT tokens in cookies - authentication failed');
+        setStatus('error');
+        setMessage('인증 토큰을 받지 못했습니다. 다시 시도해주세요.');
 
       } catch (error) {
         console.error('Auth callback error:', error);
