@@ -11,11 +11,13 @@
   "dependencies": {
     "@react-aria/overlays": "^3.27.3",
     "@toss/use-overlay": "^1.4.2",
+    "chart.js": "^4.5.0",
     "framer-motion": "^12.23.0",
     "next": "15.3.4",
     "overlay-kit": "^1.8.4",
     "react": "^19.0.0",
     "react-aria": "^3.41.1",
+    "react-chartjs-2": "^5.3.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {

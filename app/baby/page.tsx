@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation"
 import Container from "../components/Container"
 import ParentNavigationBar from "../components/ParentNavigationBar"
 
+// 감정 카테고리 색상
 const EMOTION_COLORS = {
   즐거움: '#3DC8EF',
   슬픔: '#FF7B6F',
   중립: '#FFD340'
 };
 
+// 시간대별 일기 데이터 구조
 const diaryData: Record<string, {
   morning: {
     predictedEmotions: Array<{emotion: string, category: string}>;
@@ -31,7 +33,7 @@ const diaryData: Record<string, {
     actualText: string;
   };
 }> = {
-  '2025-07-13': {
+  '2024-01-15': {
     morning: {
       predictedEmotions: [{ emotion: '기대되는', category: '즐거움' }],
       predictedText: '오늘은 친구들과 만나서 즐거운 시간을 보낼 것 같아요!',
@@ -51,7 +53,7 @@ const diaryData: Record<string, {
       actualText: '정말 완벽한 하루였어요. 친구들과 보낸 시간이 너무 소중했습니다.'
     }
   },
-  '2025-07-12': {
+  '2024-01-14': {
     morning: {
       predictedEmotions: [{ emotion: '평온한', category: '중립' }],
       predictedText: '미술시간이 있어서 차분하고 집중된 아침이 될 것 같아요.',
@@ -70,57 +72,19 @@ const diaryData: Record<string, {
       actualEmotions: [{ emotion: '기쁜', category: '즐거움' }],
       actualText: '선생님이 제 그림을 칭찬해주셔서 정말 기뻤어요!'
     }
-  },
-  '2025-07-11': {
-    morning: {
-      predictedEmotions: [{ emotion: '걱정되는', category: '슬픔' }],
-      predictedText: '수학 시험이 있어서 조금 걱정되네요.',
-      actualEmotions: [{ emotion: '긴장된', category: '슬픔' }],
-      actualText: '아침부터 시험 때문에 정말 긴장되었어요.'
-    },
-    afternoon: {
-      predictedEmotions: [{ emotion: '어려운', category: '슬픔' }],
-      predictedText: '시험 문제가 어려울 것 같아요.',
-      actualEmotions: [{ emotion: '당황스러운', category: '슬픔' }],
-      actualText: '시험 문제가 예상보다 훨씬 어려워서 당황했어요.'
-    },
-    evening: {
-      predictedEmotions: [{ emotion: '후회되는', category: '슬픔' }],
-      predictedText: '더 열심히 공부하지 못한 것이 후회될 것 같아요.',
-      actualEmotions: [{ emotion: '안도하는', category: '중립' }],
-      actualText: '시험이 끝나니까 일단 안도되었어요. 결과는 기다려봐야죠.'
-    }
-  },
-  '2025-07-10': {
-    morning: {
-      predictedEmotions: [{ emotion: '상쾌한', category: '즐거움' }],
-      predictedText: '토요일 아침, 늦잠 자고 일어나서 기분이 좋을 것 같아요.',
-      actualEmotions: [{ emotion: '개운한', category: '즐거움' }],
-      actualText: '푹 자고 일어나니까 정말 개운했어요.'
-    },
-    afternoon: {
-      predictedEmotions: [{ emotion: '여유로운', category: '중립' }],
-      predictedText: '주말이라 여유롭게 보낼 수 있을 것 같아요.',
-      actualEmotions: [{ emotion: '편안한', category: '중립' }],
-      actualText: '집에서 편하게 쉬면서 여유로운 오후를 보냈어요.'
-    },
-    evening: {
-      predictedEmotions: [{ emotion: '즐거운', category: '즐거움' }],
-      predictedText: '가족과 함께 시간을 보내며 즐거운 저녁이 될 것 같아요.',
-      actualEmotions: [{ emotion: '따뜻한', category: '즐거움' }],
-      actualText: '가족들과 함께 영화를 보면서 따뜻한 시간을 보냈어요.'
-    }
   }
 };
 
 export default function Present() {
   const router = useRouter()
-  const [childName, setChildName] = useState('신희성')
+  const [currentName, setCurrentName] = useState('신희성')
+  const [currentId, setCurrentId] = useState('#342944')
   const [activeTab, setActiveTab] = useState('감정비교')
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<'morning' | 'afternoon' | 'evening'>('morning')
   const [currentMonth, setCurrentMonth] = useState(new Date())
 
+  // 현재 달의 날짜들을 생성
   const generateCalendarDays = () => {
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
@@ -151,6 +115,12 @@ export default function Present() {
     return date.toDateString() === today.toDateString();
   };
 
+  const isTomorrow = (date: Date) => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return date.toDateString() === tomorrow.toDateString();
+  };
+
   const isPastDate = (date: Date) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -164,14 +134,13 @@ export default function Present() {
   };
 
   const hasDiary = (date: Date) => {
-    return isPastDate(date) && diaryData[formatDate(date)];
+    // 과거 날짜만 일기가 있다고 표시
+    return isPastDate(date);
   };
 
   const handleDateClick = (date: Date) => {
-    if (isPastDate(date)) {
-      const dateStr = formatDate(date);
-      setSelectedDate(dateStr);
-    }
+    const dateStr = formatDate(date);
+    setSelectedDate(dateStr);
   };
 
   const handlePrevMonth = () => {
@@ -182,24 +151,65 @@ export default function Present() {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1));
   };
 
-  const analyzeEmotionComparison = (predicted: Array<{emotion: string, category: string}>, actual: Array<{emotion: string, category: string}>) => {
-    const predictedCategories = predicted.map(p => p.category);
-    const actualCategories = actual.map(a => a.category);
+  // 일기가 없는 날짜에도 기본 일기 내용 제공
+  const getDefaultDiary = (date: string) => {
+    const dayNum = new Date(date).getDate();
     
-    const matchedCategories = predictedCategories.filter(cat => actualCategories.includes(cat));
-    const matchPercentage = (matchedCategories.length / Math.max(predictedCategories.length, actualCategories.length)) * 100;
+    const sampleMorning = [
+      {
+        predictedEmotions: [{ emotion: '기대되는', category: '즐거움' }],
+        predictedText: '새로운 하루가 시작되네요! 오늘은 뭔가 좋은 일이 있을 것 같아요.',
+        actualEmotions: [{ emotion: '상쾌한', category: '즐거움' }],
+        actualText: '아침에 일어나니 기분이 좋았어요. 날씨도 맑고 컨디션도 좋았습니다.'
+      },
+      {
+        predictedEmotions: [{ emotion: '집중된', category: '중립' }],
+        predictedText: '오늘은 공부에 집중할 수 있을 것 같아요.',
+        actualEmotions: [{ emotion: '차분한', category: '중립' }],
+        actualText: '아침 시간에 조용히 책을 읽었어요. 마음이 평온했습니다.'
+      }
+    ];
+
+    const sampleAfternoon = [
+      {
+        predictedEmotions: [{ emotion: '활발한', category: '즐거움' }],
+        predictedText: '오후에는 친구들과 활동적인 시간을 보낼 거예요.',
+        actualEmotions: [{ emotion: '즐거운', category: '즐거움' }],
+        actualText: '친구들과 함께 놀면서 정말 재미있는 시간을 보냈어요.'
+      },
+      {
+        predictedEmotions: [{ emotion: '호기심 많은', category: '즐거움' }],
+        predictedText: '새로운 것을 배우는 시간이 될 것 같아요.',
+        actualEmotions: [{ emotion: '뿌듯한', category: '즐거움' }],
+        actualText: '새로운 지식을 배워서 뿌듯했어요. 점점 실력이 늘고 있는 것 같습니다.'
+      }
+    ];
+
+    const sampleEvening = [
+      {
+        predictedEmotions: [{ emotion: '평온한', category: '중립' }],
+        predictedText: '저녁에는 가족과 함께 편안한 시간을 보낼 거예요.',
+        actualEmotions: [{ emotion: '따뜻한', category: '즐거움' }],
+        actualText: '가족과 함께 저녁을 먹으며 하루 이야기를 나누었어요. 정말 따뜻한 시간이었습니다.'
+      },
+      {
+        predictedEmotions: [{ emotion: '만족스러운', category: '즐거움' }],
+        predictedText: '하루를 마무리하며 성취감을 느낄 것 같아요.',
+        actualEmotions: [{ emotion: '감사한', category: '중립' }],
+        actualText: '오늘 하루를 돌이켜보니 정말 감사한 마음이 들었어요.'
+      }
+    ];
     
-    if (matchPercentage >= 80) {
-      return { status: 'excellent', message: '예측이 매우 정확했어요!', color: 'text-green-600' };
-    } else if (matchPercentage >= 50) {
-      return { status: 'good', message: '예측이 어느 정도 맞았어요', color: 'text-blue-600' };
-    } else {
-      return { status: 'different', message: '예측과 실제가 달랐어요', color: 'text-orange-600' };
-    }
+    const index = dayNum % 2;
+    return {
+      morning: sampleMorning[index],
+      afternoon: sampleAfternoon[index],
+      evening: sampleEvening[index]
+    };
   };
 
   const calendarDays = generateCalendarDays();
-  const selectedDiary = selectedDate ? diaryData[selectedDate] : null;
+  const selectedDiary = selectedDate && isPastDate(new Date(selectedDate)) ? (diaryData[selectedDate] || getDefaultDiary(selectedDate)) : null;
 
   const timeSlots = [
     { key: 'morning', label: '아침', time: '오전' },
@@ -210,11 +220,15 @@ export default function Present() {
   return (
     <Container>
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
-        <div className="flex items-center gap-2 rounded-lg px-2 mb-6">
-          <div className="text-sm text-gray-500">보호자 모드</div>
-          <span className="text-gray-900 font-semibold text-xl">{childName}의 감정 일기</span>
+        {/* 사용자 정보 */}
+        <div className="flex items-end gap-1 rounded-lg px-2 mb-6">
+          <span className="text-gray-900 font-semibold text-2xl">{currentName}</span>
+          <div className="flex items-center gap-1">
+            <span className="text-sm text-gray-500 font-medium mr-1">{currentId}</span>
+          </div>
         </div>
 
+        {/* 달력 */}
         <div className="w-full mb-4">
           <div className="flex items-center justify-between mb-4">
             <button onClick={handlePrevMonth} className="p-2 hover:bg-gray-100 rounded-lg">
@@ -232,6 +246,7 @@ export default function Present() {
             </button>
           </div>
 
+          {/* 요일 헤더 */}
           <div className="grid grid-cols-7 gap-1 mb-2">
             {['일', '월', '화', '수', '목', '금', '토'].map(day => (
               <div key={day} className="text-center text-sm font-medium text-gray-500 py-2">
@@ -240,18 +255,17 @@ export default function Present() {
             ))}
           </div>
 
+          {/* 날짜 그리드 */}
           <div className="grid grid-cols-7 gap-1">
             {calendarDays.map(date => (
               <button
                 key={date.toISOString()}
                 onClick={() => handleDateClick(date)}
-                disabled={!isPastDate(date)}
                 className={`
-                  relative h-10 text-sm rounded-lg transition-colors
+                  relative h-10 text-sm rounded-lg transition-colors hover:bg-gray-100
                   ${isCurrentMonth(date) ? 'text-gray-900' : 'text-gray-300'}
                   ${isToday(date) ? 'bg-blue-100 text-blue-600 font-semibold' : ''}
                   ${selectedDate === formatDate(date) ? 'bg-[#FF6F71] text-white' : ''}
-                  ${isPastDate(date) ? 'hover:bg-gray-100 cursor-pointer' : 'cursor-not-allowed opacity-50'}
                 `}
               >
                 {date.getDate()}
@@ -263,7 +277,8 @@ export default function Present() {
           </div>
         </div>
 
-        {selectedDate && selectedDiary && (
+        {/* 시간대 선택 버튼 */}
+        {selectedDate && (
           <div className="w-full mb-4">
             <div className="flex bg-gray-100 rounded-xl p-1">
               {timeSlots.map((timeSlot) => (
@@ -285,8 +300,10 @@ export default function Present() {
           </div>
         )}
 
-        {selectedDate && selectedDiary && (
+        {/* 선택된 날짜의 내용 */}
+        {selectedDate && (
           <div className="w-full space-y-4">
+            {/* 날짜 정보 */}
             <div className="text-xs text-gray-400 mb-2">
               {new Date(selectedDate).toLocaleDateString('ko-KR', { 
                 year: 'numeric', 
@@ -296,30 +313,42 @@ export default function Present() {
               })}
             </div>
 
-            <div className="w-full">
-              <div className="text-lg font-semibold text-gray-800 mb-4">
-                {timeSlots.find(t => t.key === selectedTimeSlot)?.label} 시간대 분석
+            {/* 내일인 경우 - 예측 버튼 */}
+            {isTomorrow(new Date(selectedDate)) && (
+              <div className="w-full text-center py-8">
+                <div className="bg-white border-2 border-purple-200 rounded-xl p-6 shadow-sm">
+                  <div className="text-lg font-semibold text-gray-800 mb-4">
+                    내일의 일을 예측해보세요!
+                  </div>
+                  <p className="text-gray-600 text-sm mb-6">
+                    내일 하루 어떤 감정을 느낄지 미리 예측해보아요
+                  </p>
+                  <button
+                    onClick={() => router.push('/insert')}
+                    className="bg-purple-500 hover:bg-purple-600 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+                  >
+                    감정 예측하러 가기
+                  </button>
+                </div>
               </div>
-              
-              {(() => {
-                const timeData = selectedDiary[selectedTimeSlot];
-                const analysis = analyzeEmotionComparison(timeData.predictedEmotions, timeData.actualEmotions);
-                
-                return (
-                  <div className="space-y-4">
-                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="text-sm font-semibold text-gray-700">예측 정확도</div>
-                        <div className={`text-sm font-medium ${analysis.color}`}>
-                          {analysis.message}
-                        </div>
-                      </div>
-                    </div>
+            )}
 
-                    <div className="space-y-3">
+            {/* 과거 날짜인 경우 - 일기 표시 */}
+            {selectedDiary && (
+              <div className="w-full">
+                {/* 선택된 시간대 일기 */}
+                <div className="text-lg font-semibold text-gray-800 mb-4">
+                  {timeSlots.find(t => t.key === selectedTimeSlot)?.label} 일기
+                </div>
+                
+                {(() => {
+                  const timeData = selectedDiary[selectedTimeSlot];
+                  return (
+                    <div className="space-y-4">
+
                       <div className="bg-white border-2 border-blue-200 rounded-xl p-4 shadow-sm">
                         <div className="flex items-start justify-between mb-3">
-                          <div className="text-sm font-semibold text-blue-600">예측했던 감정</div>
+                          <div className="text-sm font-semibold text-blue-600">예상했던 감정과 생각</div>
                           <div className="flex flex-wrap gap-2 justify-end">
                             {timeData.predictedEmotions.map((emotion, index) => (
                               <div
@@ -341,7 +370,7 @@ export default function Present() {
 
                       <div className="bg-white border-2 border-green-200 rounded-xl p-4 shadow-sm">
                         <div className="flex items-start justify-between mb-3">
-                          <div className="text-sm font-semibold text-green-600">실제 느낀 감정</div>
+                          <div className="text-sm font-semibold text-green-600">실제로 느꼈던 감정과 경험</div>
                           <div className="flex flex-wrap gap-2 justify-end">
                             {timeData.actualEmotions.map((emotion, index) => (
                               <div
@@ -361,10 +390,23 @@ export default function Present() {
                         </p>
                       </div>
                     </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {!isPastDate(new Date(selectedDate)) && !isTomorrow(new Date(selectedDate)) && (
+              <div className="w-full text-center py-8">
+                <div className="bg-white border-2 border-gray-200 rounded-xl p-6 shadow-sm">
+                  <div className="text-lg font-semibold text-gray-800 mb-4">
+                    감정 등록까지 멀었어요!!
                   </div>
-                );
-              })()}
-            </div>
+                  <p className="text-gray-500 text-sm">
+                    아직 시간이 많이 남았어요. 조금만 기다려주세요!
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -376,10 +418,7 @@ export default function Present() {
               </svg>
             </div>
             <p className="text-gray-500 text-sm">
-              과거 날짜를 클릭해서 {childName}의 감정 일기를 확인해보세요
-            </p>
-            <p className="text-xs text-gray-400 mt-1">
-              예측과 실제 감정을 비교하여 분석해드립니다
+              날짜를 클릭해서 일기를 확인해보세요
             </p>
           </div>
         )}
