@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "../../components/Button";
@@ -23,7 +23,7 @@ const TIME_PERIODS = {
   evening: { label: '저녁', text: '왜 이런 감정을' }
 };
 
-export default function ReasonPage() {
+function ReasonPageContent() {
   const [selectedEmotions, setSelectedEmotions] = useState<SelectedEmotion[]>([]);
   const [reason, setReason] = useState('');
   const [currentStep, setCurrentStep] = useState<'morning' | 'afternoon' | 'evening'>('morning');
@@ -148,5 +148,20 @@ export default function ReasonPage() {
         </Button>
       </motion.div>
     </div>
+  );
+}
+
+export default function ReasonPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p className="text-gray-600">로딩 중...</p>
+        </div>
+      </div>
+    }>
+      <ReasonPageContent />
+    </Suspense>
   );
 }

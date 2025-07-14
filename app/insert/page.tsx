@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "../components/Button";
@@ -33,7 +33,7 @@ const TIME_PERIODS = {
   evening: { label: '저녁', text: '저녁에는 어떤 감정을' }
 };
 
-export default function InsertPage() {
+function InsertPageContent() {
   const [selected, setSelected] = useState<number[]>([]);
   const [currentStep, setCurrentStep] = useState<'morning' | 'afternoon' | 'evening'>('morning');
   const router = useRouter();
@@ -162,5 +162,20 @@ export default function InsertPage() {
         </Button>
       </motion.div>
     </div>
+  );
+}
+
+export default function InsertPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p className="text-gray-600">로딩 중...</p>
+        </div>
+      </div>
+    }>
+      <InsertPageContent />
+    </Suspense>
   );
 }
