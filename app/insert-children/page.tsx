@@ -42,6 +42,7 @@ export default function Register() {
       setCurrentDisplayStep(prevStep => prevStep + 1);
     } else {
       console.log("Registration Finished!", { name, dob, gender, healthStatus });
+      router.push('/home');
     }
   };
 

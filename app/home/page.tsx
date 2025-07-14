@@ -229,8 +229,7 @@ export default function Register() {
         </div>
 
         {/* 달력 */}
-        <div className="w-full bg-white rounded-2xl p-4 mb-4">
-          {/* 달력 헤더 */}
+        <div className="w-full mb-4">
           <div className="flex items-center justify-between mb-4">
             <button onClick={handlePrevMonth} className="p-2 hover:bg-gray-100 rounded-lg">
               <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

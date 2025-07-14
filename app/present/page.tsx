@@ -215,7 +215,7 @@ export default function Present() {
           <span className="text-gray-900 font-semibold text-xl">{childName}의 감정 일기</span>
         </div>
 
-        <div className="w-full bg-white rounded-2xl p-4 mb-4">
+        <div className="w-full mb-4">
           <div className="flex items-center justify-between mb-4">
             <button onClick={handlePrevMonth} className="p-2 hover:bg-gray-100 rounded-lg">
               <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

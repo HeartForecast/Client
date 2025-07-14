@@ -2,11 +2,18 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import Button from '../components/Button';
 
 export default function Register() {
+  const router = useRouter();
+  
   const handleBack = () => {
     window.history.back();
+  };
+
+  const handleComplete = () => {
+    router.push('/home');
   };
 
   const [code, setCode] = useState(["", "", "", "", "", ""]);
@@ -96,6 +103,7 @@ export default function Register() {
         <Button
           className={`flex w-full items-center justify-center gap-1 rounded-lg bg-[#FF6F71] text-white py-3 text-lg font-semibold text-gray-900 mb-4 transition-opacity ${isCodeComplete ? '' : 'opacity-50 cursor-not-allowed'}`}
           disabled={!isCodeComplete}
+          onClick={handleComplete}
         >
           완료
         </Button>
