@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import React from 'react';
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from '../../components/Button';
 import Container from '../../components/Container';
 
-export default function EditChildPage() {
+function EditChildPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const childId = searchParams.get('id');
@@ -329,5 +329,20 @@ export default function EditChildPage() {
         )}
       </div>
     </Container>
+  );
+}
+
+export default function EditChildPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p className="text-gray-600">로딩 중...</p>
+        </div>
+      </div>
+    }>
+      <EditChildPageContent />
+    </Suspense>
   );
 } 
