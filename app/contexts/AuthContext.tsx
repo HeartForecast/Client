@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { isAuthenticated, getAccessToken, clearTokens } from '../utils/api';
+import { isAuthenticated, getAccessToken, clearTokens, checkAuthStatus } from '../utils/api';
 
 interface AuthContextType {
   isLoggedIn: boolean;
@@ -28,49 +28,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const checkAuth = () => {
-    console.log('=== AuthContext checkAuth ===');
-    console.log('Document available:', typeof document !== 'undefined');
-    
-    // 백엔드 API를 호출해서 인증 상태 확인
-    const verifyAuth = async () => {
-      try {
-        console.log('Checking auth with backend...');
-        console.log('API_BASE_URL:', process.env.NEXT_PUBLIC_API_BASE_URL);
-        console.log('Full URL:', `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/check`);
-        
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/check`, {
-          method: 'GET',
-          credentials: 'include', // HttpOnly 쿠키 포함
-        });
-        
-        if (response.ok) {
-          // 백엔드에서 인증 성공
-          localStorage.setItem('isAuthenticated', 'true');
-          localStorage.setItem('authTimestamp', Date.now().toString());
-          console.log('✅ Backend auth successful - setting localStorage');
-        } else {
-          // 백엔드에서 인증 실패
-          localStorage.removeItem('isAuthenticated');
-          localStorage.removeItem('authTimestamp');
-          console.log('❌ Backend auth failed - clearing localStorage');
-        }
-        
-        const newLoginState = response.ok;
-        console.log('Setting isLoggedIn to:', newLoginState);
-        
-        setIsLoggedIn(newLoginState);
-        setLoading(false);
-      } catch (error) {
-        console.error('Auth verification failed:', error);
-        localStorage.removeItem('isAuthenticated');
-        localStorage.removeItem('authTimestamp');
-        setIsLoggedIn(false);
-        setLoading(false);
-      }
-    };
-    
-    verifyAuth();
+  const checkAuth = async () => {
+    try {
+      // 서버에서 인증 상태 확인
+      const serverAuthStatus = await checkAuthStatus();
+      console.log('Server auth status:', serverAuthStatus);
+      
+      // 로컬 토큰도 확인 (백업용)
+      const token = getAccessToken();
+      const localAuthStatus = !!token;
+      
+      console.log('Local token status:', localAuthStatus);
+      
+      // 서버 인증 상태를 우선으로 사용
+      setIsLoggedIn(serverAuthStatus);
+      setLoading(false);
+      
+      console.log('Final auth state:', serverAuthStatus);
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      // 에러 발생 시 로컬 토큰으로 폴백
+      const token = getAccessToken();
+      setIsLoggedIn(!!token);
+      setLoading(false);
+    }
   };
 
   const logout = () => {

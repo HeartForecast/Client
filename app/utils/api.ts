@@ -192,3 +192,15 @@ export const apiRequest = async <T>(
     };
   }
 }; 
+
+// 서버에서 인증 상태 확인 함수
+export const checkAuthStatus = async (): Promise<boolean> => {
+  try {
+    const response = await apiRequest('/api/check');
+    console.log('Auth status check response:', response);
+    return response.success;
+  } catch (error) {
+    console.error('Auth status check failed:', error);
+    return false;
+  }
+}; 

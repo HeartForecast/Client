@@ -42,7 +42,7 @@ function AuthCallbackContent() {
         }
 
         // 백엔드에 인증 코드 전송 (쿠키 설정을 위해 credentials: 'include' 사용)
-        const response = await fetch(`${API_BASE_URL}/api/auth/callback`, {
+        const response = await fetch(`${API_BASE_URL}/api/callback`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
