@@ -490,7 +490,7 @@ export default function SettingsPage() {
         )}
 
         {/* 아이 추가/등록 버튼 */}
-        <div className="w-full mt-8 flex gap-3">
+        <div className="w-full mt-8 mb-20 flex gap-3">
           <button
             onClick={() => router.push('/insert-children')}
             className="flex-1 bg-[#FF6F71] text-white py-4 px-6 rounded-2xl font-medium hover:bg-[#e55a5c] transition-colors flex items-center justify-center"

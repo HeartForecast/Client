@@ -167,7 +167,7 @@ export default function Register() {
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
         <div className="w-full mb-8">
           <span className="text-gray-500 font-medium text-sm mr-1">새로운 아이 프로필 추가</span>
-          <h1 className="text-2xl font-semibold mb-3">새로운 아이 프로필을 생성할게요</h1>
+          <h1 className="text-2xl font-semibold mb-3">새로운 아이 프로필을 생성할게요.</h1>
         </div>
         <AnimatePresence mode="wait" initial={false}>
           {currentDisplayStep >= 1 && (
