@@ -28,10 +28,13 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
 
   // localStorage에서 상태 복원
   useEffect(() => {
-    console.log('ChildContext useEffect running');
+    console.log('=== ChildContext useEffect running ===');
     
     // 인증 상태 확인
-    if (!isAuthenticated()) {
+    const authStatus = isAuthenticated();
+    console.log('Authentication status:', authStatus);
+    
+    if (!authStatus) {
       console.log('User not authenticated, redirecting to login');
       if (typeof window !== 'undefined') {
         window.location.href = '/';
@@ -47,28 +50,46 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
     
     if (savedChild && savedMode === 'true') {
       console.log('Restoring child mode with saved child');
-      setSelectedChild(JSON.parse(savedChild));
-      setIsChildMode(true);
-      setIsLoading(false);
+      try {
+        const parsedChild = JSON.parse(savedChild);
+        console.log('Parsed child:', parsedChild);
+        setSelectedChild(parsedChild);
+        setIsChildMode(true);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error parsing saved child:', error);
+        setIsLoading(false);
+      }
     } else if (savedChild) {
       console.log('Restoring saved child');
-      setSelectedChild(JSON.parse(savedChild));
-      setIsLoading(false);
+      try {
+        const parsedChild = JSON.parse(savedChild);
+        console.log('Parsed child:', parsedChild);
+        setSelectedChild(parsedChild);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error parsing saved child:', error);
+        setIsLoading(false);
+      }
     } else {
       console.log('No saved child, setting loading to false');
       setIsLoading(false);
     }
 
-    // 안전장치: 10초 후에도 로딩이 끝나지 않으면 강제로 로딩 종료
+    // 안전장치: 5초 후에도 로딩이 끝나지 않으면 강제로 로딩 종료
     const timeout = setTimeout(() => {
       console.log('Loading timeout, forcing loading to false');
       setIsLoading(false);
-    }, 10000);
+    }, 5000);
 
-    return () => clearTimeout(timeout);
+    return () => {
+      console.log('Clearing timeout');
+      clearTimeout(timeout);
+    };
   }, []);
 
   const enterChildMode = (child: ChildData) => {
+    console.log('Entering child mode with:', child);
     setSelectedChild(child);
     setIsChildMode(true);
     localStorage.setItem('selectedChild', JSON.stringify(child));
@@ -76,11 +97,14 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
   };
 
   const exitChildMode = () => {
+    console.log('Exiting child mode');
     setSelectedChild(null);
     setIsChildMode(false);
     localStorage.removeItem('selectedChild');
     localStorage.removeItem('isChildMode');
   };
+
+  console.log('ChildContext render - isLoading:', isLoading, 'selectedChild:', selectedChild, 'isChildMode:', isChildMode);
 
   return (
     <ChildContext.Provider value={{
