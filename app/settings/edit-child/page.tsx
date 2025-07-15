@@ -32,7 +32,7 @@ function Toast({ message, type, isVisible, onClose }: ToastProps) {
     if (isVisible) {
       const timer = setTimeout(() => {
         onClose();
-      }, 3000);
+      }, 5000); // 3초에서 5초로 변경 (1.5배 이상)
       return () => clearTimeout(timer);
     }
   }, [isVisible, onClose]);

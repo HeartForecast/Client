@@ -25,90 +25,57 @@ interface ApiChildData {
   inviteCode: string
 }
 
-interface DeleteModalProps {
-  isOpen: boolean
-  childId: number
-  childName: string
+interface ToastProps {
+  message: string
+  type: 'success' | 'error'
+  isVisible: boolean
   onClose: () => void
-  onDeleteRelation: (childId: number) => void
-  onDeleteChild: (childId: number) => void
 }
 
-function DeleteModal({ isOpen, childId, childName, onClose, onDeleteRelation, onDeleteChild }: DeleteModalProps) {
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [deleteType, setDeleteType] = useState<'relation' | 'child' | null>(null)
-
-  const handleDelete = async (type: 'relation' | 'child') => {
-    setIsDeleting(true)
-    setDeleteType(type)
-    
-    try {
-      if (type === 'relation') {
-        await onDeleteRelation(childId)
-      } else {
-        await onDeleteChild(childId)
-      }
-    } finally {
-      setIsDeleting(false)
-      setDeleteType(null)
-      onClose()
+function Toast({ message, type, isVisible, onClose }: ToastProps) {
+  useEffect(() => {
+    if (isVisible) {
+      const timer = setTimeout(() => {
+        onClose();
+      }, 5000); // 3초에서 5초로 변경 (1.5배 이상)
+      return () => clearTimeout(timer);
     }
-  }
-
-  if (!isOpen) return null
+  }, [isVisible, onClose]);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl p-6 mx-4 max-w-sm w-full">
-        <h3 className="text-lg font-semibold mb-4">삭제 옵션 선택</h3>
-        <p className="text-sm text-gray-600 mb-6">
-          <strong>{childName}</strong>에 대한 삭제 옵션을 선택해주세요.
-        </p>
-        
-        <div className="space-y-3 mb-6">
-          <button
-            onClick={() => handleDelete('relation')}
-            disabled={isDeleting}
-            className="w-full p-4 border border-gray-200 rounded-lg text-left hover:bg-gray-50 disabled:opacity-50"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium text-gray-900">돌봄관계 삭제</h4>
-                <p className="text-sm text-gray-500">아이 정보는 유지하고 돌봄관계만 삭제합니다</p>
-              </div>
-              {isDeleting && deleteType === 'relation' && (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#FF6F71]"></div>
-              )}
-            </div>
-          </button>
-          
-          <button
-            onClick={() => handleDelete('child')}
-            disabled={isDeleting}
-            className="w-full p-4 border border-red-200 rounded-lg text-left hover:bg-red-50 disabled:opacity-50"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium text-red-600">아이 완전 삭제</h4>
-                <p className="text-sm text-red-500">아이 정보와 모든 관련 데이터를 완전히 삭제합니다</p>
-              </div>
-              {isDeleting && deleteType === 'child' && (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-500"></div>
-              )}
-            </div>
-          </button>
-        </div>
-        
-        <button
-          onClick={onClose}
-          disabled={isDeleting}
-          className="w-full py-3 text-gray-600 hover:text-gray-800 disabled:opacity-50"
-        >
-          취소
-        </button>
+    <div className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 transition-all duration-300 ${
+      isVisible 
+        ? 'opacity-100 translate-y-0' 
+        : 'opacity-0 -translate-y-2 pointer-events-none'
+    } ${
+      type === 'success' 
+        ? 'bg-green-500 text-white' 
+        : 'bg-red-500 text-white'
+    }`}>
+      <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
+        type === 'success' ? 'bg-green-400' : 'bg-red-400'
+      }`}>
+        {type === 'success' ? (
+          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+          </svg>
+        ) : (
+          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+          </svg>
+        )}
       </div>
+      <span className="font-medium">{message}</span>
+      <button
+        onClick={onClose}
+        className="ml-2 text-white/80 hover:text-white"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
     </div>
-  )
+  );
 }
 
 export default function ChildrenListPage() {
@@ -118,14 +85,14 @@ export default function ChildrenListPage() {
   const [childrenData, setChildrenData] = useState<ChildData[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [deleteModal, setDeleteModal] = useState<{
-    isOpen: boolean
-    childId: number
-    childName: string
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error';
+    isVisible: boolean;
   }>({
-    isOpen: false,
-    childId: 0,
-    childName: ''
+    message: '',
+    type: 'success',
+    isVisible: false
   })
 
   useEffect(() => {
@@ -177,6 +144,18 @@ export default function ChildrenListPage() {
     fetchChildRelations()
   }, [])
 
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({
+      message,
+      type,
+      isVisible: true
+    });
+  };
+
+  const hideToast = () => {
+    setToast(prev => ({ ...prev, isVisible: false }));
+  };
+
   const handleBack = () => {
     window.history.back()
   }
@@ -191,59 +170,61 @@ export default function ChildrenListPage() {
     router.push(`/settings/edit-child?id=${childId}`)
   }
 
-  const handleDelete = (childId: number, childName: string) => {
-    console.log('Delete child:', childId, childName)
+  const handleDelete = async (childId: number, childName: string) => {
     setOpenMenuId(null)
-    setDeleteModal({
-      isOpen: true,
-      childId,
-      childName
-    })
-  }
+    
+    // 삭제 옵션 선택을 위한 confirm
+    const deleteType = confirm(
+      `${childName}을(를) 삭제하시겠습니까?\n\n` +
+      `• 돌봄관계 삭제: 아이 정보는 유지하고 돌봄관계만 삭제\n` +
+      `• 아이 완전 삭제: 아이 정보와 모든 관련 데이터를 완전히 삭제\n\n` +
+      `확인을 누르면 돌봄관계 삭제, 취소를 누르면 아이 완전 삭제가 실행됩니다.`
+    );
 
-  const handleDeleteRelation = async (childId: number) => {
     try {
-      const response = await fetch(`${apiBaseUrl}/api/childRelations/${childId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
+      if (deleteType) {
+        // 돌봄관계 삭제
+        const response = await fetch(`${apiBaseUrl}/api/childRelations/${childId}`, {
+          method: 'DELETE',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`관계 삭제 실패: ${response.status}`);
         }
-      })
 
-      if (!response.ok) {
-        throw new Error(`관계 삭제 실패: ${response.status}`)
-      }
+        setChildrenData(prev => prev.filter(child => child.id !== childId));
+        showToast('돌봄관계가 삭제되었습니다.', 'success');
+      } else {
+        // 아이 완전 삭제
+        const finalConfirm = confirm(
+          `정말로 ${childName}의 모든 정보를 완전히 삭제하시겠습니까?\n\n` +
+          `이 작업은 되돌릴 수 없습니다.`
+        );
 
-      // 성공 시 목록에서 제거
-      setChildrenData(prev => prev.filter(child => child.id !== childId))
-      alert('돌봄관계가 삭제되었습니다.')
-    } catch (error) {
-      console.error('관계 삭제 실패:', error)
-      alert('돌봄관계 삭제에 실패했습니다.')
-    }
-  }
+        if (finalConfirm) {
+          const response = await fetch(`${apiBaseUrl}/api/children/${childId}`, {
+            method: 'DELETE',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
 
-  const handleDeleteChild = async (childId: number) => {
-    try {
-      const response = await fetch(`${apiBaseUrl}/api/children/${childId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
+          if (!response.ok) {
+            throw new Error(`아이 삭제 실패: ${response.status}`);
+          }
+
+          setChildrenData(prev => prev.filter(child => child.id !== childId));
+          showToast('아이가 완전히 삭제되었습니다.', 'success');
         }
-      })
-
-      if (!response.ok) {
-        throw new Error(`아이 삭제 실패: ${response.status}`)
       }
-
-      // 성공 시 목록에서 제거
-      setChildrenData(prev => prev.filter(child => child.id !== childId))
-      alert('아이가 완전히 삭제되었습니다.')
     } catch (error) {
-      console.error('아이 삭제 실패:', error)
-      alert('아이 삭제에 실패했습니다.')
+      console.error('삭제 실패:', error);
+      showToast('삭제에 실패했습니다. 다시 시도해주세요.', 'error');
     }
   }
 
@@ -254,14 +235,6 @@ export default function ChildrenListPage() {
 
   const toggleMenu = (childId: number) => {
     setOpenMenuId(openMenuId === childId ? null : childId)
-  }
-
-  const closeDeleteModal = () => {
-    setDeleteModal({
-      isOpen: false,
-      childId: 0,
-      childName: ''
-    })
   }
 
   // 로딩 상태 렌더링
@@ -321,6 +294,13 @@ export default function ChildrenListPage() {
 
   return (
     <Container>
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+      />
+      
       <div className="w-full max-w-sm mx-auto">
         <button className="mb-4 cursor-pointer" onClick={handleBack}>
           <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
@@ -412,15 +392,6 @@ export default function ChildrenListPage() {
       </div>
       
       <NavigationBar activeTab={activeTab} onTabChange={setActiveTab} />
-      
-      <DeleteModal
-        isOpen={deleteModal.isOpen}
-        childId={deleteModal.childId}
-        childName={deleteModal.childName}
-        onClose={closeDeleteModal}
-        onDeleteRelation={handleDeleteRelation}
-        onDeleteChild={handleDeleteChild}
-      />
     </Container>
   )
 } 
