@@ -29,6 +29,13 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     console.log('=== ChildContext useEffect running ===');
     
+    // 서버 사이드 렌더링 중에는 localStorage 접근하지 않음
+    if (typeof window === 'undefined') {
+      console.log('Server side rendering, skipping localStorage access');
+      setIsLoading(false);
+      return;
+    }
+    
     const savedChild = localStorage.getItem('selectedChild');
     const savedMode = localStorage.getItem('isChildMode');
     
@@ -79,16 +86,20 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
     console.log('Entering child mode with:', child);
     setSelectedChild(child);
     setIsChildMode(true);
-    localStorage.setItem('selectedChild', JSON.stringify(child));
-    localStorage.setItem('isChildMode', 'true');
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('selectedChild', JSON.stringify(child));
+      localStorage.setItem('isChildMode', 'true');
+    }
   };
 
   const exitChildMode = () => {
     console.log('Exiting child mode');
     setSelectedChild(null);
     setIsChildMode(false);
-    localStorage.removeItem('selectedChild');
-    localStorage.removeItem('isChildMode');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('selectedChild');
+      localStorage.removeItem('isChildMode');
+    }
   };
 
   console.log('ChildContext render - isLoading:', isLoading, 'selectedChild:', selectedChild, 'isChildMode:', isChildMode);

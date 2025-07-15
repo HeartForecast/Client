@@ -221,8 +221,12 @@ export default function Register() {
   console.log('Home page - isLoading:', isLoading);
   console.log('Home page - selectedChild:', selectedChild);
   console.log('Home page - isAuthenticated:', isAuthenticated());
-  console.log('Home page - localStorage isAuthenticated:', localStorage.getItem('isAuthenticated'));
-  console.log('Home page - localStorage authTimestamp:', localStorage.getItem('authTimestamp'));
+  
+  // 클라이언트 사이드에서만 localStorage 접근
+  if (typeof window !== 'undefined') {
+    console.log('Home page - localStorage isAuthenticated:', localStorage.getItem('isAuthenticated'));
+    console.log('Home page - localStorage authTimestamp:', localStorage.getItem('authTimestamp'));
+  }
 
   // 로딩 중일 때
   if (isLoading) {

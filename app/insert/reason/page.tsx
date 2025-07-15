@@ -61,16 +61,19 @@ function ReasonPageContent() {
       reason: reason
     };
 
-    const existingData = localStorage.getItem('emotionData');
     let allData: EmotionData[] = [];
     
-    if (existingData) {
-      allData = JSON.parse(existingData);
-      allData = allData.filter(data => data.step !== currentStep);
+    if (typeof window !== 'undefined') {
+      const existingData = localStorage.getItem('emotionData');
+      
+      if (existingData) {
+        allData = JSON.parse(existingData);
+        allData = allData.filter(data => data.step !== currentStep);
+      }
+      
+      allData.push(currentData);
+      localStorage.setItem('emotionData', JSON.stringify(allData));
     }
-    
-    allData.push(currentData);
-    localStorage.setItem('emotionData', JSON.stringify(allData));
 
     console.log(`${currentStep} 데이터 저장:`, currentData);
 
