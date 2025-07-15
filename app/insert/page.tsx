@@ -123,7 +123,7 @@ function InsertPageContent() {
         emotionTypeId: selectedEmotion.emotion.id,
         date: dateString,
         timeZone: TIME_PERIODS[currentStep].label,
-        memo: `${selectedEmotion.emotion.name}한 상태`
+        memo: selectedEmotion.emotion.name
       };
 
       console.log('감정 예보 생성 요청:', forecastData);
@@ -174,6 +174,15 @@ function InsertPageContent() {
   const isEmotionSelected = selectedEmotion !== null;
   const isStepCompleted = savedSteps.has(currentStep);
 
+  // 현재 날짜 포맷팅
+  const getCurrentDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const fadeInOutVariants = {
     hidden: { opacity: 0, y: 10 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
@@ -202,7 +211,7 @@ function InsertPageContent() {
           </button>
         </div>
         <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
-          <div className="text-xs text-gray-400 mb-2">오늘 {TIME_PERIODS[currentStep].label}</div>
+          <div className="text-xs text-gray-400 mb-2">{getCurrentDate()} {TIME_PERIODS[currentStep].label}</div>
           <div className="text-2xl font-bold leading-tight whitespace-pre-line mb-8">
             {TIME_PERIODS[currentStep].text}{`\n`}느낄까요?
           </div>
