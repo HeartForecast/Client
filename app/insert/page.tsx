@@ -5,39 +5,85 @@ import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "../components/Button";
 
-const EMOTION_CATEGORIES = {
-  즐거움: [
-    "신나는", "열정적인", "희망찬", "기대되는", "뿌듯한",
-    "황홀한", "설레는", "기쁜", "감동한", "대견한",
-    "즐거운", "영감을 받은", "행복한", "사랑하는", "만족스러운"
-  ],
-  슬픔: [
-    "우울한", "속상한", "실망한", "외로운", "불안한",
-    "화난", "짜증나는", "스트레스받는", "걱정되는", "답답한"
-  ],
-  중립: [
-    "감사한", "평온한", "여유로운", "자신감 있는", "든든한",
-    "차분한", "안정된", "집중된", "편안한", "고요한"
-  ]
-};
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+// 감정 타입 정의
+interface EmotionType {
+  id: number;
+  name: string;
+  type: string;
+  temp: number;
+  image: string;
+}
 
 const CATEGORY_COLORS = {
-  즐거움: '#3DC8EF',
-  슬픔: '#FF7B6F',
-  중립: '#FFD340'
+  긍정: '#3DC8EF',
+  중립: '#FFD340',
+  부정: '#FF7B6F'
 };
 
 const TIME_PERIODS = {
-  morning: { label: '오전', text: '오전에는 어떤 감정을' },
-  afternoon: { label: '오후', text: '오후에는 어떤 감정을' },
+  morning: { label: '아침', text: '아침에는 어떤 감정을' },
+  afternoon: { label: '점심', text: '점심에는 어떤 감정을' },
   evening: { label: '저녁', text: '저녁에는 어떤 감정을' }
 };
 
 function InsertPageContent() {
-  const [selected, setSelected] = useState<number[]>([]);
+  const [emotions, setEmotions] = useState<EmotionType[]>([]);
+  const [emotionCategories, setEmotionCategories] = useState<{[key: string]: EmotionType[]}>({});
+  const [selectedEmotion, setSelectedEmotion] = useState<{
+    emotion: EmotionType;
+    categoryIdx: number;
+    emotionIdx: number;
+  } | null>(null);
   const [currentStep, setCurrentStep] = useState<'morning' | 'afternoon' | 'evening'>('morning');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingEmotions, setIsLoadingEmotions] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [savedSteps, setSavedSteps] = useState<Set<string>>(new Set());
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  // 감정 목록 조회
+  const fetchEmotions = async () => {
+    try {
+      setIsLoadingEmotions(true);
+      const response = await fetch(`${apiBaseUrl}/api/emotionTypes/emotionType`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('감정 목록 조회에 실패했습니다.');
+      }
+
+      const emotionData: EmotionType[] = await response.json();
+      setEmotions(emotionData);
+
+      // 감정을 타입별로 그룹화
+      const grouped = emotionData.reduce((acc, emotion) => {
+        if (!acc[emotion.type]) {
+          acc[emotion.type] = [];
+        }
+        acc[emotion.type].push(emotion);
+        return acc;
+      }, {} as {[key: string]: EmotionType[]});
+
+      setEmotionCategories(grouped);
+    } catch (error) {
+      console.error('감정 목록 조회 실패:', error);
+      setError('감정 목록을 불러오는데 실패했습니다.');
+    } finally {
+      setIsLoadingEmotions(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEmotions();
+  }, []);
 
   useEffect(() => {
     const step = searchParams.get('step') as 'morning' | 'afternoon' | 'evening';
@@ -47,13 +93,14 @@ function InsertPageContent() {
   }, [searchParams]);
 
   const handleEmotionClick = (categoryIdx: number, emotionIdx: number) => {
-    const globalIdx = categoryIdx * 1000 + emotionIdx;
-    setSelected((prev) => {
-      if (prev.includes(globalIdx)) {
-        return prev.filter((i) => i !== globalIdx);
-      } else {
-        return [...prev, globalIdx];
-      }
+    const categories = Object.entries(emotionCategories);
+    const [categoryName, categoryEmotions] = categories[categoryIdx];
+    const emotion = categoryEmotions[emotionIdx];
+    
+    setSelectedEmotion({
+      emotion,
+      categoryIdx,
+      emotionIdx
     });
   };
 
@@ -61,33 +108,86 @@ function InsertPageContent() {
     window.history.back();
   };
 
-  const handleNext = () => {
-    if (selected.length === 0) return;
-    const selectedEmotions = selected.map(globalIdx => {
-      const categoryIdx = Math.floor(globalIdx / 1000);
-      const emotionIdx = globalIdx % 1000;
-      const categories = Object.entries(EMOTION_CATEGORIES);
-      const [categoryName, emotions] = categories[categoryIdx];
-      return {
-        category: categoryName,
-        emotion: emotions[emotionIdx],
-        color: CATEGORY_COLORS[categoryName as keyof typeof CATEGORY_COLORS]
-      };
-    });
+  const createForecast = async () => {
+    if (!selectedEmotion) return;
 
-    const params = new URLSearchParams();
-    params.set('emotions', JSON.stringify(selectedEmotions));
-    params.set('step', currentStep);
-    router.push(`/insert/reason?${params.toString()}`);
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const today = new Date();
+      const dateString = today.toISOString().split('T')[0]; 
+
+      const forecastData = {
+        childId: 1, // TODO: 현재 선택된 아이 ID로 변경 필요
+        emotionTypeId: selectedEmotion.emotion.id,
+        date: dateString,
+        timeZone: TIME_PERIODS[currentStep].label,
+        memo: `${selectedEmotion.emotion.name}한 상태`
+      };
+
+      console.log('감정 예보 생성 요청:', forecastData);
+
+      const response = await fetch(`${apiBaseUrl}/api/forecasts/forecast`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(forecastData)
+      });
+
+      console.log('API 응답:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API 에러 응답:', errorText);
+        throw new Error('감정 예보 생성에 실패했습니다.');
+      }
+
+      setSavedSteps(prev => new Set([...prev, currentStep]));
+      
+      const steps = ['morning', 'afternoon', 'evening'];
+      const currentIndex = steps.indexOf(currentStep);
+      const nextStep = steps[currentIndex + 1];
+      
+      if (nextStep) {
+        setCurrentStep(nextStep as 'morning' | 'afternoon' | 'evening');
+        setSelectedEmotion(null);
+      } else {
+        router.push('/home');
+      }
+    } catch (error) {
+      console.error('감정 예보 생성 실패:', error);
+      setError('감정 예보 생성에 실패했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const isCodeComplete = selected.length > 0;
+  const isEmotionSelected = selectedEmotion !== null;
+  const isStepCompleted = savedSteps.has(currentStep);
 
   const fadeInOutVariants = {
     hidden: { opacity: 0, y: 10 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
     exit: { opacity: 0, y: -10, transition: { duration: 0.3 } },
   };
+
+  if (isLoadingEmotions) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p className="text-gray-600">감정 목록을 불러오는 중...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 pt-10 pb-5 bg-white text-black">
@@ -99,23 +199,37 @@ function InsertPageContent() {
         </button>
       </div>
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
-        <div className="text-xs text-gray-400 mb-2">7월 12일 토요일 {TIME_PERIODS[currentStep].label}</div>
+        <div className="text-xs text-gray-400 mb-2">오늘 {TIME_PERIODS[currentStep].label}</div>
         <div className="text-2xl font-bold leading-tight whitespace-pre-line mb-8">
           {TIME_PERIODS[currentStep].text}{`\n`}느낄까요?
         </div>
+        
+        {error && (
+          <div className="w-full mb-4 text-sm text-red-500 text-center">
+            {error}
+          </div>
+        )}
+
+        {isStepCompleted && (
+          <div className="w-full mb-4 text-sm text-green-600 text-center">
+            ✓ {TIME_PERIODS[currentStep].label} 감정이 저장되었습니다
+          </div>
+        )}
+        
         <div className="w-full space-y-6">
-          {Object.entries(EMOTION_CATEGORIES).map(([category, emotions], categoryIdx) => (
+          {Object.entries(emotionCategories).map(([category, categoryEmotions], categoryIdx) => (
             <div key={category} className="w-full">
               <div className="text-sm font-medium text-gray-600 mb-3">{category}</div>
               <div className="flex flex-wrap gap-2">
-                {emotions.map((emotion, emotionIdx) => {
-                  const globalIdx = categoryIdx * 1000 + emotionIdx;
-                  const isSelected = selected.includes(globalIdx);
+                {categoryEmotions.map((emotion, emotionIdx) => {
+                  const isSelected = selectedEmotion && 
+                    selectedEmotion.categoryIdx === categoryIdx && 
+                    selectedEmotion.emotionIdx === emotionIdx;
                   const categoryColor = CATEGORY_COLORS[category as keyof typeof CATEGORY_COLORS];
                   
                   return (
                     <motion.button
-                      key={`${category}-${emotionIdx}`}
+                      key={`${category}-${emotion.id}`}
                       type="button"
                       className={`
                         px-4 py-2 rounded-full text-sm font-medium transition-all duration-200
@@ -136,8 +250,9 @@ function InsertPageContent() {
                       }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => handleEmotionClick(categoryIdx, emotionIdx)}
+                      disabled={isLoading || isStepCompleted}
                     >
-                      {emotion}
+                      {emotion.name}
                     </motion.button>
                   );
                 })}
@@ -154,11 +269,20 @@ function InsertPageContent() {
         className="flex flex-col items-center w-full max-w-sm mt-auto mb-4"
       >
         <Button
-          className={`flex w-full items-center justify-center gap-1 rounded-lg bg-[#FF6F71] text-white py-3 text-lg font-semibold text-gray-900 mb-4 transition-opacity ${isCodeComplete ? '' : 'opacity-50 cursor-not-allowed'}`}
-          disabled={!isCodeComplete}
-          onClick={handleNext}
+          className={`flex w-full items-center justify-center gap-1 rounded-lg bg-[#FF6F71] text-white py-3 text-lg font-semibold text-gray-900 mb-4 transition-opacity ${isEmotionSelected && !isLoading && !isStepCompleted ? '' : 'opacity-50 cursor-not-allowed'}`}
+          disabled={!isEmotionSelected || isLoading || isStepCompleted}
+          onClick={createForecast}
         >
-          다음으로
+          {isLoading ? (
+            <div className="flex items-center gap-2">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              저장 중...
+            </div>
+          ) : isStepCompleted ? (
+            '완료됨'
+          ) : (
+            '저장하기'
+          )}
         </Button>
       </motion.div>
     </div>
