@@ -77,9 +77,11 @@ function AuthCallbackContent() {
           console.log('After saving - authTimestamp:', localStorage.getItem('authTimestamp'));
           console.log('All localStorage keys:', Object.keys(localStorage));
           
+          // AuthContext 강제 업데이트
+          notifyAuthStateChange();
+          
           setStatus('success');
           setMessage('로그인 성공! 홈으로 이동합니다.');
-          notifyAuthStateChange();
           setTimeout(() => {
             router.push('/home');
           }, 1500);
