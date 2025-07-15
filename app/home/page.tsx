@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Container from "../components/Container"
 import NavigationBar from "../components/NavigationBar"
+import { useChild } from "../contexts/ChildContext";
 
 const EMOTION_COLORS = {
   즐거움: '#3DC8EF',
@@ -115,6 +116,7 @@ const diaryData: Record<string, {
 
 export default function Register() {
   const router = useRouter()
+  const { isChildMode, selectedChild, exitChildMode } = useChild();
   const [childName, setChildName] = useState('신희성')
   const [activeTab, setActiveTab] = useState('홈')
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
@@ -207,13 +209,30 @@ export default function Register() {
     { key: 'evening', label: '저녁', time: '저녁' }
   ];
 
+  // 아이 모드일 때 childName을 selectedChild에서 가져옴
+  const displayChildName = isChildMode && selectedChild ? selectedChild.name : childName;
+
   return (
     <Container>
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
-        <div className="flex items-center gap-2 rounded-lg px-2 mb-6">
-          <span className="text-gray-900 font-semibold text-2xl">{childName}</span>
-        </div>
+        {isChildMode && (
+          <div className="w-full flex justify-between items-center mb-4">
+            <span className="text-gray-900 font-semibold text-2xl">{displayChildName}</span>
+            <button
+              onClick={exitChildMode}
+              className="px-3 py-1 bg-gray-200 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-300"
+            >
+              보호자 모드로 전환
+            </button>
+          </div>
+        )}
+        {!isChildMode && (
+          <div className="flex items-center gap-2 rounded-lg px-2 mb-6">
+            <span className="text-gray-900 font-semibold text-2xl">{displayChildName}</span>
+          </div>
+        )}
 
+        {/* 달력 및 일기 UI는 항상 노출 */}
         <div className="w-full mb-4">
           <div className="flex items-center justify-between mb-4">
             <button onClick={handlePrevMonth} className="p-2 hover:bg-gray-100 rounded-lg">
@@ -349,8 +368,8 @@ export default function Register() {
           </div>
         )}
       </div>
-      
-      <NavigationBar activeTab={activeTab} onTabChange={setActiveTab} />
+      {/* 네비게이션바는 보호자 모드에서만 노출 */}
+      {!isChildMode && <NavigationBar activeTab={activeTab} onTabChange={setActiveTab} />}
     </Container>
   )
 }

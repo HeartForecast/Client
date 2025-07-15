@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Container from "../components/Container"
 import NavigationBar from "../components/NavigationBar"
+import { useChild } from "../contexts/ChildContext"
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL
 
@@ -166,6 +167,7 @@ function DeleteModal({ isOpen, childId, childName, onClose, onDeleteRelation, on
 
 export default function SettingsPage() {
   const router = useRouter()
+  const { enterChildMode, isChildMode } = useChild();
   const [activeTab, setActiveTab] = useState('아이 목록')
   const [openMenuId, setOpenMenuId] = useState<number | null>(null)
   const [childrenData, setChildrenData] = useState<ChildData[]>([])
@@ -320,8 +322,12 @@ export default function SettingsPage() {
   }
 
   const handleSwitchAccount = (childId: number, childName: string) => {
-    console.log('Switch to child account:', childId, childName)
-    setOpenMenuId(null)
+    const child = childrenData.find(c => c.id === childId);
+    if (child) {
+      enterChildMode(child);
+      setOpenMenuId(null);
+      router.push('/home');
+    }
   }
 
   const toggleMenu = (childId: number) => {
@@ -334,6 +340,14 @@ export default function SettingsPage() {
       childId: 0,
       childName: ''
     })
+  }
+
+  // 아이 모드일 때 접근 차단
+  if (isChildMode) {
+    if (typeof window !== 'undefined') {
+      router.replace('/home');
+    }
+    return null;
   }
 
   // 로딩 상태 렌더링

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Container from "../components/Container"
 import NavigationBar from "../components/NavigationBar"
+import { useChild } from "../contexts/ChildContext"
 import {
   Chart as ChartJS,
   ArcElement,
@@ -45,6 +46,7 @@ const emotionDistribution = { 즐거움: 65, 슬픔: 20, 중립: 15 };
 
 export default function StatsPage() {
   const router = useRouter()
+  const { isChildMode } = useChild();
   const [childName, setChildName] = useState('신희성')
   const [activeTab, setActiveTab] = useState('통계')
   const [statsUnit, setStatsUnit] = useState<'week' | 'month'>('week')
@@ -57,6 +59,14 @@ export default function StatsPage() {
   useEffect(() => {
     setCurrentAccuracy(latestAccuracy);
   }, [latestAccuracy]);
+
+  // 아이 모드일 때 접근 차단
+  if (isChildMode) {
+    if (typeof window !== 'undefined') {
+      router.replace('/home');
+    }
+    return null;
+  }
 
   // 감정 예측 정확도 반원형 게이지 차트 데이터
   const accuracyChartData = {
