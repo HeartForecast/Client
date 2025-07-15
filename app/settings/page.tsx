@@ -166,7 +166,7 @@ function DeleteModal({ isOpen, childId, childName, onClose, onDeleteRelation, on
 
 export default function SettingsPage() {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState('아이목록')
+  const [activeTab, setActiveTab] = useState('아이 목록')
   const [openMenuId, setOpenMenuId] = useState<number | null>(null)
   const [childrenData, setChildrenData] = useState<ChildData[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -489,7 +489,6 @@ export default function SettingsPage() {
           </div>
         )}
 
-        {/* 아이 추가/등록 버튼 */}
         <div className="w-full mt-8 mb-20 flex gap-3">
           <button
             onClick={() => router.push('/insert-children')}
