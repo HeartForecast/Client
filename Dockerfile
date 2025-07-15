@@ -6,8 +6,7 @@ RUN npm install -g pnpm
 
 COPY . .
 
-ARG ENV_FILE=.env
-COPY ${ENV_FILE} .env
+COPY .env .env
 
 RUN pnpm install --frozen-lockfile
 RUN pnpm build
