@@ -39,3 +39,18 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Docker and build cache
+CACHED
+ERROR
+[builder
+[internal]
+heart@0.1.0
+next
+transferring
+Dockerfile
+.dockerignore
+
+# Cache directories
+.cache/
+*.cache
