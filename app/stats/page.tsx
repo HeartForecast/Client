@@ -274,7 +274,7 @@ export default function StatsPage() {
   };
 
   return (
-    <Container>
+    <Container className="bg-white">
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
         <div className="flex items-center gap-2 rounded-lg px-2 mb-6">
           <span className="text-gray-900 font-semibold text-2xl">{childName}의 통계</span>
