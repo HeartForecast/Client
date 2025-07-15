@@ -492,7 +492,7 @@ export default function SettingsPage() {
         <div className="w-full mt-8 mb-20 flex gap-3">
           <button
             onClick={() => router.push('/insert-children')}
-            className="flex-1 bg-[#FF6F71] text-white py-4 px-6 rounded-2xl font-medium hover:bg-[#e55a5c] transition-colors flex items-center justify-center"
+            className="flex-1 bg-white border-2 border-[#FF6F71] text-[#FF6F71] py-4 px-6 rounded-2xl font-medium hover:bg-[#FF6F71] hover:text-white transition-colors flex items-center justify-center"
           >
             아이 추가
           </button>
