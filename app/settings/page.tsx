@@ -25,6 +25,92 @@ interface ApiChildData {
   inviteCode: string
 }
 
+interface DeleteModalProps {
+  isOpen: boolean
+  childId: number
+  childName: string
+  onClose: () => void
+  onDeleteRelation: (childId: number) => void
+  onDeleteChild: (childId: number) => void
+}
+
+function DeleteModal({ isOpen, childId, childName, onClose, onDeleteRelation, onDeleteChild }: DeleteModalProps) {
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteType, setDeleteType] = useState<'relation' | 'child' | null>(null)
+
+  const handleDelete = async (type: 'relation' | 'child') => {
+    setIsDeleting(true)
+    setDeleteType(type)
+    
+    try {
+      if (type === 'relation') {
+        await onDeleteRelation(childId)
+      } else {
+        await onDeleteChild(childId)
+      }
+    } finally {
+      setIsDeleting(false)
+      setDeleteType(null)
+      onClose()
+    }
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-2xl p-6 mx-4 max-w-sm w-full">
+        <h3 className="text-lg font-semibold mb-4">삭제 옵션 선택</h3>
+        <p className="text-sm text-gray-600 mb-6">
+          <strong>{childName}</strong>에 대한 삭제 옵션을 선택해주세요.
+        </p>
+        
+        <div className="space-y-3 mb-6">
+          <button
+            onClick={() => handleDelete('relation')}
+            disabled={isDeleting}
+            className="w-full p-4 border border-gray-200 rounded-lg text-left hover:bg-gray-50 disabled:opacity-50"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium text-gray-900">돌봄관계 삭제</h4>
+                <p className="text-sm text-gray-500">아이 정보는 유지하고 돌봄관계만 삭제합니다</p>
+              </div>
+              {isDeleting && deleteType === 'relation' && (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#FF6F71]"></div>
+              )}
+            </div>
+          </button>
+          
+          <button
+            onClick={() => handleDelete('child')}
+            disabled={isDeleting}
+            className="w-full p-4 border border-red-200 rounded-lg text-left hover:bg-red-50 disabled:opacity-50"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium text-red-600">아이 완전 삭제</h4>
+                <p className="text-sm text-red-500">아이 정보와 모든 관련 데이터를 완전히 삭제합니다</p>
+              </div>
+              {isDeleting && deleteType === 'child' && (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-500"></div>
+              )}
+            </div>
+          </button>
+        </div>
+        
+        <button
+          onClick={onClose}
+          disabled={isDeleting}
+          className="w-full py-3 text-gray-600 hover:text-gray-800 disabled:opacity-50"
+        >
+          취소
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function ChildrenListPage() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState('설정')
@@ -32,6 +118,15 @@ export default function ChildrenListPage() {
   const [childrenData, setChildrenData] = useState<ChildData[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean
+    childId: number
+    childName: string
+  }>({
+    isOpen: false,
+    childId: 0,
+    childName: ''
+  })
 
   useEffect(() => {
     const fetchChildRelations = async () => {
@@ -99,6 +194,57 @@ export default function ChildrenListPage() {
   const handleDelete = (childId: number, childName: string) => {
     console.log('Delete child:', childId, childName)
     setOpenMenuId(null)
+    setDeleteModal({
+      isOpen: true,
+      childId,
+      childName
+    })
+  }
+
+  const handleDeleteRelation = async (childId: number) => {
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/childRelations/${childId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`관계 삭제 실패: ${response.status}`)
+      }
+
+      // 성공 시 목록에서 제거
+      setChildrenData(prev => prev.filter(child => child.id !== childId))
+      alert('돌봄관계가 삭제되었습니다.')
+    } catch (error) {
+      console.error('관계 삭제 실패:', error)
+      alert('돌봄관계 삭제에 실패했습니다.')
+    }
+  }
+
+  const handleDeleteChild = async (childId: number) => {
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/children/${childId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`아이 삭제 실패: ${response.status}`)
+      }
+
+      // 성공 시 목록에서 제거
+      setChildrenData(prev => prev.filter(child => child.id !== childId))
+      alert('아이가 완전히 삭제되었습니다.')
+    } catch (error) {
+      console.error('아이 삭제 실패:', error)
+      alert('아이 삭제에 실패했습니다.')
+    }
   }
 
   const handleSwitchAccount = (childId: number, childName: string) => {
@@ -108,6 +254,14 @@ export default function ChildrenListPage() {
 
   const toggleMenu = (childId: number) => {
     setOpenMenuId(openMenuId === childId ? null : childId)
+  }
+
+  const closeDeleteModal = () => {
+    setDeleteModal({
+      isOpen: false,
+      childId: 0,
+      childName: ''
+    })
   }
 
   // 로딩 상태 렌더링
@@ -258,6 +412,15 @@ export default function ChildrenListPage() {
       </div>
       
       <NavigationBar activeTab={activeTab} onTabChange={setActiveTab} />
+      
+      <DeleteModal
+        isOpen={deleteModal.isOpen}
+        childId={deleteModal.childId}
+        childName={deleteModal.childName}
+        onClose={closeDeleteModal}
+        onDeleteRelation={handleDeleteRelation}
+        onDeleteChild={handleDeleteChild}
+      />
     </Container>
   )
 } 
