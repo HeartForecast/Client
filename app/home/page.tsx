@@ -116,7 +116,7 @@ const diaryData: Record<string, {
 
 export default function Register() {
   const router = useRouter()
-  const { isChildMode, selectedChild, exitChildMode } = useChild();
+  const { isChildMode, selectedChild, exitChildMode, enterChildMode } = useChild();
   const [childName, setChildName] = useState('신희성')
   const [activeTab, setActiveTab] = useState('홈')
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
@@ -212,19 +212,44 @@ export default function Register() {
   // 선택된 아이 이름 표시 (아이 모드일 때는 selectedChild, 보호자 모드일 때는 기본값)
   const displayChildName = isChildMode && selectedChild ? selectedChild.name : (selectedChild ? selectedChild.name : childName);
 
+  // 아이 모드 전환 함수
+  const handleEnterChildMode = () => {
+    if (selectedChild) {
+      enterChildMode(selectedChild);
+    }
+  };
+
   return (
     <Container className="bg-white">
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
         <div className="w-full flex justify-between items-center mb-4">
           <span className="text-gray-900 font-semibold text-2xl">{displayChildName}</span>
-          {selectedChild && (
-            <button
-              onClick={() => router.push('/settings')}
-              className="px-3 py-1 bg-gray-200 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-300"
-            >
-              아이 변경
-            </button>
-          )}
+          <div className="flex gap-2">
+            {isChildMode && (
+              <button
+                onClick={exitChildMode}
+                className="px-3 py-1 bg-gray-200 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-300"
+              >
+                보호자 모드로 전환
+              </button>
+            )}
+            {selectedChild && !isChildMode && (
+              <button
+                onClick={handleEnterChildMode}
+                className="px-3 py-1 bg-blue-200 text-blue-700 rounded-lg text-xs font-medium hover:bg-blue-300"
+              >
+                아이 모드
+              </button>
+            )}
+            {selectedChild && !isChildMode && (
+              <button
+                onClick={() => router.push('/settings')}
+                className="px-3 py-1 bg-gray-200 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-300"
+              >
+                아이 변경
+              </button>
+            )}
+          </div>
         </div>
 
         {/* 달력 및 일기 UI는 항상 노출 */}
