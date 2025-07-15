@@ -5,6 +5,18 @@ import { useRouter } from "next/navigation"
 import Container from "../components/Container"
 import NavigationBar from "../components/NavigationBar"
 import { useChild } from "../contexts/ChildContext"
+import { 
+  getDailyTemperature, 
+  getAverageTemperature, 
+  getTimezoneEmotions, 
+  getEmotionRatio, 
+  getEmotionErrorRate,
+  DailyTemperatureData,
+  AverageTemperatureData,
+  TimezoneEmotionData,
+  EmotionRatioData,
+  EmotionErrorRateData
+} from "../auth/index"
 import {
   Chart as ChartJS,
   ArcElement,
@@ -34,31 +46,101 @@ ChartJS.register(
 )
 
 const EMOTION_COLORS = {
-  즐거움: '#3DC8EF',
+  기쁨: '#3DC8EF',
   슬픔: '#FF7B6F',
-  중립: '#FFD340'
+  중립: '#FFD340',
+  분노: '#FF6B6B',
+  놀람: '#4ECDC4',
+  두려움: '#9B59B6',
+  혐오: '#E67E22'
 };
-
-// 간단한 모의 데이터 (시간대별 기록 제거)
-const weeklyAccuracyData = [78, 82, 85, 88, 92, 89, 94];
-const monthlyAccuracyData = [85, 87, 83, 89, 91, 88, 92, 85, 90, 93, 95, 89];
-const emotionDistribution = { 즐거움: 65, 슬픔: 20, 중립: 15 };
 
 export default function StatsPage() {
   const router = useRouter()
-  const { isChildMode } = useChild();
+  const { isChildMode, selectedChild } = useChild();
   const [childName, setChildName] = useState('신희성')
   const [activeTab, setActiveTab] = useState('통계')
   const [statsUnit, setStatsUnit] = useState<'week' | 'month'>('week')
-  const [currentAccuracy, setCurrentAccuracy] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  
+  // API 데이터 상태
+  const [dailyTemperatureData, setDailyTemperatureData] = useState<DailyTemperatureData[]>([])
+  const [averageTemperatureData, setAverageTemperatureData] = useState<AverageTemperatureData | null>(null)
+  const [timezoneEmotionsData, setTimezoneEmotionsData] = useState<TimezoneEmotionData[]>([])
+  const [emotionRatioData, setEmotionRatioData] = useState<EmotionRatioData[]>([])
+  const [emotionErrorRateData, setEmotionErrorRateData] = useState<EmotionErrorRateData[]>([])
 
-  const currentAccuracyData = statsUnit === 'week' ? weeklyAccuracyData : monthlyAccuracyData;
-  const latestAccuracy = currentAccuracyData[currentAccuracyData.length - 1];
+  // 날짜 범위 계산
+  const getDateRange = () => {
+    const endDate = new Date()
+    const startDate = new Date()
+    
+    if (statsUnit === 'week') {
+      startDate.setDate(endDate.getDate() - 7)
+    } else {
+      startDate.setMonth(endDate.getMonth() - 1)
+    }
+    
+    return {
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0]
+    }
+  }
 
-  // 정확도 설정
+  // 데이터 로딩
+  const loadStatisticsData = async () => {
+    if (!selectedChild?.id) return
+    
+    setLoading(true)
+    setError(null)
+    
+    try {
+      const { startDate, endDate } = getDateRange()
+      const childId = selectedChild.id
+
+      const [
+        dailyTempResponse,
+        avgTempResponse,
+        timezoneResponse,
+        ratioResponse,
+        errorRateResponse
+      ] = await Promise.all([
+        getDailyTemperature(childId, startDate, endDate),
+        getAverageTemperature(childId, startDate, endDate),
+        getTimezoneEmotions(childId, startDate, endDate),
+        getEmotionRatio(childId, startDate, endDate),
+        getEmotionErrorRate(childId, startDate, endDate)
+      ])
+
+      if (dailyTempResponse.success) setDailyTemperatureData(dailyTempResponse.data || [])
+      if (avgTempResponse.success) setAverageTemperatureData(avgTempResponse.data || null)
+      if (timezoneResponse.success) setTimezoneEmotionsData(timezoneResponse.data || [])
+      if (ratioResponse.success) setEmotionRatioData(ratioResponse.data || [])
+      if (errorRateResponse.success) setEmotionErrorRateData(errorRateResponse.data || [])
+
+    } catch (err) {
+      setError('통계 데이터를 불러오는데 실패했습니다.')
+      console.error('Statistics loading error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // 선택된 아이가 변경되거나 단위가 변경될 때 데이터 로딩
   useEffect(() => {
-    setCurrentAccuracy(latestAccuracy);
-  }, [latestAccuracy]);
+    if (selectedChild?.id) {
+      setChildName(selectedChild.name)
+      loadStatisticsData()
+    }
+  }, [selectedChild?.id, statsUnit])
+
+  // 계산된 데이터
+  const currentAccuracyData = dailyTemperatureData.map(d => d.avgTemp)
+  const latestAccuracy = currentAccuracyData.length > 0 ? currentAccuracyData[currentAccuracyData.length - 1] : 0
+  const averageAccuracy = currentAccuracyData.length > 0 
+    ? currentAccuracyData.reduce((sum, val) => sum + val, 0) / currentAccuracyData.length 
+    : 0
 
   // 아이 모드일 때 접근 차단
   if (isChildMode) {
@@ -73,13 +155,13 @@ export default function StatsPage() {
     labels: ['정확도'],
     datasets: [
       {
-        data: [currentAccuracy, 100 - currentAccuracy],
+        data: [latestAccuracy, 100 - latestAccuracy],
         backgroundColor: [
-          currentAccuracy >= 90 ? '#10B981' : currentAccuracy >= 70 ? '#3B82F6' : '#F59E0B',
+          latestAccuracy >= 90 ? '#10B981' : latestAccuracy >= 70 ? '#3B82F6' : '#F59E0B',
           'rgba(243, 244, 246, 0.3)'
         ],
         borderColor: [
-          currentAccuracy >= 90 ? '#10B981' : currentAccuracy >= 70 ? '#3B82F6' : '#F59E0B',
+          latestAccuracy >= 90 ? '#10B981' : latestAccuracy >= 70 ? '#3B82F6' : '#F59E0B',
           'rgba(229, 231, 235, 0.5)'
         ],
         borderWidth: 0,
@@ -186,35 +268,25 @@ export default function StatsPage() {
     maintainAspectRatio: false,
   };
 
-  // 감정 분포 바 차트 데이터 (개선된 버전)
+  // 감정 분포 바 차트 데이터 (API 데이터 기반)
   const emotionChartData = {
-    labels: ['즐거움', '슬픔', '중립'],
+    labels: emotionRatioData.map(item => item.emotionName),
     datasets: [
       {
         label: '감정 분포',
-        data: [
-          emotionDistribution.즐거움,
-          emotionDistribution.슬픔,
-          emotionDistribution.중립
-        ],
-        backgroundColor: [
-          'rgba(61, 200, 239, 0.8)',
-          'rgba(255, 123, 111, 0.8)',
-          'rgba(255, 211, 64, 0.8)'
-        ],
-        borderColor: [
-          EMOTION_COLORS.즐거움,
-          EMOTION_COLORS.슬픔,
-          EMOTION_COLORS.중립
-        ],
+        data: emotionRatioData.map(item => item.ratio * 100),
+        backgroundColor: emotionRatioData.map(item => 
+          `rgba(${EMOTION_COLORS[item.emotionName as keyof typeof EMOTION_COLORS]?.replace('#', '').match(/.{2}/g)?.map(x => parseInt(x, 16)).join(', ')}, 0.8)` || 'rgba(128, 128, 128, 0.8)'
+        ),
+        borderColor: emotionRatioData.map(item => 
+          EMOTION_COLORS[item.emotionName as keyof typeof EMOTION_COLORS] || '#808080'
+        ),
         borderWidth: 3,
         borderRadius: 12,
         borderSkipped: false,
-        hoverBackgroundColor: [
-          'rgba(61, 200, 239, 1)',
-          'rgba(255, 123, 111, 1)',
-          'rgba(255, 211, 64, 1)'
-        ],
+        hoverBackgroundColor: emotionRatioData.map(item => 
+          `rgba(${EMOTION_COLORS[item.emotionName as keyof typeof EMOTION_COLORS]?.replace('#', '').match(/.{2}/g)?.map(x => parseInt(x, 16)).join(', ')}, 1)` || 'rgba(128, 128, 128, 1)'
+        ),
         hoverBorderWidth: 4,
       },
     ],
@@ -280,47 +352,93 @@ export default function StatsPage() {
           <span className="text-gray-900 font-semibold text-2xl">{childName}의 통계</span>
         </div>
 
-        {/* 단위 선택 */}
-        <div className="w-full mb-6">
-          <div className="flex bg-gray-100 rounded-xl p-1">
-            <button
-              onClick={() => setStatsUnit('week')}
-              className={`
-                flex-1 py-2 px-4 text-sm font-medium rounded-lg transition-all
-                ${statsUnit === 'week' 
-                  ? 'bg-white text-gray-900 shadow-sm' 
-                  : 'text-gray-500 hover:text-gray-700'
-                }
-              `}
+        {/* 로딩 상태 */}
+        {loading && (
+          <div className="w-full text-center py-8">
+            <div className="text-gray-400 mb-2">
+              <svg className="w-8 h-8 mx-auto animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </div>
+            <p className="text-gray-500 text-sm">통계 데이터를 불러오는 중...</p>
+          </div>
+        )}
+
+        {/* 에러 상태 */}
+        {error && (
+          <div className="w-full text-center py-8">
+            <div className="text-red-400 mb-2">
+              <svg className="w-8 h-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <p className="text-red-500 text-sm">{error}</p>
+            <button 
+              onClick={loadStatisticsData}
+              className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600"
             >
-              주 단위
-            </button>
-            <button
-              onClick={() => setStatsUnit('month')}
-              className={`
-                flex-1 py-2 px-4 text-sm font-medium rounded-lg transition-all
-                ${statsUnit === 'month' 
-                  ? 'bg-white text-gray-900 shadow-sm' 
-                  : 'text-gray-500 hover:text-gray-700'
-                }
-              `}
-            >
-              월 단위
+              다시 시도
             </button>
           </div>
-        </div>
+        )}
+
+        {/* 데이터가 없을 때 */}
+        {!loading && !error && currentAccuracyData.length === 0 && (
+          <div className="w-full text-center py-8">
+            <div className="text-gray-400 mb-2">
+              <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <p className="text-gray-500 text-sm">아직 통계 데이터가 없습니다</p>
+            <p className="text-xs text-gray-400 mt-1">감정 예측을 시작하면 통계가 표시됩니다</p>
+          </div>
+        )}
+
+        {/* 단위 선택 */}
+        {!loading && !error && currentAccuracyData.length > 0 && (
+          <div className="w-full mb-6">
+            <div className="flex bg-gray-100 rounded-xl p-1">
+              <button
+                onClick={() => setStatsUnit('week')}
+                className={`
+                  flex-1 py-2 px-4 text-sm font-medium rounded-lg transition-all
+                  ${statsUnit === 'week' 
+                    ? 'bg-white text-gray-900 shadow-sm' 
+                    : 'text-gray-500 hover:text-gray-700'
+                  }
+                `}
+              >
+                주 단위
+              </button>
+              <button
+                onClick={() => setStatsUnit('month')}
+                className={`
+                  flex-1 py-2 px-4 text-sm font-medium rounded-lg transition-all
+                  ${statsUnit === 'month' 
+                    ? 'bg-white text-gray-900 shadow-sm' 
+                    : 'text-gray-500 hover:text-gray-700'
+                  }
+                `}
+              >
+                월 단위
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* 감정 예측 정확도 차트 */}
-        <div className="w-full mb-6">
-          <div className="bg-white rounded-2xl p-5 border border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-800 mb-6">감정 예측 정확도</h3>
+        {!loading && !error && currentAccuracyData.length > 0 && (
+          <div className="w-full mb-6">
+            <div className="bg-white rounded-2xl p-5 border border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-800 mb-6">감정 예측 정확도</h3>
             
             {/* 게이지 차트 */}
             <div className="relative" style={{ height: '140px' }}>
               <Doughnut data={accuracyChartData} options={accuracyChartOptions} />
               <div className="absolute inset-0 flex items-end justify-center pb-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-800">{currentAccuracy}%</div>
+                  <div className="text-2xl font-bold text-gray-800">{latestAccuracy.toFixed(1)}%</div>
                   <div className="text-xs text-gray-500">예측 성공률</div>
                 </div>
               </div>
@@ -330,19 +448,19 @@ export default function StatsPage() {
             <div className="mt-6 grid grid-cols-3 gap-4">
               <div className="text-center">
                 <div className="text-lg font-semibold text-green-600">
-                  {currentAccuracy >= 90 ? '우수' : currentAccuracy >= 70 ? '양호' : '개선필요'}
+                  {latestAccuracy >= 90 ? '우수' : latestAccuracy >= 70 ? '양호' : '개선필요'}
                 </div>
                 <div className="text-xs text-gray-500">성능 등급</div>
               </div>
               <div className="text-center">
                 <div className="text-lg font-semibold text-gray-800">
-                  {Math.round(currentAccuracyData.reduce((sum, val) => sum + val, 0) / currentAccuracyData.length)}%
+                  {averageAccuracy.toFixed(1)}%
                 </div>
                 <div className="text-xs text-gray-500">평균 정확도</div>
               </div>
               <div className="text-center">
                 <div className="text-lg font-semibold text-gray-800">
-                  {Math.max(...currentAccuracyData)}%
+                  {Math.max(...currentAccuracyData).toFixed(1)}%
                 </div>
                 <div className="text-xs text-gray-500">최고 정확도</div>
               </div>
@@ -359,43 +477,48 @@ export default function StatsPage() {
             </div>
           </div>
         </div>
+        )}
 
         {/* 정확도 추이 차트 */}
-        <div className="w-full mb-6">
-          <div className="bg-white rounded-2xl p-5 border border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">정확도 추이</h3>
-            <div className="relative" style={{ height: '200px' }}>
-              <Line data={accuracyTrendData} options={accuracyTrendOptions} />
+        {!loading && !error && currentAccuracyData.length > 0 && (
+          <div className="w-full mb-6">
+            <div className="bg-white rounded-2xl p-5 border border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">정확도 추이</h3>
+              <div className="relative" style={{ height: '200px' }}>
+                <Line data={accuracyTrendData} options={accuracyTrendOptions} />
+              </div>
+              <p className="text-sm text-gray-500 mt-4 text-center">
+                평균 정확도: {averageAccuracy.toFixed(1)}%
+              </p>
             </div>
-            <p className="text-sm text-gray-500 mt-4 text-center">
-              평균 정확도: {Math.round(currentAccuracyData.reduce((sum, val) => sum + val, 0) / currentAccuracyData.length)}%
-            </p>
           </div>
-        </div>
+        )}
 
         {/* 감정 분포 차트 */}
-        <div className="w-full mb-6">
-          <div className="bg-white rounded-2xl p-5 border border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">감정 분포</h3>
-            <div className="relative" style={{ height: '250px' }}>
-              <Bar data={emotionChartData} options={emotionChartOptions} />
-            </div>
-            <div className="mt-4 space-y-2">
-              {Object.entries(emotionDistribution).map(([emotion, percentage]) => (
-                <div key={emotion} className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div 
-                      className="w-3 h-3 rounded-full mr-2"
-                      style={{ backgroundColor: EMOTION_COLORS[emotion as keyof typeof EMOTION_COLORS] }}
-                    ></div>
-                    <span className="text-sm text-gray-600">{emotion}</span>
+        {!loading && !error && emotionRatioData.length > 0 && (
+          <div className="w-full mb-6">
+            <div className="bg-white rounded-2xl p-5 border border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">감정 분포</h3>
+              <div className="relative" style={{ height: '250px' }}>
+                <Bar data={emotionChartData} options={emotionChartOptions} />
+              </div>
+              <div className="mt-4 space-y-2">
+                {emotionRatioData.map((item) => (
+                  <div key={item.emotionName} className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div 
+                        className="w-3 h-3 rounded-full mr-2"
+                        style={{ backgroundColor: EMOTION_COLORS[item.emotionName as keyof typeof EMOTION_COLORS] || '#808080' }}
+                      ></div>
+                      <span className="text-sm text-gray-600">{item.emotionName}</span>
+                    </div>
+                    <span className="text-sm font-medium text-gray-700">{(item.ratio * 100).toFixed(1)}%</span>
                   </div>
-                  <span className="text-sm font-medium text-gray-700">{percentage}%</span>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
       
       <NavigationBar activeTab={activeTab} onTabChange={setActiveTab} />
