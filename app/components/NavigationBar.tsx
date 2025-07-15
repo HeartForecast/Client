@@ -50,13 +50,13 @@ export default function NavigationBar({ activeTab = "홈", onTabChange }: Naviga
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 w-full bg-white border-t border-gray-200 py-3 z-50">
+    <div className="fixed bottom-0 left-0 right-0 w-full bg-white border-t border-gray-200 py-2 z-50">
       <div className="flex justify-around items-center w-full max-w-sm mx-auto">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => handleTabClick(tab)}
-            className={`flex flex-col items-center py-2 px-4 rounded-lg transition-colors ${
+            className={`flex flex-col items-center py-1 px-4 rounded-lg transition-colors ${
               activeTab === tab.id
                 ? "text-red-600"
                 : "text-gray-400"
