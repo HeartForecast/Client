@@ -9,18 +9,6 @@ export const handleKakaoLogin = () => {
   window.location.href = KAKAO_LOGIN_URL!;
 };
 
-// 쿠키에서 토큰 읽기 함수
-export const getCookie = (name: string): string | null => {
-  if (typeof document === 'undefined') return null;
-  
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) {
-    return parts.pop()?.split(';').shift() || null;
-  }
-  return null;
-};
-
 // 토큰 관리 함수들 - HttpOnly 쿠키 사용으로 인증 상태만 확인
 export const getAccessToken = (): string | null => {
   if (typeof window === 'undefined') return null;

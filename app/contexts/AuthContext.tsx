@@ -32,7 +32,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     console.log('=== AuthContext checkAuth ===');
     console.log('Document available:', typeof document !== 'undefined');
     
+    // isAuthenticated 함수 사용 (로컬스토리지 기반)
     const newLoginState = isAuthenticated();
+    
+    // 디버깅을 위한 추가 로그
+    console.log('isAuthenticated() result:', newLoginState);
+    console.log('localStorage isAuthenticated:', localStorage.getItem('isAuthenticated'));
+    console.log('localStorage authTimestamp:', localStorage.getItem('authTimestamp'));
+    console.log('All localStorage keys:', Object.keys(localStorage));
+    
     console.log('Setting isLoggedIn to:', newLoginState);
     
     setIsLoggedIn(newLoginState);

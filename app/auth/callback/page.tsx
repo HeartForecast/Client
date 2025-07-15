@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { API_BASE_URL, getCookie, setTokens } from '../../utils/api';
+import { API_BASE_URL, setTokens } from '../../utils/api';
 
 function AuthCallbackContent() {
   const router = useRouter();
