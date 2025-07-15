@@ -209,28 +209,23 @@ export default function Register() {
     { key: 'evening', label: '저녁', time: '저녁' }
   ];
 
-  // 아이 모드일 때 childName을 selectedChild에서 가져옴
-  const displayChildName = isChildMode && selectedChild ? selectedChild.name : childName;
+  // 선택된 아이 이름 표시 (아이 모드일 때는 selectedChild, 보호자 모드일 때는 기본값)
+  const displayChildName = isChildMode && selectedChild ? selectedChild.name : (selectedChild ? selectedChild.name : childName);
 
   return (
     <Container className="bg-white">
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
-        {isChildMode && (
-          <div className="w-full flex justify-between items-center mb-4">
-            <span className="text-gray-900 font-semibold text-2xl">{displayChildName}</span>
+        <div className="w-full flex justify-between items-center mb-4">
+          <span className="text-gray-900 font-semibold text-2xl">{displayChildName}</span>
+          {selectedChild && (
             <button
-              onClick={exitChildMode}
+              onClick={() => router.push('/settings')}
               className="px-3 py-1 bg-gray-200 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-300"
             >
-              보호자 모드로 전환
+              아이 변경
             </button>
-          </div>
-        )}
-        {!isChildMode && (
-          <div className="flex items-center gap-2 rounded-lg px-2 mb-6">
-            <span className="text-gray-900 font-semibold text-2xl">{displayChildName}</span>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* 달력 및 일기 UI는 항상 노출 */}
         <div className="w-full mb-4">

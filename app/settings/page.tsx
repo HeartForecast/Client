@@ -167,7 +167,7 @@ function DeleteModal({ isOpen, childId, childName, onClose, onDeleteRelation, on
 
 export default function SettingsPage() {
   const router = useRouter()
-  const { enterChildMode, isChildMode } = useChild();
+  const { setSelectedChild, isChildMode } = useChild();
   const [activeTab, setActiveTab] = useState('아이 목록')
   const [openMenuId, setOpenMenuId] = useState<number | null>(null)
   const [childrenData, setChildrenData] = useState<ChildData[]>([])
@@ -324,7 +324,7 @@ export default function SettingsPage() {
   const handleSwitchAccount = (childId: number, childName: string) => {
     const child = childrenData.find(c => c.id === childId);
     if (child) {
-      enterChildMode(child);
+      setSelectedChild(child);
       setOpenMenuId(null);
       router.push('/home');
     }
@@ -463,7 +463,7 @@ export default function SettingsPage() {
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                         </svg>
-                        계정 전환
+                        아이 선택
                       </button>
                       <button
                         onClick={() => handleEdit(child.id, child.name)}
