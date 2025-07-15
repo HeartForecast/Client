@@ -213,7 +213,7 @@ export default function Register() {
   const displayChildName = isChildMode && selectedChild ? selectedChild.name : childName;
 
   return (
-    <Container>
+    <Container className="bg-white">
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
         {isChildMode && (
           <div className="w-full flex justify-between items-center mb-4">
