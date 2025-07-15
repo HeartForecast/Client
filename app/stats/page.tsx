@@ -73,18 +73,31 @@ export default function StatsPage() {
 
   // 날짜 범위 계산
   const getDateRange = () => {
-    const endDate = new Date()
-    const startDate = new Date()
+    const now = new Date()
     
     if (statsUnit === 'week') {
-      startDate.setDate(endDate.getDate() - 7)
+      // 이번 주 (월요일부터 일요일까지)
+      const startOfWeek = new Date(now)
+      const dayOfWeek = now.getDay()
+      const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1) // 월요일이 1, 일요일이 0
+      startOfWeek.setDate(diff)
+      
+      const endOfWeek = new Date(startOfWeek)
+      endOfWeek.setDate(startOfWeek.getDate() + 6) // 일요일까지
+      
+      return {
+        startDate: startOfWeek.toISOString().split('T')[0],
+        endDate: endOfWeek.toISOString().split('T')[0]
+      }
     } else {
-      startDate.setMonth(endDate.getMonth() - 1)
-    }
-    
-    return {
-      startDate: startDate.toISOString().split('T')[0],
-      endDate: endDate.toISOString().split('T')[0]
+      // 현재 달 (1일부터 마지막 날까지)
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0) // 다음 달 0일 = 이번 달 마지막 날
+      
+      return {
+        startDate: startOfMonth.toISOString().split('T')[0],
+        endDate: endOfMonth.toISOString().split('T')[0]
+      }
     }
   }
 
@@ -191,8 +204,15 @@ export default function StatsPage() {
   // 정확도 추이 라인 차트 데이터
   const accuracyTrendData = {
     labels: statsUnit === 'week' 
-      ? ['월', '화', '수', '목', '금', '토', '일']
-      : ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'],
+      ? dailyTemperatureData.map(item => {
+          const date = new Date(item.date)
+          const dayNames = ['일', '월', '화', '수', '목', '금', '토']
+          return dayNames[date.getDay()]
+        })
+      : dailyTemperatureData.map(item => {
+          const date = new Date(item.date)
+          return `${date.getMonth() + 1}/${date.getDate()}`
+        }),
     datasets: [
       {
         label: '정확도 추이',
@@ -471,7 +491,17 @@ export default function StatsPage() {
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-600">분석 기간</span>
                 <span className="font-medium text-gray-800">
-                  {statsUnit === 'week' ? '최근 7일' : '최근 12개월'}
+                  {(() => {
+                    const { startDate, endDate } = getDateRange()
+                    const start = new Date(startDate)
+                    const end = new Date(endDate)
+                    
+                    if (statsUnit === 'week') {
+                      return `${start.getMonth() + 1}/${start.getDate()} - ${end.getMonth() + 1}/${end.getDate()}`
+                    } else {
+                      return `${start.getFullYear()}년 ${start.getMonth() + 1}월`
+                    }
+                  })()}
                 </span>
               </div>
             </div>
