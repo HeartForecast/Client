@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Container from "../components/Container"
 import NavigationBar from "../components/NavigationBar"
-import { useChild } from "@/app/contexts/ChildContext"
+import { useChild } from "../contexts/ChildContext"
 import {
   Chart as ChartJS,
   ArcElement,
