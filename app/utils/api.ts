@@ -1,4 +1,8 @@
 // API 관련 유틸리티 함수들
+import { 
+  ChildCreateRequest, 
+  ChildCreateResponse 
+} from '../types/api';
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 export const KAKAO_LOGIN_URL = process.env.NEXT_PUBLIC_KAKAO_LOGIN_URL;
@@ -256,5 +260,29 @@ export const checkAuthStatus = async (): Promise<boolean> => {
   } catch (error) {
     console.error('Auth status check failed:', error);
     return false;
+  }
+}; 
+
+// 아이 생성 API 함수
+export const createChild = async (childData: ChildCreateRequest): Promise<ApiResponse<ChildCreateResponse>> => {
+  try {
+    const response = await authenticatedApiRequest<ChildCreateResponse>('/api/children/child', {
+      method: 'POST',
+      body: JSON.stringify(childData),
+    });
+
+    if (response.success) {
+      console.log('아이 생성 성공:', response.data);
+    } else {
+      console.error('아이 생성 실패:', response.error);
+    }
+
+    return response;
+  } catch (error) {
+    console.error('아이 생성 API 호출 중 오류:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : '아이 생성 중 오류가 발생했습니다.',
+    };
   }
 }; 

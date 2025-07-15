@@ -5,9 +5,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import React from 'react';
 import { useRouter } from "next/navigation";
 import Button from '../components/Button';
+import { createChild } from '../utils/api';
+import { ChildCreateRequest } from '../types/api';
 
 export default function Register() {
   const [currentDisplayStep, setCurrentDisplayStep] = useState(1); 
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [name, setName] = useState('');
   const [dob, setDob] = useState('');
@@ -41,9 +45,82 @@ export default function Register() {
     if (currentDisplayStep < 4) {
       setCurrentDisplayStep(prevStep => prevStep + 1);
     } else {
-      console.log("Registration Finished!", { name, dob, gender, healthStatus });
-      router.push('/home');
+      handleSubmit();
     }
+  };
+
+  const handleSubmit = async () => {
+    if (isLoading) return;
+
+    // 입력 검증
+    if (!name.trim()) {
+      setError('이름을 입력해주세요.');
+      return;
+    }
+    if (!dob.trim()) {
+      setError('생년월일을 입력해주세요.');
+      return;
+    }
+    if (!gender) {
+      setError('성별을 선택해주세요.');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // 생년월일 형식 변환 (YYYY-MM-DD)
+      const formattedDob = formatDateForAPI(dob);
+      
+      // 성별 변환
+      const formattedGender = gender === 'male' ? '남성' : '여성';
+
+      const childData: ChildCreateRequest = {
+        username: name.trim(),
+        birthdate: formattedDob,
+        gender: formattedGender,
+        healthInfo: healthStatus.trim() || undefined,
+      };
+
+      console.log('아이 생성 요청 데이터:', childData);
+
+      const response = await createChild(childData);
+
+      if (response.success) {
+        console.log('아이 생성 성공!');
+        router.push('/home');
+      } else {
+        setError(response.error || '아이 생성에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('아이 생성 중 오류:', error);
+      setError('아이 생성 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 생년월일을 API 형식으로 변환하는 함수
+  const formatDateForAPI = (dateString: string): string => {
+    // 숫자만 추출
+    const numbers = dateString.replace(/[^0-9]/g, '');
+    
+    if (numbers.length !== 8) {
+      throw new Error('생년월일이 올바르지 않습니다.');
+    }
+
+    const year = numbers.slice(0, 4);
+    const month = numbers.slice(4, 6);
+    const day = numbers.slice(6, 8);
+
+    // 유효성 검사
+    const date = new Date(`${year}-${month}-${day}`);
+    if (isNaN(date.getTime())) {
+      throw new Error('생년월일이 올바르지 않습니다.');
+    }
+
+    return `${year}-${month}-${day}`;
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -252,7 +329,22 @@ export default function Register() {
           variants={fadeInOutVariants}
           className="flex flex-col items-center w-full max-w-sm mt-auto mb-4"
         >
-          <Button onClick={advanceStep}>완료</Button>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="w-full mb-4 p-3 bg-red-50 border border-red-200 rounded-lg"
+            >
+              <p className="text-red-600 text-sm text-center">{error}</p>
+            </motion.div>
+          )}
+          <Button 
+            onClick={advanceStep}
+            disabled={isLoading}
+            className={isLoading ? "opacity-50 cursor-not-allowed" : ""}
+          >
+            {isLoading ? "처리 중..." : "완료"}
+          </Button>
         </motion.div>
       )}
     </div>
