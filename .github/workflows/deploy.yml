@@ -37,7 +37,7 @@ jobs:
     - name: Create .env file
       run: |
         echo "NEXT_PUBLIC_API_BASE_URL=https://heartforecast.co.kr" >> .env
-        echo "NEXT_PUBLIC_KAKAO_LOGIN_URL=https://api.heartforecast.co.kr/oauth2/authorization/kakao" >> .env
+        echo "NEXT_PUBLIC_KAKAO_LOGIN_URL=https://heartforecast.co.kr/oauth2/authorization/kakao" >> .env
         echo "NEXT_PUBLIC_FRONTEND_URL=https://heartforecast.co.kr" >> .env
         echo "NEXT_PUBLIC_ENVIRONMENT=production" >> .env
 
