@@ -5,6 +5,10 @@ WORKDIR /app
 RUN npm install -g pnpm
 
 COPY . .
+
+ARG ENV_FILE=.env
+COPY ${ENV_FILE} .env
+
 RUN pnpm install --frozen-lockfile
 RUN pnpm build
 
@@ -14,8 +18,6 @@ WORKDIR /app
 RUN npm install -g pnpm
 
 COPY --from=builder /app ./
-
-COPY .env .env
 
 ENV NODE_ENV=production
 EXPOSE 3000
