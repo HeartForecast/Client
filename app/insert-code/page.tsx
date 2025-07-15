@@ -113,7 +113,20 @@ export default function Register() {
       return true;
     } catch (error) {
       console.error('코드 검증 실패:', error);
-      setError('잘못된 초대 코드입니다. 다시 확인해주세요.');
+      
+      // 에러 타입에 따라 적절한 메시지 표시
+      if (error instanceof Error) {
+        if (error.message.includes('이미 등록된 아이입니다')) {
+          setError('이미 등록된 아이입니다.');
+        } else if (error.message.includes('잘못된 초대 코드입니다')) {
+          setError('잘못된 초대 코드입니다. 다시 확인해주세요.');
+        } else {
+          setError(error.message);
+        }
+      } else {
+        setError('알 수 없는 오류가 발생했습니다.');
+      }
+      
       return false;
     } finally {
       setIsLoading(false);
