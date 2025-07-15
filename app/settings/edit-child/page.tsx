@@ -20,6 +20,64 @@ interface ApiChildData {
   inviteCode: string
 }
 
+interface ToastProps {
+  message: string
+  type: 'success' | 'error'
+  isVisible: boolean
+  onClose: () => void
+}
+
+function Toast({ message, type, isVisible, onClose }: ToastProps) {
+  useEffect(() => {
+    if (isVisible) {
+      const timer = setTimeout(() => {
+        onClose();
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [isVisible, onClose]);
+
+  return (
+    <AnimatePresence>
+      {isVisible && (
+        <motion.div
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -50 }}
+          className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 ${
+            type === 'success' 
+              ? 'bg-green-500 text-white' 
+              : 'bg-red-500 text-white'
+          }`}
+        >
+          <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
+            type === 'success' ? 'bg-green-400' : 'bg-red-400'
+          }`}>
+            {type === 'success' ? (
+              <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            ) : (
+              <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            )}
+          </div>
+          <span className="font-medium">{message}</span>
+          <button
+            onClick={onClose}
+            className="ml-2 text-white/80 hover:text-white"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 function EditChildPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -33,6 +91,15 @@ function EditChildPageContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error';
+    isVisible: boolean;
+  }>({
+    message: '',
+    type: 'success',
+    isVisible: false
+  });
 
   const nameRef = useRef<HTMLInputElement>(null);
   const dobRef = useRef<HTMLInputElement>(null);
@@ -105,6 +172,18 @@ function EditChildPageContent() {
     }
   }, [currentDisplayStep]);
 
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({
+      message,
+      type,
+      isVisible: true
+    });
+  };
+
+  const hideToast = () => {
+    setToast(prev => ({ ...prev, isVisible: false }));
+  };
+
   const advanceStep = () => {
     if (currentDisplayStep < 4) {
       setCurrentDisplayStep(prevStep => prevStep + 1);
@@ -141,11 +220,15 @@ function EditChildPageContent() {
         throw new Error(`수정 실패: ${response.status}`);
       }
 
-      alert("아이 정보가 수정되었습니다!");
-      router.push('/settings');
+      showToast('아이 정보가 성공적으로 수정되었습니다!', 'success');
+      
+      // 성공 후 잠시 대기 후 페이지 이동
+      setTimeout(() => {
+        router.push('/settings');
+      }, 1500);
     } catch (error) {
       console.error("수정 실패:", error);
-      setError(error instanceof Error ? error.message : '아이 정보 수정에 실패했습니다.');
+      showToast('아이 정보 수정에 실패했습니다. 다시 시도해주세요.', 'error');
     } finally {
       setIsSaving(false);
     }
@@ -235,6 +318,13 @@ function EditChildPageContent() {
 
   return (
     <Container>
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+      />
+      
       <div className="w-full max-w-sm mx-auto">
         <button className="mb-4 cursor-pointer" onClick={handleBack}>
           <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
