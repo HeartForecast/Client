@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import React from 'react';
 import { useRouter } from "next/navigation";
 import Button from '../components/Button';
-import { createChild } from '../utils/api';
+import { createChild } from '../auth';
 import { ChildCreateRequest } from '../types/api';
 
 export default function Register() {
