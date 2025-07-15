@@ -14,7 +14,9 @@ export default function ProtectedRoute({ children, fallback }: ProtectedRoutePro
   const router = useRouter();
 
   useEffect(() => {
+    console.log('ProtectedRoute - Auth state:', { isLoggedIn, loading });
     if (!loading && !isLoggedIn) {
+      console.log('ProtectedRoute - Redirecting to / due to not logged in');
       router.push('/');
     }
   }, [isLoggedIn, loading, router]);

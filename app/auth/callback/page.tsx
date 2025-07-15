@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { API_BASE_URL, getCookie, setTokens } from '../../utils/api';
+import { API_BASE_URL, setTokens } from '../../utils/api';
 
 function AuthCallbackContent() {
   const router = useRouter();
@@ -55,35 +55,40 @@ function AuthCallbackContent() {
           }),
         });
 
+        console.log('=== Backend Response Debug ===');
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const data = await response.json();
+        console.log('Response data:', data);
         
         if (data.success) {
-          // 백엔드에서 쿠키로 토큰을 설정했는지 확인
-          const accessToken = getCookie('access_social');
-          const refreshToken = getCookie('refresh_social');
-
-          console.log('=== Cookie Check After API Call ===');
-          console.log('Access Token from cookie:', accessToken ? 'Found' : 'Not found');
-          console.log('Refresh Token from cookie:', refreshToken ? 'Found' : 'Not found');
-
-          if (accessToken && refreshToken) {
-            console.log('✅ JWT tokens found in cookies - authentication successful');
-            setTokens(accessToken, refreshToken);
-            setStatus('success');
-            setMessage('로그인 성공! 홈으로 이동합니다.');
-            notifyAuthStateChange();
-            setTimeout(() => {
-              router.push('/home');
-            }, 1500);
-          } else {
-            console.log('❌ No JWT tokens in cookies after API call');
-            setStatus('error');
-            setMessage('인증 토큰을 받지 못했습니다. 다시 시도해주세요.');
-          }
+          console.log('✅ Backend API call successful - authentication successful');
+          console.log('Response data:', data);
+          
+          // 로컬스토리지 저장 전 확인
+          console.log('=== LocalStorage Save Debug ===');
+          console.log('Before saving - localStorage:', localStorage.getItem('isAuthenticated'));
+          
+          localStorage.setItem('isAuthenticated', 'true');
+          localStorage.setItem('authTimestamp', Date.now().toString());
+          
+          // 로컬스토리지 저장 후 확인
+          console.log('After saving - isAuthenticated:', localStorage.getItem('isAuthenticated'));
+          console.log('After saving - authTimestamp:', localStorage.getItem('authTimestamp'));
+          console.log('All localStorage keys:', Object.keys(localStorage));
+          
+          setStatus('success');
+          setMessage('로그인 성공! 홈으로 이동합니다.');
+          notifyAuthStateChange();
+          setTimeout(() => {
+            router.push('/home');
+          }, 1500);
         } else {
           throw new Error(data.message || '로그인 처리 중 오류가 발생했습니다.');
         }
