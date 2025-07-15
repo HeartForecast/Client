@@ -29,25 +29,41 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const checkAuth = () => {
-    // JWT 토큰 확인
+    // JWT 토큰만 확인 (세션 기반 인증 제거)
     const token = getAccessToken();
-    
-    // 세션 기반 로그인 확인 (임시)
-    const sessionLogin = localStorage.getItem('isLoggedIn') === 'true';
-    
-    setIsLoggedIn(!!token || sessionLogin);
+    const newLoginState = !!token;
+    setIsLoggedIn(newLoginState);
     setLoading(false);
+    
+    console.log('Auth check:', { token: !!token, isLoggedIn: newLoginState });
   };
 
   const logout = () => {
     clearTokens();
-    localStorage.removeItem('isLoggedIn');
     setIsLoggedIn(false);
     window.location.href = '/';
   };
 
   useEffect(() => {
     checkAuth();
+  }, []);
+
+  // localStorage 변경 감지
+  useEffect(() => {
+    const handleStorageChange = () => {
+      checkAuth();
+    };
+
+    // storage 이벤트 리스너 (다른 탭에서의 변경 감지)
+    window.addEventListener('storage', handleStorageChange);
+    
+    // 현재 탭에서의 변경 감지를 위한 커스텀 이벤트
+    window.addEventListener('authStateChanged', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('authStateChanged', handleStorageChange);
+    };
   }, []);
 
   const value: AuthContextType = {
