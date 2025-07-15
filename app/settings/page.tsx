@@ -490,24 +490,18 @@ export default function SettingsPage() {
         )}
 
         {/* 아이 추가/등록 버튼 */}
-        <div className="w-full mt-8 space-y-3">
+        <div className="w-full mt-8 flex gap-3">
           <button
             onClick={() => router.push('/insert-children')}
-            className="w-full bg-[#FF6F71] text-white py-4 px-6 rounded-2xl font-medium hover:bg-[#e55a5c] transition-colors flex items-center justify-center gap-3"
+            className="flex-1 bg-[#FF6F71] text-white py-4 px-6 rounded-2xl font-medium hover:bg-[#e55a5c] transition-colors flex items-center justify-center"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
             아이 추가
           </button>
           
           <button
             onClick={() => router.push('/insert-code')}
-            className="w-full bg-white border-2 border-[#FF6F71] text-[#FF6F71] py-4 px-6 rounded-2xl font-medium hover:bg-[#FF6F71] hover:text-white transition-colors flex items-center justify-center gap-3"
+            className="flex-1 bg-white border-2 border-[#FF6F71] text-[#FF6F71] py-4 px-6 rounded-2xl font-medium hover:bg-[#FF6F71] hover:text-white transition-colors flex items-center justify-center"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-            </svg>
             아이 등록
           </button>
         </div>
