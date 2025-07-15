@@ -9,7 +9,8 @@ import {
   getForecastsByDate, 
   getForecastRecordsByDate,
   ForecastData,
-  ForecastRecordData
+  ForecastRecordData,
+  isAuthenticated
 } from "../auth/index"
 
 
@@ -92,11 +93,15 @@ export default function Register() {
     }
     
     console.log('Loading diary data for date:', date, 'childId:', selectedChild.id);
+    console.log('API_BASE_URL:', process.env.NEXT_PUBLIC_API_BASE_URL);
     setLoading(true)
     setError(null)
     
     try {
       console.log('Making API calls...');
+      console.log('Forecasts endpoint:', `/api/forecasts/${selectedChild.id}/${date}`);
+      console.log('Records endpoint:', `/api/forecastRecords/${selectedChild.id}/${date}`);
+      
       const [forecastsResponse, recordsResponse] = await Promise.all([
         getForecastsByDate(selectedChild.id, date),
         getForecastRecordsByDate(selectedChild.id, date)
@@ -119,6 +124,7 @@ export default function Register() {
         })
       } else {
         console.log('Forecasts API failed or no data:', forecastsResponse);
+        console.log('Forecasts error:', forecastsResponse.error);
       }
 
       // 예보 기록 데이터 처리
@@ -133,6 +139,7 @@ export default function Register() {
         })
       } else {
         console.log('Records API failed or no data:', recordsResponse);
+        console.log('Records error:', recordsResponse.error);
       }
 
       console.log('Final diary data:', newDiaryData);
@@ -213,6 +220,9 @@ export default function Register() {
   // 디버깅용 로그
   console.log('Home page - isLoading:', isLoading);
   console.log('Home page - selectedChild:', selectedChild);
+  console.log('Home page - isAuthenticated:', isAuthenticated());
+  console.log('Home page - localStorage isAuthenticated:', localStorage.getItem('isAuthenticated'));
+  console.log('Home page - localStorage authTimestamp:', localStorage.getItem('authTimestamp'));
 
   // 로딩 중일 때
   if (isLoading) {
