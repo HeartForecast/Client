@@ -164,9 +164,9 @@ function DeleteModal({ isOpen, childId, childName, onClose, onDeleteRelation, on
   )
 }
 
-export default function ChildrenListPage() {
+export default function SettingsPage() {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState('설정')
+  const [activeTab, setActiveTab] = useState('아이목록')
   const [openMenuId, setOpenMenuId] = useState<number | null>(null)
   const [childrenData, setChildrenData] = useState<ChildData[]>([])
   const [isLoading, setIsLoading] = useState(true)
