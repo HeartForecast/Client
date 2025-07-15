@@ -55,11 +55,17 @@ function AuthCallbackContent() {
           }),
         });
 
+        console.log('=== Backend Response Debug ===');
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const data = await response.json();
+        console.log('Response data:', data);
         
         if (data.success) {
           console.log('✅ Backend API call successful - authentication successful');
@@ -71,19 +77,15 @@ function AuthCallbackContent() {
           
           localStorage.setItem('isAuthenticated', 'true');
           localStorage.setItem('authTimestamp', Date.now().toString());
-          window.dispatchEvent(new Event('authStateChanged'));
-          window.location.reload(); // 강제 새로고침
           
           // 로컬스토리지 저장 후 확인
           console.log('After saving - isAuthenticated:', localStorage.getItem('isAuthenticated'));
           console.log('After saving - authTimestamp:', localStorage.getItem('authTimestamp'));
           console.log('All localStorage keys:', Object.keys(localStorage));
           
-          // AuthContext 강제 업데이트
-          notifyAuthStateChange();
-          
           setStatus('success');
           setMessage('로그인 성공! 홈으로 이동합니다.');
+          notifyAuthStateChange();
           setTimeout(() => {
             router.push('/home');
           }, 1500);

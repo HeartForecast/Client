@@ -32,19 +32,44 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     console.log('=== AuthContext checkAuth ===');
     console.log('Document available:', typeof document !== 'undefined');
     
-    // isAuthenticated 함수 사용 (로컬스토리지 기반)
-    const newLoginState = isAuthenticated();
+    // 백엔드 API를 호출해서 인증 상태 확인
+    const verifyAuth = async () => {
+      try {
+        console.log('Checking auth with backend...');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/check`, {
+          method: 'GET',
+          credentials: 'include', // HttpOnly 쿠키 포함
+        });
+        
+        console.log('Backend auth check response:', response.status, response.ok);
+        
+        if (response.ok) {
+          // 백엔드에서 인증 성공
+          localStorage.setItem('isAuthenticated', 'true');
+          localStorage.setItem('authTimestamp', Date.now().toString());
+          console.log('✅ Backend auth successful - setting localStorage');
+        } else {
+          // 백엔드에서 인증 실패
+          localStorage.removeItem('isAuthenticated');
+          localStorage.removeItem('authTimestamp');
+          console.log('❌ Backend auth failed - clearing localStorage');
+        }
+        
+        const newLoginState = response.ok;
+        console.log('Setting isLoggedIn to:', newLoginState);
+        
+        setIsLoggedIn(newLoginState);
+        setLoading(false);
+      } catch (error) {
+        console.error('Auth verification failed:', error);
+        localStorage.removeItem('isAuthenticated');
+        localStorage.removeItem('authTimestamp');
+        setIsLoggedIn(false);
+        setLoading(false);
+      }
+    };
     
-    // 디버깅을 위한 추가 로그
-    console.log('isAuthenticated() result:', newLoginState);
-    console.log('localStorage isAuthenticated:', localStorage.getItem('isAuthenticated'));
-    console.log('localStorage authTimestamp:', localStorage.getItem('authTimestamp'));
-    console.log('All localStorage keys:', Object.keys(localStorage));
-    
-    console.log('Setting isLoggedIn to:', newLoginState);
-    
-    setIsLoggedIn(newLoginState);
-    setLoading(false);
+    verifyAuth();
   };
 
   const logout = () => {
