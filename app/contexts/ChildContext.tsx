@@ -1,7 +1,6 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { isAuthenticated } from '../auth/index';
 
 interface ChildData {
   id: number;
@@ -29,18 +28,6 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
   // localStorage에서 상태 복원
   useEffect(() => {
     console.log('=== ChildContext useEffect running ===');
-    
-    // 인증 상태 확인
-    const authStatus = isAuthenticated();
-    console.log('Authentication status:', authStatus);
-    
-    if (!authStatus) {
-      console.log('User not authenticated, redirecting to login');
-      if (typeof window !== 'undefined') {
-        window.location.href = '/';
-      }
-      return;
-    }
     
     const savedChild = localStorage.getItem('selectedChild');
     const savedMode = localStorage.getItem('isChildMode');
@@ -76,11 +63,11 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
     }
 
-    // 안전장치: 5초 후에도 로딩이 끝나지 않으면 강제로 로딩 종료
+    // 안전장치: 3초 후에도 로딩이 끝나지 않으면 강제로 로딩 종료
     const timeout = setTimeout(() => {
       console.log('Loading timeout, forcing loading to false');
       setIsLoading(false);
-    }, 5000);
+    }, 3000);
 
     return () => {
       console.log('Clearing timeout');
