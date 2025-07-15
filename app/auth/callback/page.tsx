@@ -2,13 +2,17 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { API_BASE_URL } from '../../utils/api';
+import { API_BASE_URL, getCookie, setTokens } from '../../utils/api';
 
 function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('로그인 처리 중...');
+
+  const notifyAuthStateChange = () => {
+    window.dispatchEvent(new Event('authStateChanged'));
+  };
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -17,6 +21,12 @@ function AuthCallbackContent() {
         const code = searchParams.get('code');
         const error = searchParams.get('error');
         const state = searchParams.get('state');
+
+        console.log('=== OAuth Callback Debug ===');
+        console.log('Current URL:', window.location.href);
+        console.log('Code:', code);
+        console.log('State:', state);
+        console.log('Error:', error);
 
         if (error) {
           setStatus('error');
@@ -31,12 +41,13 @@ function AuthCallbackContent() {
           return;
         }
 
-        // 백엔드에 인증 코드 전송
+        // 백엔드에 인증 코드 전송 (쿠키 설정을 위해 credentials: 'include' 사용)
         const response = await fetch(`${API_BASE_URL}/api/auth/callback`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
+          credentials: 'include', // 쿠키 포함
           body: JSON.stringify({
             code,
             state,
@@ -51,21 +62,28 @@ function AuthCallbackContent() {
         const data = await response.json();
         
         if (data.success) {
-          setStatus('success');
-          setMessage('로그인 성공! 홈으로 이동합니다.');
-          
-          // 토큰을 로컬 스토리지에 저장
-          if (data.accessToken) {
-            localStorage.setItem('accessToken', data.accessToken);
+          // 백엔드에서 쿠키로 토큰을 설정했는지 확인
+          const accessToken = getCookie('access_social');
+          const refreshToken = getCookie('refresh_social');
+
+          console.log('=== Cookie Check After API Call ===');
+          console.log('Access Token from cookie:', accessToken ? 'Found' : 'Not found');
+          console.log('Refresh Token from cookie:', refreshToken ? 'Found' : 'Not found');
+
+          if (accessToken && refreshToken) {
+            console.log('✅ JWT tokens found in cookies - authentication successful');
+            setTokens(accessToken, refreshToken);
+            setStatus('success');
+            setMessage('로그인 성공! 홈으로 이동합니다.');
+            notifyAuthStateChange();
+            setTimeout(() => {
+              router.push('/home');
+            }, 1500);
+          } else {
+            console.log('❌ No JWT tokens in cookies after API call');
+            setStatus('error');
+            setMessage('인증 토큰을 받지 못했습니다. 다시 시도해주세요.');
           }
-          if (data.refreshToken) {
-            localStorage.setItem('refreshToken', data.refreshToken);
-          }
-          
-          // 홈 페이지로 리다이렉트
-          setTimeout(() => {
-            router.push('/home');
-          }, 1500);
         } else {
           throw new Error(data.message || '로그인 처리 중 오류가 발생했습니다.');
         }
