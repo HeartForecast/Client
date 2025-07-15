@@ -63,9 +63,19 @@ function AuthCallbackContent() {
         
         if (data.success) {
           console.log('✅ Backend API call successful - authentication successful');
+          console.log('Response data:', data);
+          
+          // 로컬스토리지 저장 전 확인
+          console.log('=== LocalStorage Save Debug ===');
+          console.log('Before saving - localStorage:', localStorage.getItem('isAuthenticated'));
           
           localStorage.setItem('isAuthenticated', 'true');
           localStorage.setItem('authTimestamp', Date.now().toString());
+          
+          // 로컬스토리지 저장 후 확인
+          console.log('After saving - isAuthenticated:', localStorage.getItem('isAuthenticated'));
+          console.log('After saving - authTimestamp:', localStorage.getItem('authTimestamp'));
+          console.log('All localStorage keys:', Object.keys(localStorage));
           
           setStatus('success');
           setMessage('로그인 성공! 홈으로 이동합니다.');
