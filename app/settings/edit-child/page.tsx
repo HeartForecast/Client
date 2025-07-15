@@ -7,64 +7,84 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Button from '../../components/Button';
 import Container from '../../components/Container';
 
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL
+
+interface ApiChildData {
+  id: number
+  username: string
+  birthdate: string
+  gender: string
+  healthInfo: string
+  createdAt: string
+  point: number
+  inviteCode: string
+}
+
 function EditChildPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const childId = searchParams.get('id');
-  
+
   const [currentDisplayStep, setCurrentDisplayStep] = useState(1);
   const [name, setName] = useState('');
   const [dob, setDob] = useState('');
   const [gender, setGender] = useState('');
   const [healthStatus, setHealthStatus] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const nameRef = useRef<HTMLInputElement>(null);
   const dobRef = useRef<HTMLInputElement>(null);
   const healthStatusRef = useRef<HTMLInputElement>(null);
   const nameAdvanceTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  const childrenData = [
-    {
-      id: 1,
-      name: '김민수',
-      age: 12,
-      dob: '2012-03-15',
-      gender: 'male',
-      healthStatus: '알레르기 없음',
-      registeredDate: '2024.03.15'
-    },
-    {
-      id: 2,
-      name: '김지은',
-      age: 15,
-      dob: '2009-01-20',
-      gender: 'female',
-      healthStatus: '천식',
-      registeredDate: '2024.01.20'
-    },
-    {
-      id: 3,
-      name: '이준호',
-      age: 8,
-      dob: '2016-05-10',
-      gender: 'male',
-      healthStatus: '특이사항 없음',
-      registeredDate: '2024.05.10'
-    }
-  ];
-
   useEffect(() => {
-    if (childId) {
-      const child = childrenData.find(c => c.id === parseInt(childId));
-      if (child) {
-        setName(child.name);
-        setDob(child.dob);
-        setGender(child.gender);
-        setHealthStatus(child.healthStatus);
+    const fetchChildData = async () => {
+      if (!childId) {
+        setError('아이 ID가 없습니다.');
+        setIsLoading(false);
+        return;
       }
-    }
-    setIsLoading(false);
+
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const response = await fetch(`${apiBaseUrl}/api/childRelations`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data: ApiChildData[] = await response.json();
+        const child = data.find(c => c.id === parseInt(childId));
+
+        if (!child) {
+          throw new Error('해당 아이를 찾을 수 없습니다.');
+        }
+
+        setName(child.username);
+        setDob(child.birthdate);
+        setGender(child.gender === '여성' ? 'female' : 'male');
+        setHealthStatus(child.healthInfo);
+
+      } catch (err) {
+        console.error('아이 정보 불러오기 실패:', err);
+        setError(err instanceof Error ? err.message : '아이 정보를 불러오는데 실패했습니다.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchChildData();
   }, [childId]);
 
   useEffect(() => {
@@ -93,10 +113,42 @@ function EditChildPageContent() {
     }
   };
 
-  const handleSave = () => {
-    console.log("자녀 정보 수정 완료:", { childId, name, dob, gender, healthStatus });
-    alert("자녀 정보가 수정되었습니다!");
-    router.push('/settings');
+  const handleSave = async () => {
+    if (!childId) return;
+
+    setIsSaving(true);
+    setError(null);
+
+    const payload = {
+      childId: parseInt(childId),
+      username: name,
+      birthdate: dob,
+      gender: gender === 'male' ? '남성' : '여성',
+      healthInfo: healthStatus
+    };
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/children/child`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error(`수정 실패: ${response.status}`);
+      }
+
+      alert("아이 정보가 수정되었습니다!");
+      router.push('/settings');
+    } catch (error) {
+      console.error("수정 실패:", error);
+      setError(error instanceof Error ? error.message : '아이 정보 수정에 실패했습니다.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -133,11 +185,49 @@ function EditChildPageContent() {
   if (isLoading) {
     return (
       <Container>
-        <div className="flex items-center justify-center min-h-screen">
+        <div className="w-full max-w-sm mx-auto">
+          <button className="mb-4 cursor-pointer" onClick={handleBack}>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        </div>
+        
+        <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF6F71] mx-auto mb-4"></div>
-            <p className="text-gray-600">정보를 불러오는 중...</p>
+            <p className="text-gray-600">아이 정보를 불러오는 중...</p>
           </div>
+        </div>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container>
+        <div className="w-full max-w-sm mx-auto">
+          <button className="mb-4 cursor-pointer" onClick={handleBack}>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        </div>
+        
+        <div className="flex flex-col items-center justify-center min-h-[60vh]">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+            <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">오류가 발생했습니다</h3>
+          <p className="text-sm text-gray-500 text-center mb-4">{error}</p>
+          <button 
+            onClick={() => router.push('/settings')}
+            className="px-4 py-2 bg-[#FF6F71] text-white rounded-lg hover:bg-[#e55a5c] transition-colors"
+          >
+            설정으로 돌아가기
+          </button>
         </div>
       </Container>
     );
@@ -156,8 +246,8 @@ function EditChildPageContent() {
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
         <div className="w-full mb-8">
           <span className="text-gray-500 font-medium text-sm">설정</span>
-          <h1 className="text-2xl font-semibold mb-3">자녀 정보 수정</h1>
-          <p className="text-sm text-gray-600">자녀의 정보를 수정해주세요</p>
+          <h1 className="text-2xl font-semibold mb-3">아이 정보 수정</h1>
+          <p className="text-sm text-gray-600">아이의 정보를 수정해주세요</p>
         </div>
         
         <AnimatePresence mode="wait" initial={false}>
@@ -320,10 +410,18 @@ function EditChildPageContent() {
             className="flex flex-col items-center w-full max-w-sm mt-auto mb-4"
           >
             <Button
-              className="flex w-full items-center justify-center gap-1 rounded-lg bg-[#FF6F71] text-white py-3 text-lg font-semibold mb-4"
+              className="flex w-full items-center justify-center gap-1 rounded-lg bg-[#FF6F71] text-white py-3 text-lg font-semibold mb-4 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={handleSave}
+              disabled={isSaving}
             >
-              수정 완료
+              {isSaving ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  수정 중...
+                </>
+              ) : (
+                '수정 완료'
+              )}
             </Button>
           </motion.div> 
         )}
