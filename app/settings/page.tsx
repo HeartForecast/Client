@@ -406,7 +406,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <Container className="bg-white">
+    <Container>
       <Toast
         message={toast.message}
         type={toast.type}
