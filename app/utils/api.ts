@@ -21,37 +21,106 @@ export const getCookie = (name: string): string | null => {
   return null;
 };
 
-// 토큰 관리 함수들 - 백엔드 쿠키 이름 그대로 사용
+// 토큰 관리 함수들 - HttpOnly 쿠키 사용으로 인증 상태만 확인
 export const getAccessToken = (): string | null => {
   if (typeof window === 'undefined') return null;
   
-  // 백엔드에서 설정한 쿠키 이름 그대로 사용
-  return getCookie('access_social');
+  // HttpOnly 쿠키는 JavaScript에서 읽을 수 없으므로
+  // 로컬스토리지의 인증 상태만 확인
+  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+  const authTimestamp = localStorage.getItem('authTimestamp');
+  
+  if (!isAuthenticated || !authTimestamp) {
+    return null;
+  }
+  
+  // 인증 상태가 24시간 이내인지 확인
+  const authAge = Date.now() - parseInt(authTimestamp);
+  const isRecentAuth = authAge < 24 * 60 * 60 * 1000; // 24시간
+  
+  if (!isRecentAuth) {
+    // 만료된 인증 상태 삭제
+    clearTokens();
+    return null;
+  }
+  
+  // HttpOnly 쿠키는 백엔드에서만 읽을 수 있으므로
+  // 인증 상태만 반환 (실제 토큰은 백엔드에서 처리)
+  return 'authenticated';
 };
 
 export const getRefreshToken = (): string | null => {
   if (typeof window === 'undefined') return null;
   
-  // 백엔드에서 설정한 쿠키 이름 그대로 사용
-  return getCookie('refresh_social');
+  // HttpOnly 쿠키는 JavaScript에서 읽을 수 없으므로
+  // 로컬스토리지의 인증 상태만 확인
+  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+  const authTimestamp = localStorage.getItem('authTimestamp');
+  
+  if (!isAuthenticated || !authTimestamp) {
+    return null;
+  }
+  
+  // 인증 상태가 24시간 이내인지 확인
+  const authAge = Date.now() - parseInt(authTimestamp);
+  const isRecentAuth = authAge < 24 * 60 * 60 * 1000; // 24시간
+  
+  if (!isRecentAuth) {
+    // 만료된 인증 상태 삭제
+    clearTokens();
+    return null;
+  }
+  
+  // HttpOnly 쿠키는 백엔드에서만 읽을 수 있으므로
+  // 인증 상태만 반환 (실제 토큰은 백엔드에서 처리)
+  return 'authenticated';
 };
 
-// 토큰 설정 함수 - 백엔드에서 쿠키로 관리하므로 빈 함수
+// 토큰 설정 함수 - HttpOnly 쿠키 사용으로 인증 상태만 저장
 export const setTokens = (accessToken: string, refreshToken?: string) => {
-  // 백엔드에서 쿠키로 설정하므로 프론트엔드에서는 설정하지 않음
-  console.log('Tokens are managed by backend cookies');
+  if (typeof window === 'undefined') return;
+  
+  // HttpOnly 쿠키는 백엔드에서 설정하므로
+  // 프론트엔드에서는 인증 상태만 저장
+  localStorage.setItem('isAuthenticated', 'true');
+  localStorage.setItem('authTimestamp', Date.now().toString());
+  
+  console.log('Authentication state saved to localStorage');
 };
 
 export const clearTokens = () => {
   if (typeof window === 'undefined') return;
   
-  // 백엔드 쿠키 이름 그대로 사용하여 삭제
+  // 백엔드 쿠키 삭제 (가능한 경우)
   document.cookie = 'access_social=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
   document.cookie = 'refresh_social=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+  
+  // 로컬스토리지의 인증 상태 삭제
+  localStorage.removeItem('isAuthenticated');
+  localStorage.removeItem('authTimestamp');
 };
 
 export const isAuthenticated = (): boolean => {
-  return getAccessToken() !== null;
+  if (typeof window === 'undefined') return false;
+  
+  const isAuthInStorage = localStorage.getItem('isAuthenticated') === 'true';
+  const authTimestamp = localStorage.getItem('authTimestamp');
+  
+  if (!isAuthInStorage || !authTimestamp) {
+    return false;
+  }
+  
+  // 인증 상태가 24시간 이내인지 확인
+  const authAge = Date.now() - parseInt(authTimestamp);
+  const isRecentAuth = authAge < 24 * 60 * 60 * 1000; // 24시간
+  
+  if (!isRecentAuth) {
+    // 만료된 인증 상태 삭제
+    clearTokens();
+    return false;
+  }
+  
+  return true;
 };
 
 // API 응답 타입 정의
@@ -68,8 +137,8 @@ export const authenticatedApiRequest = async <T>(
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> => {
   try {
-    const accessToken = getAccessToken();
-    if (!accessToken) {
+    // HttpOnly 쿠키를 사용하므로 인증 상태만 확인
+    if (!isAuthenticated()) {
       throw new Error('인증 토큰이 없습니다.');
     }
 
@@ -77,10 +146,9 @@ export const authenticatedApiRequest = async <T>(
     const response = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`,
         ...options.headers,
       },
-      credentials: 'include', // 쿠키 포함
+      credentials: 'include', // HttpOnly 쿠키 자동 포함
       ...options,
     });
 

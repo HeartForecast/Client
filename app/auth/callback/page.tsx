@@ -62,28 +62,17 @@ function AuthCallbackContent() {
         const data = await response.json();
         
         if (data.success) {
-          // 백엔드에서 쿠키로 토큰을 설정했는지 확인
-          const accessToken = getCookie('access_social');
-          const refreshToken = getCookie('refresh_social');
-
-          console.log('=== Cookie Check After API Call ===');
-          console.log('Access Token from cookie:', accessToken ? 'Found' : 'Not found');
-          console.log('Refresh Token from cookie:', refreshToken ? 'Found' : 'Not found');
-
-          if (accessToken && refreshToken) {
-            console.log('✅ JWT tokens found in cookies - authentication successful');
-            setTokens(accessToken, refreshToken);
-            setStatus('success');
-            setMessage('로그인 성공! 홈으로 이동합니다.');
-            notifyAuthStateChange();
-            setTimeout(() => {
-              router.push('/home');
-            }, 1500);
-          } else {
-            console.log('❌ No JWT tokens in cookies after API call');
-            setStatus('error');
-            setMessage('인증 토큰을 받지 못했습니다. 다시 시도해주세요.');
-          }
+          console.log('✅ Backend API call successful - authentication successful');
+          
+          localStorage.setItem('isAuthenticated', 'true');
+          localStorage.setItem('authTimestamp', Date.now().toString());
+          
+          setStatus('success');
+          setMessage('로그인 성공! 홈으로 이동합니다.');
+          notifyAuthStateChange();
+          setTimeout(() => {
+            router.push('/home');
+          }, 1500);
         } else {
           throw new Error(data.message || '로그인 처리 중 오류가 발생했습니다.');
         }

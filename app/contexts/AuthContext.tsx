@@ -29,13 +29,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const checkAuth = () => {
-    // JWT 토큰만 확인 (세션 기반 인증 제거)
-    const token = getAccessToken();
-    const newLoginState = !!token;
+    console.log('=== AuthContext checkAuth ===');
+    console.log('Document available:', typeof document !== 'undefined');
+    
+    const newLoginState = isAuthenticated();
+    console.log('Setting isLoggedIn to:', newLoginState);
+    
     setIsLoggedIn(newLoginState);
     setLoading(false);
-    
-    console.log('Auth check:', { token: !!token, isLoggedIn: newLoginState });
   };
 
   const logout = () => {
@@ -54,10 +55,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       checkAuth();
     };
 
-    // storage 이벤트 리스너 (다른 탭에서의 변경 감지)
     window.addEventListener('storage', handleStorageChange);
     
-    // 현재 탭에서의 변경 감지를 위한 커스텀 이벤트
     window.addEventListener('authStateChanged', handleStorageChange);
 
     return () => {
