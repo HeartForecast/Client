@@ -1,7 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getChildRelations, ChildRelationData, isAuthenticated } from '../auth/index';
+import { isAuthenticated } from '../auth/index';
 
 interface ChildData {
   id: number;
@@ -26,45 +26,7 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
   const [isChildMode, setIsChildMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 아이 목록 가져오기
-  const loadChildRelations = async () => {
-    try {
-      console.log('Loading child relations...');
-      const response = await getChildRelations();
-      console.log('Child relations response:', response);
-      
-      if (response.success && response.data && response.data.length > 0) {
-        const firstChild = response.data[0];
-        
-        // 나이 계산
-        const birthDate = new Date(firstChild.birthdate);
-        const today = new Date();
-        const age = today.getFullYear() - birthDate.getFullYear();
-        const monthDiff = today.getMonth() - birthDate.getMonth();
-        const actualAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate()) ? age - 1 : age;
-        
-        const childData: ChildData = {
-          id: firstChild.id,
-          name: firstChild.username,
-          age: actualAge,
-          registeredDate: firstChild.createdAt.split('T')[0]
-        };
-        
-        console.log('Setting first child:', childData);
-        setSelectedChild(childData);
-        localStorage.setItem('selectedChild', JSON.stringify(childData));
-      } else {
-        console.log('No child relations found or API failed');
-      }
-    } catch (error) {
-      console.error('Failed to load child relations:', error);
-    } finally {
-      console.log('Setting loading to false');
-      setIsLoading(false);
-    }
-  };
-
-  // localStorage에서 상태 복원 및 자동 선택
+  // localStorage에서 상태 복원
   useEffect(() => {
     console.log('ChildContext useEffect running');
     
@@ -93,9 +55,8 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
       setSelectedChild(JSON.parse(savedChild));
       setIsLoading(false);
     } else {
-      console.log('No saved child, loading first child');
-      // 저장된 아이가 없으면 첫 번째 아이 자동 선택
-      loadChildRelations();
+      console.log('No saved child, setting loading to false');
+      setIsLoading(false);
     }
 
     // 안전장치: 10초 후에도 로딩이 끝나지 않으면 강제로 로딩 종료
