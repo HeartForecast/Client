@@ -155,7 +155,25 @@ export const authenticatedApiRequest = async <T>(
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const data = await response.json();
+    // 응답 텍스트를 먼저 확인
+    const responseText = await response.text();
+    
+    // 빈 응답인 경우 성공으로 처리
+    if (!responseText) {
+      return { success: true, data: undefined };
+    }
+
+    // JSON 파싱 시도
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      console.log('Raw response text:', responseText);
+      // 파싱 실패해도 성공으로 처리 (빈 응답이 정상인 경우)
+      return { success: true, data: undefined };
+    }
+    
     return { success: true, data };
   } catch (error) {
     console.error('Authenticated API request failed:', error);
