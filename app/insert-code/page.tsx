@@ -55,21 +55,53 @@ export default function Register() {
       setIsLoading(true);
       setError(null);
       
+      console.log('API 호출 정보:', {
+        url: `${apiBaseUrl}/api/childRelations/childRelation`,
+        inviteCode: inviteCode,
+        apiBaseUrl: apiBaseUrl
+      });
+      
       const response = await fetch(`${apiBaseUrl}/api/childRelations/childRelation`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // 쿠키 포함
         body: JSON.stringify({
           inviteCode: inviteCode
         })
       });
 
+      console.log('API 응답:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
+      });
+
       if (!response.ok) {
-        throw new Error('잘못된 초대 코드입니다.');
+        const errorText = await response.text();
+        console.error('API 에러 응답:', errorText);
+        
+        if (response.status === 409) {
+          throw new Error('이미 등록된 아이입니다.');
+        } else {
+          throw new Error(`잘못된 초대 코드입니다. (${response.status})`);
+        }
       }
 
-      const data = await response.json();
+      // 성공 시 응답 본문이 있을 때만 JSON 파싱
+      let data = null;
+      const responseText = await response.text();
+      if (responseText) {
+        try {
+          data = JSON.parse(responseText);
+          console.log('API 성공 응답:', data);
+        } catch (parseError) {
+          console.log('응답 본문이 JSON이 아니거나 비어있음:', responseText);
+        }
+      } else {
+        console.log('응답 본문이 비어있음 - 성공으로 처리');
+      }
       
       // 임시로 하드코딩된 아이 정보 (실제로는 API 응답에서 받아와야 함)
       setChildInfo({
