@@ -36,12 +36,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const verifyAuth = async () => {
       try {
         console.log('Checking auth with backend...');
+        console.log('API_BASE_URL:', process.env.NEXT_PUBLIC_API_BASE_URL);
+        console.log('Full URL:', `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/check`);
+        
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/check`, {
           method: 'GET',
           credentials: 'include', // HttpOnly 쿠키 포함
         });
-        
-        console.log('Backend auth check response:', response.status, response.ok);
         
         if (response.ok) {
           // 백엔드에서 인증 성공
