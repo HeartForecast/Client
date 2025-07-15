@@ -113,6 +113,19 @@ export const createChild = async (childData: ChildCreateRequest): Promise<ApiRes
   });
 };
 
+// 아이 관계 API 타입 정의
+export interface ChildRelationData {
+  id: number;
+  username: string;
+  birthdate: string;
+  createdAt: string;
+}
+
+// 아이 관계 API 함수
+export const getChildRelations = async (): Promise<ApiResponse<ChildRelationData[]>> => {
+  return authenticatedApiRequest<ChildRelationData[]>('/api/childRelations');
+};
+
 // 통계 API 타입 정의
 export interface DailyTemperatureData {
   date: string;

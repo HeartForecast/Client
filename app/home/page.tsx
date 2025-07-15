@@ -32,7 +32,7 @@ interface DiaryData {
 
 export default function Register() {
   const router = useRouter()
-  const { isChildMode, selectedChild, exitChildMode, enterChildMode } = useChild();
+  const { isChildMode, selectedChild, isLoading, exitChildMode, enterChildMode } = useChild();
   const [childName, setChildName] = useState('')
   const [activeTab, setActiveTab] = useState('홈')
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
@@ -86,21 +86,30 @@ export default function Register() {
 
   // 데이터 로딩 함수
   const loadDiaryData = async (date: string) => {
-    if (!selectedChild?.id) return
+    if (!selectedChild?.id) {
+      console.log('No selected child, cannot load diary data');
+      return;
+    }
     
+    console.log('Loading diary data for date:', date, 'childId:', selectedChild.id);
     setLoading(true)
     setError(null)
     
     try {
+      console.log('Making API calls...');
       const [forecastsResponse, recordsResponse] = await Promise.all([
         getForecastsByDate(selectedChild.id, date),
         getForecastRecordsByDate(selectedChild.id, date)
       ])
 
+      console.log('Forecasts response:', forecastsResponse);
+      console.log('Records response:', recordsResponse);
+
       const newDiaryData: DiaryData = {}
 
       // 예보 데이터 처리
       if (forecastsResponse.success && forecastsResponse.data) {
+        console.log('Processing forecasts data:', forecastsResponse.data);
         forecastsResponse.data.forEach(forecast => {
           const timeZone = forecast.timeZone as 'morning' | 'afternoon' | 'evening'
           if (!newDiaryData[timeZone]) {
@@ -108,10 +117,13 @@ export default function Register() {
           }
           newDiaryData[timeZone]!.forecast = forecast
         })
+      } else {
+        console.log('Forecasts API failed or no data:', forecastsResponse);
       }
 
       // 예보 기록 데이터 처리
       if (recordsResponse.success && recordsResponse.data) {
+        console.log('Processing records data:', recordsResponse.data);
         recordsResponse.data.forEach(record => {
           const timeZone = record.timeZone as 'morning' | 'afternoon' | 'evening'
           if (!newDiaryData[timeZone]) {
@@ -119,16 +131,19 @@ export default function Register() {
           }
           newDiaryData[timeZone]!.record = record
         })
+      } else {
+        console.log('Records API failed or no data:', recordsResponse);
       }
 
+      console.log('Final diary data:', newDiaryData);
       setDiaryData(prev => ({
         ...prev,
         [date]: newDiaryData
       }))
 
     } catch (err) {
+      console.error('Diary loading error:', err);
       setError('일기 데이터를 불러오는데 실패했습니다.')
-      console.error('Diary loading error:', err)
     } finally {
       setLoading(false)
     }
@@ -139,14 +154,23 @@ export default function Register() {
   };
 
   const handleDateClick = async (date: Date) => {
+    console.log('Date clicked:', date);
+    console.log('Is past date:', isPastDate(date));
+    
     if (isPastDate(date)) {
       const dateStr = formatDate(date);
+      console.log('Formatted date:', dateStr);
       setSelectedDate(dateStr);
       
       // 데이터가 없으면 로딩
       if (!diaryData[dateStr]) {
+        console.log('No cached data, loading diary data...');
         await loadDiaryData(dateStr);
+      } else {
+        console.log('Using cached data:', diaryData[dateStr]);
       }
+    } else {
+      console.log('Date is not in the past, ignoring click');
     }
   };
 
@@ -185,6 +209,51 @@ export default function Register() {
       enterChildMode(selectedChild);
     }
   };
+
+  // 디버깅용 로그
+  console.log('Home page - isLoading:', isLoading);
+  console.log('Home page - selectedChild:', selectedChild);
+
+  // 로딩 중일 때
+  if (isLoading) {
+    return (
+      <Container className="bg-white">
+        <div className="flex flex-col items-center justify-center flex-grow w-full max-w-sm mx-auto mt-4">
+          <div className="text-gray-400 mb-2">
+            <svg className="w-8 h-8 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </div>
+          <p className="text-gray-500 text-sm">아이 정보를 불러오는 중...</p>
+        </div>
+      </Container>
+    );
+  }
+
+  // 선택된 아이가 없을 때
+  if (!selectedChild) {
+    return (
+      <Container className="bg-white">
+        <div className="flex flex-col items-center justify-center flex-grow w-full max-w-sm mx-auto mt-4">
+          <div className="text-gray-400 mb-4">
+            <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </div>
+          <p className="text-gray-600 text-lg font-medium mb-2">선택된 아이가 없습니다</p>
+          <p className="text-gray-500 text-sm text-center mb-4">
+            아이 목록에서 아이를 선택해주세요
+          </p>
+          <button
+            onClick={() => router.push('/settings')}
+            className="px-6 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600"
+          >
+            아이 목록으로 이동
+          </button>
+        </div>
+      </Container>
+    );
+  }
 
   return (
     <Container className="bg-white">
