@@ -71,6 +71,8 @@ function AuthCallbackContent() {
           
           localStorage.setItem('isAuthenticated', 'true');
           localStorage.setItem('authTimestamp', Date.now().toString());
+          window.dispatchEvent(new Event('authStateChanged'));
+          window.location.reload(); // 강제 새로고침
           
           // 로컬스토리지 저장 후 확인
           console.log('After saving - isAuthenticated:', localStorage.getItem('isAuthenticated'));
