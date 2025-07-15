@@ -60,18 +60,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // localStorage 변경 감지
   useEffect(() => {
     const handleStorageChange = () => {
+      console.log('=== Storage change detected ===');
       checkAuth();
     };
 
+    // storage 이벤트 리스너 (다른 탭에서의 변경 감지)
     window.addEventListener('storage', handleStorageChange);
     
+    // 현재 탭에서의 변경 감지를 위한 커스텀 이벤트
     window.addEventListener('authStateChanged', handleStorageChange);
+    
+    // 주기적으로 인증 상태 확인 (개발용)
+    const interval = setInterval(() => {
+      const currentAuth = isAuthenticated();
+      if (currentAuth !== isLoggedIn) {
+        console.log('Auth state changed from', isLoggedIn, 'to', currentAuth);
+        checkAuth();
+      }
+    }, 1000); // 1초마다 확인
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('authStateChanged', handleStorageChange);
+      clearInterval(interval);
     };
-  }, []);
+  }, [isLoggedIn]);
 
   const value: AuthContextType = {
     isLoggedIn,
