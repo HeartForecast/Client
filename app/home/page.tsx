@@ -4,124 +4,43 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Container from "../components/Container"
 import NavigationBar from "../components/NavigationBar"
-import { useChild } from "../contexts/ChildContext";
+import { useChild } from "../contexts/ChildContext"
+import { 
+  getForecastsByDate, 
+  getForecastRecordsByDate,
+  ForecastData,
+  ForecastRecordData
+} from "../auth/index"
 
-const EMOTION_COLORS = {
-  즐거움: '#3DC8EF',
-  슬픔: '#FF7B6F',
-  중립: '#FFD340'
-};
 
-const diaryData: Record<string, {
-  morning: {
-    predictedEmotions: Array<{emotion: string, category: string}>;
-    predictedText: string;
-    actualEmotions: Array<{emotion: string, category: string}>;
-    actualText: string;
+
+// API 데이터 타입 정의
+interface DiaryData {
+  morning?: {
+    forecast?: ForecastData;
+    record?: ForecastRecordData;
   };
-  afternoon: {
-    predictedEmotions: Array<{emotion: string, category: string}>;
-    predictedText: string;
-    actualEmotions: Array<{emotion: string, category: string}>;
-    actualText: string;
+  afternoon?: {
+    forecast?: ForecastData;
+    record?: ForecastRecordData;
   };
-  evening: {
-    predictedEmotions: Array<{emotion: string, category: string}>;
-    predictedText: string;
-    actualEmotions: Array<{emotion: string, category: string}>;
-    actualText: string;
+  evening?: {
+    forecast?: ForecastData;
+    record?: ForecastRecordData;
   };
-}> = {
-  '2025-07-13': {
-    morning: {
-      predictedEmotions: [{ emotion: '기대되는', category: '즐거움' }],
-      predictedText: '오늘은 친구들과 만나서 즐거운 시간을 보낼 것 같아요! 새로운 장소도 가보고 맛있는 음식도 먹으면서 정말 행복한 하루가 될 것 같습니다.',
-      actualEmotions: [{ emotion: '설레는', category: '즐거움' }],
-      actualText: '아침부터 친구들 만날 생각에 정말 설렜어요. 오랜만에 만나는 친구들이라 더욱 기대되었고 어떤 이야기를 나눌지 상상만 해도 즐거웠습니다.'
-    },
-    afternoon: {
-      predictedEmotions: [{ emotion: '활발한', category: '즐거움' }],
-      predictedText: '체육시간에 운동하면서 활기찬 오후가 될 것 같아요. 친구들과 함께 뛰어놀면서 스트레스도 풀고 건강도 챙길 수 있을 것 같습니다.',
-      actualEmotions: [{ emotion: '신나는', category: '즐거움' }, { emotion: '즐거운', category: '즐거움' }],
-      actualText: '체육시간에 축구했는데 너무 재미있었어요! 친구들과 같이 웃으면서 놀았고 골도 넣어서 정말 신났습니다. 오랜만에 이렇게 즐거운 시간을 보냈어요.'
-    },
-    evening: {
-      predictedEmotions: [{ emotion: '만족스러운', category: '즐거움' }],
-      predictedText: '하루를 정리하면서 뿌듯한 저녁이 될 것 같아요. 친구들과 보낸 시간을 떠올리며 오늘 하루에 대해 만족스러운 마음이 들 것 같습니다.',
-      actualEmotions: [{ emotion: '행복한', category: '즐거움' }],
-      actualText: '정말 완벽한 하루였어요. 친구들과 보낸 시간이 너무 소중했고 오랜만에 이렇게 행복한 기분을 느꼈습니다. 내일도 이런 날이었으면 좋겠어요.'
-    }
-  },
-  '2025-07-12': {
-    morning: {
-      predictedEmotions: [{ emotion: '평온한', category: '중립' }],
-      predictedText: '미술시간이 있어서 차분하고 집중된 아침이 될 것 같아요. 그림을 그리면서 마음을 안정시키고 창의적인 생각을 할 수 있을 것 같습니다.',
-      actualEmotions: [{ emotion: '집중된', category: '중립' }],
-      actualText: '미술시간에 풍경화를 그렸는데 정말 집중해서 그렸어요. 색칠하는 동안 마음이 차분해지고 평온한 기분이 들었습니다. 시간가는 줄 몰랐어요.'
-    },
-    afternoon: {
-      predictedEmotions: [{ emotion: '창의적인', category: '즐거움' }],
-      predictedText: '오후에는 더 창의적인 활동을 할 수 있을 것 같아요. 새로운 아이디어들이 떠올라서 더욱 흥미로운 작품을 만들 수 있을 것 같습니다.',
-      actualEmotions: [{ emotion: '어려운', category: '슬픔' }],
-      actualText: '그림이 생각보다 너무 어려웠어요. 계속 지우고 다시 그렸는데도 만족스럽지 않았습니다. 다른 친구들은 잘 그리는 것 같은데 저만 못하는 것 같았어요.'
-    },
-    evening: {
-      predictedEmotions: [{ emotion: '뿌듯한', category: '즐거움' }],
-      predictedText: '완성된 작품을 보면서 성취감을 느낄 것 같아요. 오늘 하루 열심히 노력한 결과물을 보며 뿌듯한 마음이 들 것 같습니다.',
-      actualEmotions: [{ emotion: '기쁜', category: '즐거움' }],
-      actualText: '선생님이 제 그림을 칭찬해주셔서 정말 기뻤어요! 어려웠지만 포기하지 않고 끝까지 완성해서 뿌듯했습니다. 다음에도 더 열심히 해보고 싶어요.'
-    }
-  },
-  '2025-07-11': {
-    morning: {
-      predictedEmotions: [{ emotion: '걱정되는', category: '슬픔' }],
-      predictedText: '수학 시험이 있어서 조금 걱정되네요. 어려운 문제들이 나올까봐 불안하고 준비를 충분히 했는지 확신이 서지 않습니다.',
-      actualEmotions: [{ emotion: '긴장된', category: '슬픔' }],
-      actualText: '아침부터 시험 때문에 정말 긴장되었어요. 밤새 공부했는데도 자신이 없었고 시험장에 들어가기 전까지 계속 떨렸습니다. 손에 땀이 날 정도로 긴장했어요.'
-    },
-    afternoon: {
-      predictedEmotions: [{ emotion: '어려운', category: '슬픔' }],
-      predictedText: '시험 문제가 어려울 것 같아요. 평소보다 더 복잡한 문제들이 나와서 시간 안에 다 풀지 못할 것 같은 불안감이 듭니다.',
-      actualEmotions: [{ emotion: '당황스러운', category: '슬픔' }],
-      actualText: '시험 문제가 예상보다 훨씬 어려워서 당황했어요. 처음 보는 유형의 문제들이 많았고 시간도 부족해서 마지막 문제는 거의 찍었습니다. 정말 힘들었어요.'
-    },
-    evening: {
-      predictedEmotions: [{ emotion: '후회되는', category: '슬픔' }],
-      predictedText: '더 열심히 공부하지 못한 것이 후회될 것 같아요. 시험을 치고 나서 틀린 것들을 생각하면 아쉬운 마음이 들 것 같습니다.',
-      actualEmotions: [{ emotion: '안도하는', category: '중립' }],
-      actualText: '시험이 끝나니까 일단 안도되었어요. 결과는 기다려봐야겠지만 최선을 다했으니 후회는 없습니다. 다음엔 더 준비를 철저히 해야겠어요.'
-    }
-  },
-  '2025-07-10': {
-    morning: {
-      predictedEmotions: [{ emotion: '상쾌한', category: '즐거움' }],
-      predictedText: '토요일 아침, 늦잠 자고 일어나서 기분이 좋을 것 같아요. 평일보다 여유롭게 시작하는 하루라서 더욱 상쾌할 것 같습니다.',
-      actualEmotions: [{ emotion: '개운한', category: '즐거움' }],
-      actualText: '푹 자고 일어나니까 정말 개운했어요. 알람 소리에 급하게 일어나지 않아도 되니까 몸도 마음도 편했습니다. 오랜만에 이렇게 여유로운 아침이었어요.'
-    },
-    afternoon: {
-      predictedEmotions: [{ emotion: '여유로운', category: '중립' }],
-      predictedText: '주말이라 여유롭게 보낼 수 있을 것 같아요. 평소에 못했던 취미활동도 하고 책도 읽으면서 편안한 시간을 보낼 수 있을 것 같습니다.',
-      actualEmotions: [{ emotion: '편안한', category: '중립' }],
-      actualText: '집에서 편하게 쉬면서 여유로운 오후를 보냈어요. 좋아하는 음악을 들으며 책을 읽고 간식도 먹으면서 정말 평화로운 시간이었습니다.'
-    },
-    evening: {
-      predictedEmotions: [{ emotion: '즐거운', category: '즐거움' }],
-      predictedText: '가족과 함께 시간을 보내며 즐거운 저녁이 될 것 같아요. 평소에 바빠서 못했던 대화도 나누고 함께 활동할 수 있을 것 같습니다.',
-      actualEmotions: [{ emotion: '따뜻한', category: '즐거움' }],
-      actualText: '가족들과 함께 영화를 보면서 따뜻한 시간을 보냈어요. 팝콘도 먹고 함께 웃으면서 정말 행복했습니다. 이런 시간이 더 많았으면 좋겠어요.'
-    }
-  }
-};
+}
 
 export default function Register() {
   const router = useRouter()
   const { isChildMode, selectedChild, exitChildMode, enterChildMode } = useChild();
-  const [childName, setChildName] = useState('신희성')
+  const [childName, setChildName] = useState('')
   const [activeTab, setActiveTab] = useState('홈')
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<'morning' | 'afternoon' | 'evening'>('morning')
   const [currentMonth, setCurrentMonth] = useState(new Date())
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [diaryData, setDiaryData] = useState<Record<string, DiaryData>>({})
 
   const generateCalendarDays = () => {
     const year = currentMonth.getFullYear();
@@ -165,14 +84,69 @@ export default function Register() {
     return date.getMonth() === currentMonth.getMonth();
   };
 
+  // 데이터 로딩 함수
+  const loadDiaryData = async (date: string) => {
+    if (!selectedChild?.id) return
+    
+    setLoading(true)
+    setError(null)
+    
+    try {
+      const [forecastsResponse, recordsResponse] = await Promise.all([
+        getForecastsByDate(selectedChild.id, date),
+        getForecastRecordsByDate(selectedChild.id, date)
+      ])
+
+      const newDiaryData: DiaryData = {}
+
+      // 예보 데이터 처리
+      if (forecastsResponse.success && forecastsResponse.data) {
+        forecastsResponse.data.forEach(forecast => {
+          const timeZone = forecast.timeZone as 'morning' | 'afternoon' | 'evening'
+          if (!newDiaryData[timeZone]) {
+            newDiaryData[timeZone] = {}
+          }
+          newDiaryData[timeZone]!.forecast = forecast
+        })
+      }
+
+      // 예보 기록 데이터 처리
+      if (recordsResponse.success && recordsResponse.data) {
+        recordsResponse.data.forEach(record => {
+          const timeZone = record.timeZone as 'morning' | 'afternoon' | 'evening'
+          if (!newDiaryData[timeZone]) {
+            newDiaryData[timeZone] = {}
+          }
+          newDiaryData[timeZone]!.record = record
+        })
+      }
+
+      setDiaryData(prev => ({
+        ...prev,
+        [date]: newDiaryData
+      }))
+
+    } catch (err) {
+      setError('일기 데이터를 불러오는데 실패했습니다.')
+      console.error('Diary loading error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const hasDiary = (date: Date) => {
     return isPastDate(date) && diaryData[formatDate(date)];
   };
 
-  const handleDateClick = (date: Date) => {
+  const handleDateClick = async (date: Date) => {
     if (isPastDate(date)) {
       const dateStr = formatDate(date);
       setSelectedDate(dateStr);
+      
+      // 데이터가 없으면 로딩
+      if (!diaryData[dateStr]) {
+        await loadDiaryData(dateStr);
+      }
     }
   };
 
@@ -184,33 +158,26 @@ export default function Register() {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1));
   };
 
-  const analyzeEmotionComparison = (predicted: Array<{emotion: string, category: string}>, actual: Array<{emotion: string, category: string}>) => {
-    const predictedCategories = predicted.map(p => p.category);
-    const actualCategories = actual.map(a => a.category);
-    
-    const matchedCategories = predictedCategories.filter(cat => actualCategories.includes(cat));
-    const matchPercentage = (matchedCategories.length / Math.max(predictedCategories.length, actualCategories.length)) * 100;
-    
-    if (matchPercentage >= 80) {
-      return { status: 'excellent', message: '예측이 매우 정확했어요!', color: 'text-green-600' };
-    } else if (matchPercentage >= 50) {
-      return { status: 'good', message: '예측이 어느 정도 맞았어요', color: 'text-blue-600' };
-    } else {
-      return { status: 'different', message: '예측과 실제가 달랐어요', color: 'text-orange-600' };
-    }
-  };
+
 
   const calendarDays = generateCalendarDays();
   const selectedDiary = selectedDate ? diaryData[selectedDate] : null;
 
   const timeSlots = [
-    { key: 'morning', label: '아침', time: '오전' },
-    { key: 'afternoon', label: '점심', time: '오후' },
-    { key: 'evening', label: '저녁', time: '저녁' }
+    { key: 'morning', label: '아침' },
+    { key: 'afternoon', label: '점심' },
+    { key: 'evening', label: '저녁' }
   ];
 
   // 선택된 아이 이름 표시 (아이 모드일 때는 selectedChild, 보호자 모드일 때는 기본값)
   const displayChildName = isChildMode && selectedChild ? selectedChild.name : (selectedChild ? selectedChild.name : childName);
+
+  // 선택된 아이가 변경될 때 이름 업데이트
+  useEffect(() => {
+    if (selectedChild?.name) {
+      setChildName(selectedChild.name);
+    }
+  }, [selectedChild?.name]);
 
   // 아이 모드 전환 함수
   const handleEnterChildMode = () => {
@@ -314,7 +281,7 @@ export default function Register() {
           </div>
         )}
 
-        {selectedDate && selectedDiary && (
+        {selectedDate && (
           <div className="w-full space-y-4">
             <div className="text-xs text-gray-400 mb-2">
               {new Date(selectedDate).toLocaleDateString('ko-KR', { 
@@ -325,41 +292,91 @@ export default function Register() {
               })}
             </div>
 
-            <div className="w-full">
-              <div className="text-lg font-semibold text-gray-800 mb-2">
-                {timeSlots.find(t => t.key === selectedTimeSlot)?.label} 기록
+            {/* 로딩 상태 */}
+            {loading && (
+              <div className="w-full text-center py-8">
+                <div className="text-gray-400 mb-2">
+                  <svg className="w-8 h-8 mx-auto animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </div>
+                <p className="text-gray-500 text-sm">일기 데이터를 불러오는 중...</p>
               </div>
+            )}
+
+            {/* 에러 상태 */}
+            {error && (
+              <div className="w-full text-center py-8">
+                <div className="text-red-400 mb-2">
+                  <svg className="w-8 h-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <p className="text-red-500 text-sm">{error}</p>
+                <button 
+                  onClick={() => selectedDate && loadDiaryData(selectedDate)}
+                  className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600"
+                >
+                  다시 시도
+                </button>
+              </div>
+            )}
+
+            {/* 데이터 표시 */}
+            {!loading && !error && selectedDiary && (
+              <div className="w-full">
+                <div className="text-lg font-semibold text-gray-800 mb-2">
+                  {timeSlots.find(t => t.key === selectedTimeSlot)?.label} 기록
+                </div>
               
               {(() => {
                 const timeData = selectedDiary[selectedTimeSlot];
                 
+                if (!timeData) {
+                  return (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500 text-sm">해당 시간대의 데이터가 없습니다.</p>
+                    </div>
+                  );
+                }
+                
                 return (
                   <div className="space-y-3">
-                    <div className="bg-white rounded-2xl p-5 border border-gray-100">
-                      <div className="mb-3">
-                        <span className="text-sm text-gray-400">
-                          {timeData.predictedEmotions.map(e => e.emotion).join(', ')}
-                        </span>
+                    {/* 예보 데이터 */}
+                    {timeData.forecast && (
+                      <div className="bg-white rounded-2xl p-5 border border-gray-100">
+                        <div className="mb-3">
+                          <span className="text-sm text-gray-400">예보</span>
+                        </div>
+                        <p className="text-base text-gray-600 leading-normal">
+                          {timeData.forecast.memo || '예보 메모가 없습니다.'}
+                        </p>
                       </div>
-                      <p className="text-base text-gray-600 leading-normal">
-                        {timeData.predictedText}
-                      </p>
-                    </div>
+                    )}
 
-                    <div className="bg-white rounded-2xl p-5 border border-gray-100">
-                      <div className="mb-3">
-                        <span className="text-sm text-gray-400">
-                          {timeData.actualEmotions.map(e => e.emotion).join(', ')}
-                        </span>
+                    {/* 실제 기록 데이터 */}
+                    {timeData.record && (
+                      <div className="bg-white rounded-2xl p-5 border border-gray-100">
+                        <div className="mb-3">
+                          <span className="text-sm text-gray-400">실제 기록</span>
+                        </div>
+                        <p className="text-base text-gray-600 leading-normal">
+                          {timeData.record.memo || '실제 기록이 없습니다.'}
+                        </p>
                       </div>
-                      <p className="text-base text-gray-600 leading-normal">
-                        {timeData.actualText}
-                      </p>
-                    </div>
+                    )}
+
+                    {/* 데이터가 없는 경우 */}
+                    {!timeData.forecast && !timeData.record && (
+                      <div className="text-center py-8">
+                        <p className="text-gray-500 text-sm">해당 시간대의 데이터가 없습니다.</p>
+                      </div>
+                    )}
                   </div>
                 );
               })()}
-            </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -371,10 +388,10 @@ export default function Register() {
               </svg>
             </div>
             <p className="text-gray-500 text-sm">
-              과거 날짜를 클릭해서 {childName}의 감정 일기를 확인해보세요
+              과거 날짜를 클릭해서 {childName || '아이'}의 감정 일기를 확인해보세요
             </p>
             <p className="text-xs text-gray-400 mt-1">
-              예측과 실제 감정을 비교하여 분석해드립니다
+              예보와 실제 기록을 비교하여 확인할 수 있습니다
             </p>
           </div>
         )}

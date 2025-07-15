@@ -187,4 +187,53 @@ export const getEmotionErrorRate = async (
 ): Promise<ApiResponse<EmotionErrorRateData[]>> => {
   const params = new URLSearchParams({ startDate, endDate });
   return authenticatedApiRequest<EmotionErrorRateData[]>(`/api/statistics/${childId}/emotions/error-rate?${params}`);
+};
+
+// 예보 및 예보 기록 API 타입 정의
+export interface ForecastData {
+  id: number;
+  childId: number;
+  emotionTypeId: number;
+  date: string;
+  timeZone: string;
+  memo: string;
+}
+
+export interface ForecastRecordData {
+  id: number;
+  forecastId: number;
+  childId: number;
+  emotionTypeId: number;
+  date: string;
+  timeZone: string;
+  memo: string;
+}
+
+// 예보 및 예보 기록 API 함수들
+export const getAllForecasts = async (childId: number): Promise<ApiResponse<ForecastData[]>> => {
+  return authenticatedApiRequest<ForecastData[]>(`/api/forecasts/${childId}`);
+};
+
+export const getForecastsByDate = async (childId: number, date: string): Promise<ApiResponse<ForecastData[]>> => {
+  return authenticatedApiRequest<ForecastData[]>(`/api/forecasts/${childId}/${date}`);
+};
+
+export const getForecastById = async (forecastId: number): Promise<ApiResponse<ForecastData>> => {
+  return authenticatedApiRequest<ForecastData>(`/api/forecasts/forecast/${forecastId}`);
+};
+
+export const checkForecastExists = async (childId: number, forecastId: number): Promise<ApiResponse<boolean>> => {
+  return authenticatedApiRequest<boolean>(`/api/forecasts/${childId}/${forecastId}/exists`);
+};
+
+export const getAllForecastRecords = async (childId: number): Promise<ApiResponse<ForecastRecordData[]>> => {
+  return authenticatedApiRequest<ForecastRecordData[]>(`/api/forecastRecords/${childId}`);
+};
+
+export const getForecastRecordsByDate = async (childId: number, date: string): Promise<ApiResponse<ForecastRecordData[]>> => {
+  return authenticatedApiRequest<ForecastRecordData[]>(`/api/forecastRecords/${childId}/${date}`);
+};
+
+export const getForecastRecordById = async (forecastRecordId: number): Promise<ApiResponse<ForecastRecordData>> => {
+  return authenticatedApiRequest<ForecastRecordData>(`/api/forecastRecords/forecastRecord/${forecastRecordId}`);
 }; 
