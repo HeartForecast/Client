@@ -45,6 +45,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(false);
       
       console.log('Final auth state:', serverAuthStatus);
+      
+      // 인증되지 않은 경우 로그인 페이지로 리다이렉트 (홈 페이지가 아닌 경우)
+      if (!serverAuthStatus && typeof window !== 'undefined') {
+        const currentPath = window.location.pathname;
+        if (currentPath !== '/' && currentPath !== '/auth/callback') {
+          console.log('Redirecting to login page due to authentication failure');
+          window.location.href = '/';
+        }
+      }
     } catch (error) {
       console.error('Auth check failed:', error);
       // 에러 발생 시 로컬 토큰으로 폴백

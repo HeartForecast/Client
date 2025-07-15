@@ -196,9 +196,63 @@ export const apiRequest = async <T>(
 // 서버에서 인증 상태 확인 함수
 export const checkAuthStatus = async (): Promise<boolean> => {
   try {
-    const response = await apiRequest('/api/check');
-    console.log('Auth status check response:', response);
-    return response.success;
+    console.log('Checking auth status at:', `${API_BASE_URL}/api/check`);
+    
+    const response = await fetch(`${API_BASE_URL}/api/check`, {
+      method: 'GET',
+      credentials: 'include', // 쿠키 포함
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    console.log('Response status:', response.status);
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+    
+    if (response.status === 401) {
+      console.log('Token expired or invalid - clearing local auth state');
+      // 토큰이 만료되었거나 유효하지 않은 경우 로컬 상태 정리
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('isAuthenticated');
+        localStorage.removeItem('authTimestamp');
+        clearTokens();
+      }
+      return false;
+    }
+    
+    if (!response.ok) {
+      console.log('Response not ok, status:', response.status);
+      return false;
+    }
+
+    // 응답 텍스트를 먼저 확인
+    const responseText = await response.text();
+    console.log('Response text:', responseText);
+    
+    if (!responseText) {
+      console.log('Empty response text');
+      return false;
+    }
+
+    // JSON 파싱 시도
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      console.log('Raw response text:', responseText);
+      return false;
+    }
+
+    console.log('Parsed response data:', data);
+    
+    // 성공적인 응답인 경우 로컬 상태 업데이트
+    if (data.success === true && typeof window !== 'undefined') {
+      localStorage.setItem('isAuthenticated', 'true');
+      localStorage.setItem('authTimestamp', Date.now().toString());
+    }
+    
+    return data.success === true;
   } catch (error) {
     console.error('Auth status check failed:', error);
     return false;
