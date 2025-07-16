@@ -466,18 +466,18 @@ export default function SettingsPage() {
         </div>
 
         {childrenData.length === 0 && (
-          <div className="w-full flex flex-col items-center justify-center py-12">
+          <div className="w-full flex flex-col items-center justify-center py-8">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
               <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">등록된 아이가 없습니다.</h3>
-            <p className="text-sm text-gray-500 text-center">아이를 등록하여 관리를 시작해보세요.</p>
+            <p className="text-sm text-gray-500 text-center mb-10">아이를 등록하여 관리를 시작해보세요.</p>
           </div>
         )}
 
-        <div className="w-full mt-8 mb-20 flex gap-3">
+        <div className="w-full mt-20 mb-8 flex gap-3">
           <button
             onClick={() => router.push('/insert-children')}
             className="flex-1 bg-white border-2 border-[#FF6F71] text-[#FF6F71] py-4 px-6 rounded-2xl font-medium hover:bg-[#FF6F71] hover:text-white transition-colors flex items-center justify-center"
