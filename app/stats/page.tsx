@@ -57,7 +57,7 @@ const EMOTION_COLORS = {
 
 export default function StatsPage() {
   const router = useRouter()
-  const { isChildMode, selectedChild } = useChild();
+  const { isChildMode, selectedChild, autoSelectFirstChild } = useChild();
   const [childName, setChildName] = useState('신희성')
   const [activeTab, setActiveTab] = useState('통계')
   const [statsUnit, setStatsUnit] = useState<'week' | 'month'>('week')
@@ -148,6 +148,13 @@ export default function StatsPage() {
     }
   }, [selectedChild?.id, statsUnit])
 
+  // 선택된 아이가 없을 때 자동 선택 시도
+  useEffect(() => {
+    if (!selectedChild) {
+      autoSelectFirstChild();
+    }
+  }, [selectedChild, autoSelectFirstChild]);
+
   // 계산된 데이터
   const currentAccuracyData = dailyTemperatureData.map(d => d.avgTemp)
   const latestAccuracy = currentAccuracyData.length > 0 ? currentAccuracyData[currentAccuracyData.length - 1] : 0
@@ -163,7 +170,7 @@ export default function StatsPage() {
     return null;
   }
 
-  // 선택된 아이가 없을 때
+  // 선택된 아이가 없을 때 (자동 선택 후에도 없으면)
   if (!selectedChild) {
     return (
       <Container className="bg-white">

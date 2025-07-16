@@ -16,6 +16,7 @@ interface ChildContextType {
   setSelectedChild: (child: ChildData | null) => void;
   enterChildMode: (child: ChildData) => void;
   exitChildMode: () => void;
+  autoSelectFirstChild: () => Promise<void>;
 }
 
 const ChildContext = createContext<ChildContextType | undefined>(undefined);
@@ -83,6 +84,47 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const autoSelectFirstChild = async () => {
+    try {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+      const response = await fetch(`${apiBaseUrl}/api/childRelations`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data && data.length > 0) {
+        const firstChild = data[0];
+        const birthYear = new Date(firstChild.birthdate).getFullYear();
+        const thisYear = new Date().getFullYear();
+        const age = thisYear - birthYear;
+
+        const childData: ChildData = {
+          id: firstChild.id,
+          name: firstChild.username,
+          age,
+          registeredDate: new Date(firstChild.createdAt).toLocaleDateString('ko-KR')
+        };
+
+        setSelectedChild(childData);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('selectedChild', JSON.stringify(childData));
+        }
+      }
+    } catch (error) {
+      console.error('자동 아이 선택 실패:', error);
+    }
+  };
+
   return (
     <ChildContext.Provider value={{
       selectedChild,
@@ -90,7 +132,8 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
       isLoading,
       setSelectedChild,
       enterChildMode,
-      exitChildMode
+      exitChildMode,
+      autoSelectFirstChild
     }}>
       {children}
     </ChildContext.Provider>

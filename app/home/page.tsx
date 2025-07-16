@@ -33,7 +33,7 @@ interface DiaryData {
 
 export default function Register() {
   const router = useRouter()
-  const { isChildMode, selectedChild, isLoading, exitChildMode, enterChildMode } = useChild();
+  const { isChildMode, selectedChild, isLoading, exitChildMode, enterChildMode, autoSelectFirstChild } = useChild();
   const [childName, setChildName] = useState('')
   const [activeTab, setActiveTab] = useState('홈')
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
@@ -210,6 +210,13 @@ export default function Register() {
     }
   }, [selectedChild?.name]);
 
+  // 선택된 아이가 없을 때 자동 선택 시도
+  useEffect(() => {
+    if (!isLoading && !selectedChild) {
+      autoSelectFirstChild();
+    }
+  }, [isLoading, selectedChild, autoSelectFirstChild]);
+
   // 아이 모드 전환 함수
   const handleEnterChildMode = () => {
     if (selectedChild) {
@@ -244,7 +251,7 @@ export default function Register() {
     );
   }
 
-  // 선택된 아이가 없을 때
+  // 선택된 아이가 없을 때 (자동 선택 후에도 없으면)
   if (!selectedChild) {
     return (
       <Container className="bg-white">
