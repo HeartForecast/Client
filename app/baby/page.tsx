@@ -529,10 +529,10 @@ export default function Present() {
                           
                           {/* 오늘 날짜이고 예보 기록이 없을 때 버튼 표시 */}
                           {isToday(new Date(selectedDate)) && (!timeData.actualEmotions || timeData.actualEmotions.length === 0) && (
-                            <div className="mt-4 pt-4 border-t border-gray-100">
+                            <div className="mt-4">
                               <button
                                 onClick={() => router.push(`/insert?step=${selectedTimeSlot}`)}
-                                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
+                                className="w-full bg-[#FF7B6F] hover:bg-[#FF6B5F] text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
                               >
                                 예보 기록 작성하기
                               </button>

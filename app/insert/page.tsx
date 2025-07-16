@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from "react";
 import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "../components/Button";
+import { useChild } from "../contexts/ChildContext";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -29,6 +30,7 @@ const TIME_PERIODS = {
 };
 
 function InsertPageContent() {
+  const { selectedChild } = useChild();
   const [emotions, setEmotions] = useState<EmotionType[]>([]);
   const [emotionCategories, setEmotionCategories] = useState<{[key: string]: EmotionType[]}>({});
   const [selectedEmotion, setSelectedEmotion] = useState<{
@@ -111,6 +113,12 @@ function InsertPageContent() {
   const createForecast = async () => {
     if (!selectedEmotion) return;
 
+    // 선택된 아이가 없거나 ID가 잘못된 경우 예외 처리
+    if (!selectedChild?.id) {
+      setError('선택된 아이 정보가 없습니다. 다시 시도해주세요.');
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
@@ -119,7 +127,7 @@ function InsertPageContent() {
       const dateString = today.toISOString().split('T')[0]; 
 
       const forecastData = {
-        childId: 1, // TODO: 현재 선택된 아이 ID로 변경 필요
+        childId: selectedChild.id,
         emotionTypeId: selectedEmotion.emotion.id,
         date: dateString,
         timeZone: TIME_PERIODS[currentStep].label,
