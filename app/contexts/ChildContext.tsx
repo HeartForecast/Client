@@ -27,11 +27,8 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
 
   // localStorage에서 상태 복원
   useEffect(() => {
-    console.log('=== ChildContext useEffect running ===');
-    
     // 서버 사이드 렌더링 중에는 localStorage 접근하지 않음
     if (typeof window === 'undefined') {
-      console.log('Server side rendering, skipping localStorage access');
       setIsLoading(false);
       return;
     }
@@ -39,51 +36,36 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
     const savedChild = localStorage.getItem('selectedChild');
     const savedMode = localStorage.getItem('isChildMode');
     
-    console.log('Saved child:', savedChild);
-    console.log('Saved mode:', savedMode);
-    
     if (savedChild && savedMode === 'true') {
-      console.log('Restoring child mode with saved child');
       try {
         const parsedChild = JSON.parse(savedChild);
-        console.log('Parsed child:', parsedChild);
         setSelectedChild(parsedChild);
         setIsChildMode(true);
-        setIsLoading(false);
       } catch (error) {
         console.error('Error parsing saved child:', error);
-        setIsLoading(false);
       }
     } else if (savedChild) {
-      console.log('Restoring saved child');
       try {
         const parsedChild = JSON.parse(savedChild);
-        console.log('Parsed child:', parsedChild);
         setSelectedChild(parsedChild);
-        setIsLoading(false);
       } catch (error) {
         console.error('Error parsing saved child:', error);
-        setIsLoading(false);
       }
-    } else {
-      console.log('No saved child, setting loading to false');
-      setIsLoading(false);
     }
+    
+    setIsLoading(false);
 
     // 안전장치: 3초 후에도 로딩이 끝나지 않으면 강제로 로딩 종료
     const timeout = setTimeout(() => {
-      console.log('Loading timeout, forcing loading to false');
       setIsLoading(false);
     }, 3000);
 
     return () => {
-      console.log('Clearing timeout');
       clearTimeout(timeout);
     };
   }, []);
 
   const enterChildMode = (child: ChildData) => {
-    console.log('Entering child mode with:', child);
     setSelectedChild(child);
     setIsChildMode(true);
     if (typeof window !== 'undefined') {
@@ -93,7 +75,6 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
   };
 
   const exitChildMode = () => {
-    console.log('Exiting child mode');
     setSelectedChild(null);
     setIsChildMode(false);
     if (typeof window !== 'undefined') {
@@ -101,8 +82,6 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('isChildMode');
     }
   };
-
-  console.log('ChildContext render - isLoading:', isLoading, 'selectedChild:', selectedChild, 'isChildMode:', isChildMode);
 
   return (
     <ChildContext.Provider value={{
