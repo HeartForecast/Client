@@ -104,6 +104,19 @@ export default function Present() {
     return compareDate < today;
   };
 
+  const isMoreThanTwoDaysLater = (date: Date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const compareDate = new Date(date);
+    compareDate.setHours(0, 0, 0, 0);
+    
+    // 2일 후 날짜 계산
+    const twoDaysLater = new Date(today);
+    twoDaysLater.setDate(today.getDate() + 2);
+    
+    return compareDate >= twoDaysLater;
+  };
+
   const isCurrentMonth = (date: Date) => {
     return date.getMonth() === currentMonth.getMonth();
   };
@@ -116,11 +129,12 @@ export default function Present() {
     const dateStr = formatDate(date);
     console.log('Date clicked:', date, 'Formatted date:', dateStr);
     console.log('Is past date:', isPastDate(date));
+    console.log('Is today:', isToday(date));
     console.log('Selected child:', selectedChild);
     setSelectedDate(dateStr);
     
-    if (isPastDate(date)) {
-      console.log('Loading forecast data for past date...');
+    if (isPastDate(date) || isToday(date)) {
+      console.log('Loading forecast data for past date or today...');
       await loadForecastData(dateStr);
     }
   };
@@ -297,7 +311,7 @@ export default function Present() {
   };
 
   const calendarDays = generateCalendarDays();
-  const selectedDiary = selectedDate && isPastDate(new Date(selectedDate)) ? (forecastData[selectedDate] || getDefaultDiary(selectedDate)) : null;
+  const selectedDiary = selectedDate && (isPastDate(new Date(selectedDate)) || isToday(new Date(selectedDate))) ? (forecastData[selectedDate] || getDefaultDiary(selectedDate)) : null;
 
   const timeSlots = [
     { key: 'morning', label: '아침', time: '오전' },
@@ -517,8 +531,20 @@ export default function Present() {
                             </span>
                           </div>
                           <p className="text-base text-gray-600 leading-normal">
-                            {timeData.actualText || '실제 기록이 없습니다.'}
+                            {timeData.actualText || (isToday(new Date(selectedDate)) && (!timeData.actualEmotions || timeData.actualEmotions.length === 0) ? '' : '실제 기록이 없습니다.')}
                           </p>
+                          
+                          {/* 오늘 날짜이고 예보 기록이 없을 때 버튼 표시 */}
+                          {isToday(new Date(selectedDate)) && (!timeData.actualEmotions || timeData.actualEmotions.length === 0) && (
+                            <div className="mt-4 pt-4 border-t border-gray-100">
+                              <button
+                                onClick={() => router.push(`/insert?step=${selectedTimeSlot}`)}
+                                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
+                              >
+                                예보 기록 작성하기
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
@@ -526,8 +552,8 @@ export default function Present() {
                 </>
               )}
 
-              {/* 데이터가 없는 경우 */}
-              {!loading && !error && !selectedDiary && (
+              {/* 데이터가 없는 경우 (2일 이후가 아닌 경우에만) */}
+              {!loading && !error && !selectedDiary && !isMoreThanTwoDaysLater(new Date(selectedDate)) && (
                 <div className="w-full text-center py-8">
                   <div className="text-gray-400 mb-2">
                     <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -541,7 +567,7 @@ export default function Present() {
               )}
             </div>
 
-            {!isPastDate(new Date(selectedDate)) && !isTomorrow(new Date(selectedDate)) && (
+            {isMoreThanTwoDaysLater(new Date(selectedDate)) && (
               <div className="w-full text-center py-8">
                 <div className="bg-white rounded-2xl p-5 border border-gray-100">
                   <div className="text-lg font-semibold text-gray-800 mb-4">
