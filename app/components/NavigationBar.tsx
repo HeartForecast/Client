@@ -33,7 +33,7 @@ export default function NavigationBar({ activeTab = "홈", onTabChange }: Naviga
       )
     },
     {
-      id: "아이목록",
+      id: "아이 목록",
       label: "아이 목록",
       path: "/settings",
       icon: (

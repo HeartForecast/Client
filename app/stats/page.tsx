@@ -163,6 +163,31 @@ export default function StatsPage() {
     return null;
   }
 
+  // 선택된 아이가 없을 때
+  if (!selectedChild) {
+    return (
+      <Container className="bg-white">
+        <div className="flex flex-col items-center justify-center flex-grow w-full max-w-sm mx-auto mt-4">
+          <div className="text-gray-400 mb-4">
+            <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </div>
+          <p className="text-gray-600 text-lg font-medium mb-2">선택된 아이가 없습니다</p>
+          <p className="text-gray-500 text-sm text-center mb-4">
+            아이 목록에서 아이를 선택해주세요
+          </p>
+          <button
+            onClick={() => router.push('/settings')}
+            className="px-6 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600"
+          >
+            아이 목록으로 이동
+          </button>
+        </div>
+      </Container>
+    );
+  }
+
   // 감정 예측 정확도 반원형 게이지 차트 데이터
   const accuracyChartData = {
     labels: ['정확도'],
