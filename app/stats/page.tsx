@@ -170,10 +170,10 @@ export default function StatsPage() {
   };
 
   useEffect(() => {
-    if (!selectedChild) {
+    if (!selectedChild && !loading) {
       autoSelectFirstChild();
     }
-  }, [selectedChild, autoSelectFirstChild]);
+  }, [selectedChild, loading, autoSelectFirstChild]);
 
   useEffect(() => {
     if (!hasChildren && !selectedChild) {

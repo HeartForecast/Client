@@ -27,6 +27,7 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
   const [isChildMode, setIsChildMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [hasChildren, setHasChildren] = useState(false);
+  const [justExitedChildMode, setJustExitedChildMode] = useState(false);
 
   // localStorage에서 상태 복원 및 초기 hasChildren 확인
   useEffect(() => {
@@ -46,6 +47,9 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
         setIsChildMode(true);
       } catch (error) {
         console.error('Error parsing saved child:', error);
+        // 파싱 실패 시 localStorage 정리
+        localStorage.removeItem('selectedChild');
+        localStorage.removeItem('isChildMode');
       }
     } else if (savedChild) {
       try {
@@ -53,6 +57,8 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
         setSelectedChild(parsedChild);
       } catch (error) {
         console.error('Error parsing saved child:', error);
+        // 파싱 실패 시 localStorage 정리
+        localStorage.removeItem('selectedChild');
       }
     }
     
@@ -72,6 +78,21 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
         if (response.ok) {
           const data = await response.json();
           setHasChildren(data && data.length > 0);
+          
+          // 저장된 아이가 실제로 존재하는지 확인
+          if (savedChild && data && data.length > 0) {
+            try {
+              const parsedChild = JSON.parse(savedChild);
+              const childExists = data.some((child: any) => child.id === parsedChild.id);
+              if (!childExists) {
+                // 저장된 아이가 더 이상 존재하지 않으면 localStorage 정리
+                localStorage.removeItem('selectedChild');
+                setSelectedChild(null);
+              }
+            } catch (error) {
+              console.error('Error checking saved child existence:', error);
+            }
+          }
         }
       } catch (error) {
         console.error('hasChildren 확인 실패:', error);
@@ -102,15 +123,26 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
   };
 
   const exitChildMode = () => {
-    setSelectedChild(null);
+    // 보호자 모드로 돌아올 때는 선택된 아이를 유지
     setIsChildMode(false);
+    setJustExitedChildMode(true);
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('selectedChild');
       localStorage.removeItem('isChildMode');
+      // selectedChild는 유지 (localStorage에서 제거하지 않음)
     }
+    
+    // 3초 후에 플래그 해제
+    setTimeout(() => {
+      setJustExitedChildMode(false);
+    }, 3000);
   };
 
   const autoSelectFirstChild = async () => {
+    // 이미 선택된 아이가 있거나 아이 모드에서 보호자 모드로 돌아온 직후라면 자동 선택하지 않음
+    if (selectedChild || isChildMode || justExitedChildMode) {
+      return;
+    }
+
     try {
       const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
       const response = await fetch(`${apiBaseUrl}/api/childRelations`, {
