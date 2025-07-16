@@ -251,6 +251,7 @@ export default function Register() {
   const handleEnterChildMode = () => {
     if (selectedChild) {
       enterChildMode(selectedChild);
+      router.push('/baby');
     }
   };
 
