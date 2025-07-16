@@ -9,14 +9,10 @@ import { useChild } from "../contexts/ChildContext"
 import { 
   getDailyTemperature, 
   getAverageTemperature, 
-  getTimezoneEmotions, 
   getEmotionRatio, 
-  getEmotionErrorRate,
   DailyTemperatureData,
   AverageTemperatureData,
-  TimezoneEmotionData,
-  EmotionRatioData,
-  EmotionErrorRateData
+  EmotionRatioData
 } from "../auth/index"
 import {
   Chart as ChartJS,
@@ -47,13 +43,29 @@ ChartJS.register(
 )
 
 const EMOTION_COLORS = {
-  기쁨: '#3DC8EF',
-  슬픔: '#FF7B6F',
-  중립: '#FFD340',
-  분노: '#FF6B6B',
-  놀람: '#4ECDC4',
-  두려움: '#9B59B6',
-  혐오: '#E67E22'
+  '긍정': '#3DC8EF',
+  '중립': '#FFD340',
+  '부정': '#FF7B6F'
+};
+
+// 감정 타입 판별 함수
+const getEmotionType = (emotionName: string): keyof typeof EMOTION_COLORS => {
+  const positiveKeywords = ['긍정', '기쁜', '행복한', '신나는', '즐거운', '만족스러운', '감사한', '기대되는', '평온한'];
+  const negativeKeywords = ['부정', '슬픈', '화난', '분노한', '두려운', '걱정되는', '스트레스받는', '짜증나는'];
+  
+  if (positiveKeywords.some(keyword => emotionName.includes(keyword))) return '긍정';
+  if (negativeKeywords.some(keyword => emotionName.includes(keyword))) return '부정';
+  return '중립';
+};
+
+const getEmotionColor = (emotionName: string): string => {
+  const emotionType = getEmotionType(emotionName);
+  return EMOTION_COLORS[emotionType] || '#808080';
+};
+
+const hexToRgba = (hex: string, alpha: number = 0.8): string => {
+  const rgb = hex.replace('#', '').match(/.{2}/g)?.map(x => parseInt(x, 16)).join(', ');
+  return `rgba(${rgb}, ${alpha})` || 'rgba(128, 128, 128, 0.8)';
 };
 
 export default function StatsPage() {
@@ -77,32 +89,27 @@ export default function StatsPage() {
   // API 데이터 상태
   const [dailyTemperatureData, setDailyTemperatureData] = useState<DailyTemperatureData[]>([])
   const [averageTemperatureData, setAverageTemperatureData] = useState<AverageTemperatureData | null>(null)
-  const [timezoneEmotionsData, setTimezoneEmotionsData] = useState<TimezoneEmotionData[]>([])
   const [emotionRatioData, setEmotionRatioData] = useState<EmotionRatioData[]>([])
-  const [emotionErrorRateData, setEmotionErrorRateData] = useState<EmotionErrorRateData[]>([])
 
-  // 날짜 범위 계산
   const getDateRange = () => {
     const now = new Date()
     
     if (statsUnit === 'week') {
-      // 이번 주 (월요일부터 일요일까지)
       const startOfWeek = new Date(now)
       const dayOfWeek = now.getDay()
-      const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1) // 월요일이 1, 일요일이 0
+      const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1)
       startOfWeek.setDate(diff)
       
       const endOfWeek = new Date(startOfWeek)
-      endOfWeek.setDate(startOfWeek.getDate() + 6) // 일요일까지
+      endOfWeek.setDate(startOfWeek.getDate() + 6)
       
       return {
         startDate: startOfWeek.toISOString().split('T')[0],
         endDate: endOfWeek.toISOString().split('T')[0]
       }
     } else {
-      // 현재 달 (1일부터 마지막 날까지)
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0) // 다음 달 0일 = 이번 달 마지막 날
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
       
       return {
         startDate: startOfMonth.toISOString().split('T')[0],
@@ -111,7 +118,6 @@ export default function StatsPage() {
     }
   }
 
-  // 데이터 로딩
   const loadStatisticsData = async () => {
     if (!selectedChild?.id) return
     
@@ -125,22 +131,16 @@ export default function StatsPage() {
       const [
         dailyTempResponse,
         avgTempResponse,
-        timezoneResponse,
-        ratioResponse,
-        errorRateResponse
+        ratioResponse
       ] = await Promise.all([
         getDailyTemperature(childId, startDate, endDate),
         getAverageTemperature(childId, startDate, endDate),
-        getTimezoneEmotions(childId, startDate, endDate),
-        getEmotionRatio(childId, startDate, endDate),
-        getEmotionErrorRate(childId, startDate, endDate)
+        getEmotionRatio(childId, startDate, endDate)
       ])
 
       if (dailyTempResponse.success) setDailyTemperatureData(dailyTempResponse.data || [])
       if (avgTempResponse.success) setAverageTemperatureData(avgTempResponse.data || null)
-      if (timezoneResponse.success) setTimezoneEmotionsData(timezoneResponse.data || [])
       if (ratioResponse.success) setEmotionRatioData(ratioResponse.data || [])
-      if (errorRateResponse.success) setEmotionErrorRateData(errorRateResponse.data || [])
 
     } catch (err) {
       setError('통계 데이터를 불러오는데 실패했습니다.')
@@ -150,7 +150,6 @@ export default function StatsPage() {
     }
   }
 
-  // 선택된 아이가 변경되거나 단위가 변경될 때 데이터 로딩
   useEffect(() => {
     if (selectedChild?.id) {
       setChildName(selectedChild.name)
@@ -158,7 +157,6 @@ export default function StatsPage() {
     }
   }, [selectedChild?.id, statsUnit])
 
-  // 토스트 메시지 표시 함수
   const showToast = (message: string, type: 'success' | 'error' | 'warning') => {
     setToast({
       message,
@@ -171,28 +169,24 @@ export default function StatsPage() {
     setToast(prev => ({ ...prev, isVisible: false }));
   };
 
-  // 선택된 아이가 없을 때 자동 선택 시도
   useEffect(() => {
     if (!selectedChild) {
       autoSelectFirstChild();
     }
   }, [selectedChild, autoSelectFirstChild]);
 
-  // 아이가 없을 때 토스트 메시지 표시
   useEffect(() => {
     if (!hasChildren && !selectedChild) {
       showToast('이동할 수 없습니다. 아이를 생성하거나 연결해주세요.', 'warning');
     }
   }, [hasChildren, selectedChild]);
 
-  // 계산된 데이터
   const currentAccuracyData = dailyTemperatureData.map(d => d.avgTemp)
   const latestAccuracy = currentAccuracyData.length > 0 ? currentAccuracyData[currentAccuracyData.length - 1] : 0
   const averageAccuracy = currentAccuracyData.length > 0 
     ? currentAccuracyData.reduce((sum, val) => sum + val, 0) / currentAccuracyData.length 
     : 0
 
-  // 아이 모드일 때 접근 차단
   if (isChildMode) {
     if (typeof window !== 'undefined') {
       router.replace('/home');
@@ -202,7 +196,6 @@ export default function StatsPage() {
 
 
 
-  // 감정 예측 정확도 반원형 게이지 차트 데이터
   const accuracyChartData = {
     labels: ['정확도'],
     datasets: [
@@ -240,7 +233,6 @@ export default function StatsPage() {
     maintainAspectRatio: false,
   };
 
-  // 정확도 추이 라인 차트 데이터
   const accuracyTrendData = {
     labels: statsUnit === 'week' 
       ? dailyTemperatureData.map(item => {
@@ -327,24 +319,23 @@ export default function StatsPage() {
     maintainAspectRatio: false,
   };
 
-  // 감정 분포 바 차트 데이터 (API 데이터 기반)
   const emotionChartData = {
-    labels: emotionRatioData.map(item => item.emotionName),
+    labels: emotionRatioData.slice(0, 5).map(item => item.emotionName),
     datasets: [
       {
         label: '감정 분포',
-        data: emotionRatioData.map(item => item.ratio * 100),
-        backgroundColor: emotionRatioData.map(item => 
-          `rgba(${EMOTION_COLORS[item.emotionName as keyof typeof EMOTION_COLORS]?.replace('#', '').match(/.{2}/g)?.map(x => parseInt(x, 16)).join(', ')}, 0.8)` || 'rgba(128, 128, 128, 0.8)'
+        data: emotionRatioData.slice(0, 5).map(item => item.ratio * 100),
+        backgroundColor: emotionRatioData.slice(0, 5).map(item => 
+          hexToRgba(getEmotionColor(item.emotionName), 0.8)
         ),
-        borderColor: emotionRatioData.map(item => 
-          EMOTION_COLORS[item.emotionName as keyof typeof EMOTION_COLORS] || '#808080'
+        borderColor: emotionRatioData.slice(0, 5).map(item => 
+          getEmotionColor(item.emotionName)
         ),
         borderWidth: 3,
         borderRadius: 12,
         borderSkipped: false,
-        hoverBackgroundColor: emotionRatioData.map(item => 
-          `rgba(${EMOTION_COLORS[item.emotionName as keyof typeof EMOTION_COLORS]?.replace('#', '').match(/.{2}/g)?.map(x => parseInt(x, 16)).join(', ')}, 1)` || 'rgba(128, 128, 128, 1)'
+        hoverBackgroundColor: emotionRatioData.slice(0, 5).map(item => 
+          hexToRgba(getEmotionColor(item.emotionName), 1)
         ),
         hoverBorderWidth: 4,
       },
@@ -412,8 +403,8 @@ export default function StatsPage() {
         isVisible={toast.isVisible}
         onClose={hideToast}
       />
-      <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
-        <div className="flex items-center gap-2 rounded-lg px-2 mb-6">
+      <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4 pb-24">
+        <div className="flex items-center gap-3 rounded-lg px-3 py-2 mb-6">
           <span className="text-gray-900 font-semibold text-2xl">{childName}의 통계</span>
         </div>
 
@@ -449,16 +440,14 @@ export default function StatsPage() {
 
         {/* 데이터가 없을 때 */}
         {!loading && !error && currentAccuracyData.length === 0 && (
-          <div className="w-full text-center py-8 flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <div className="text-gray-400 mb-2">
-                <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-              <p className="text-gray-500 text-sm">아직 통계 데이터가 없습니다</p>
-              <p className="text-xs text-gray-400 mt-1">감정 예측을 시작하면 통계가 표시됩니다</p>
+          <div className="w-full text-center py-8">
+            <div className="text-gray-400 mb-2">
+              <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
             </div>
+            <p className="text-gray-500 text-sm">아직 통계 데이터가 없습니다</p>
+            <p className="text-xs text-gray-400 mt-1">감정 예측을 시작하면 통계가 표시됩니다</p>
           </div>
         )}
 
@@ -500,7 +489,6 @@ export default function StatsPage() {
             <div className="bg-white rounded-2xl p-5 border border-gray-100">
               <h3 className="text-lg font-semibold text-gray-800 mb-6">감정 예측 정확도</h3>
             
-            {/* 게이지 차트 */}
             <div className="relative" style={{ height: '140px' }}>
               <Doughnut data={accuracyChartData} options={accuracyChartOptions} />
               <div className="absolute inset-0 flex items-end justify-center pb-4">
@@ -511,7 +499,6 @@ export default function StatsPage() {
               </div>
             </div>
             
-            {/* 성능 지표 */}
             <div className="mt-6 grid grid-cols-3 gap-4">
               <div className="text-center">
                 <div className="text-lg font-semibold text-green-600">
@@ -533,7 +520,6 @@ export default function StatsPage() {
               </div>
             </div>
             
-            {/* 상세 정보 */}
             <div className="mt-4 p-3 bg-gray-50 rounded-lg">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-600">분석 기간</span>
@@ -580,12 +566,12 @@ export default function StatsPage() {
                 <Bar data={emotionChartData} options={emotionChartOptions} />
               </div>
               <div className="mt-4 space-y-2">
-                {emotionRatioData.map((item) => (
+                {emotionRatioData.slice(0, 5).map((item) => (
                   <div key={item.emotionName} className="flex items-center justify-between">
                     <div className="flex items-center">
                       <div 
                         className="w-3 h-3 rounded-full mr-2"
-                        style={{ backgroundColor: EMOTION_COLORS[item.emotionName as keyof typeof EMOTION_COLORS] || '#808080' }}
+                        style={{ backgroundColor: getEmotionColor(item.emotionName) }}
                       ></div>
                       <span className="text-sm text-gray-600">{item.emotionName}</span>
                     </div>
