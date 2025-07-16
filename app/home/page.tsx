@@ -13,6 +13,7 @@ import {
   ForecastRecordData,
   isAuthenticated
 } from "../auth/index"
+import ModeToggleButton from "../components/ModeToggleButton"
 
 
 
@@ -247,13 +248,7 @@ export default function Register() {
     }
   }, [isLoading, hasChildren, selectedChild]);
 
-  // 아이 모드 전환 함수
-  const handleEnterChildMode = () => {
-    if (selectedChild) {
-      enterChildMode(selectedChild);
-      router.push('/baby');
-    }
-  };
+
 
   // 디버깅용 로그
   console.log('Home page - isLoading:', isLoading);
@@ -296,21 +291,7 @@ export default function Register() {
         <div className="w-full flex justify-between items-center mb-4">
           <span className="text-gray-900 font-semibold text-2xl">{displayChildName}</span>
           <div className="flex gap-2">
-            {isChildMode ? (
-              <button
-                onClick={exitChildMode}
-                className="px-3 py-1 bg-gray-200 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-300"
-              >
-                보호자 모드
-              </button>
-            ) : selectedChild && (
-              <button
-                onClick={handleEnterChildMode}
-                className="px-3 py-1 bg-blue-200 text-blue-700 rounded-lg text-xs font-medium hover:bg-blue-300"
-              >
-                아이 모드
-              </button>
-            )}
+            <ModeToggleButton />
           </div>
         </div>
 

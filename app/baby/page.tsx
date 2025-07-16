@@ -17,6 +17,7 @@ import {
   fetchEmotionType, 
   EmotionTypeData 
 } from "../utils/emotionUtils"
+import ModeToggleButton from "../components/ModeToggleButton"
 
 // 감정 타입 인터페이스 (공통 유틸리티 사용)
 type EmotionType = EmotionTypeData;
@@ -327,15 +328,7 @@ export default function Present() {
           <span className="text-gray-900 font-semibold text-2xl">{selectedChild?.name || currentName}</span>
           <div className="flex items-center gap-1">
             <span className="text-sm text-gray-500 font-medium mr-1">{currentId}</span>
-            <button
-              onClick={() => {
-                exitChildMode();
-                router.push('/home');
-              }}
-              className="px-3 py-1 bg-gray-200 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-300"
-            >
-              보호자 모드
-            </button>
+            <ModeToggleButton />
           </div>
         </div>
 
