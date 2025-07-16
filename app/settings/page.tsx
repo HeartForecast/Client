@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Container from "../components/Container"
 import NavigationBar from "../components/NavigationBar"
+import Toast from "../components/Toast"
 import { useChild } from "../contexts/ChildContext"
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL
@@ -24,59 +25,6 @@ interface ApiChildData {
   createdAt: string
   point: number
   inviteCode: string
-}
-
-interface ToastProps {
-  message: string
-  type: 'success' | 'error'
-  isVisible: boolean
-  onClose: () => void
-}
-
-function Toast({ message, type, isVisible, onClose }: ToastProps) {
-  useEffect(() => {
-    if (isVisible) {
-      const timer = setTimeout(() => {
-        onClose();
-      }, 5000); // 3초에서 5초로 변경 (1.5배 이상)
-      return () => clearTimeout(timer);
-    }
-  }, [isVisible, onClose]);
-
-  return (
-    <div className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 transition-all duration-300 ${
-      isVisible 
-        ? 'opacity-100 translate-y-0' 
-        : 'opacity-0 -translate-y-2 pointer-events-none'
-    } ${
-      type === 'success' 
-        ? 'bg-green-500 text-white' 
-        : 'bg-red-500 text-white'
-    }`}>
-      <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
-        type === 'success' ? 'bg-green-400' : 'bg-red-400'
-      }`}>
-        {type === 'success' ? (
-          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-          </svg>
-        ) : (
-          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-          </svg>
-        )}
-      </div>
-      <span className="font-medium">{message}</span>
-      <button
-        onClick={onClose}
-        className="ml-2 text-white/80 hover:text-white"
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-    </div>
-  );
 }
 
 interface DeleteModalProps {
@@ -167,7 +115,7 @@ function DeleteModal({ isOpen, childId, childName, onClose, onDeleteRelation, on
 
 export default function SettingsPage() {
   const router = useRouter()
-  const { setSelectedChild, isChildMode } = useChild();
+  const { selectedChild, setSelectedChild, isChildMode, autoSelectFirstChild } = useChild();
   const [activeTab, setActiveTab] = useState('아이 목록')
   const [openMenuId, setOpenMenuId] = useState<number | null>(null)
   const [childrenData, setChildrenData] = useState<ChildData[]>([])
@@ -241,10 +189,10 @@ export default function SettingsPage() {
     fetchChildRelations()
   }, [])
 
-  const showToast = (message: string, type: 'success' | 'error') => {
+  const showToast = (message: string, type: 'success' | 'error' | 'warning') => {
     setToast({
       message,
-      type,
+      type: type === 'warning' ? 'error' : type,
       isVisible: true
     });
   };
@@ -291,8 +239,21 @@ export default function SettingsPage() {
         throw new Error(`관계 삭제 실패: ${response.status}`)
       }
 
+      // 삭제된 아이가 현재 선택된 아이인지 확인
+      if (selectedChild?.id === childId) {
+        setSelectedChild(null);
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('selectedChild');
+        }
+      }
+
       setChildrenData(prev => prev.filter(child => child.id !== childId))
       showToast('돌봄관계가 삭제되었습니다.', 'success')
+      
+      // 삭제 후 자동으로 첫 번째 아이 선택
+      setTimeout(() => {
+        autoSelectFirstChild();
+      }, 100);
     } catch (error) {
       console.error('관계 삭제 실패:', error)
       showToast('돌봄관계 삭제에 실패했습니다.', 'error')
@@ -313,8 +274,21 @@ export default function SettingsPage() {
         throw new Error(`아이 삭제 실패: ${response.status}`)
       }
 
+      // 삭제된 아이가 현재 선택된 아이인지 확인
+      if (selectedChild?.id === childId) {
+        setSelectedChild(null);
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('selectedChild');
+        }
+      }
+
       setChildrenData(prev => prev.filter(child => child.id !== childId))
       showToast('아이가 완전히 삭제되었습니다.', 'success')
+      
+      // 삭제 후 자동으로 첫 번째 아이 선택
+      setTimeout(() => {
+        autoSelectFirstChild();
+      }, 100);
     } catch (error) {
       console.error('아이 삭제 실패:', error)
       showToast('아이 삭제에 실패했습니다.', 'error')
@@ -367,7 +341,7 @@ export default function SettingsPage() {
           <p className="text-gray-600">아이 목록을 불러오는 중...</p>
         </div>
         
-        <NavigationBar activeTab={activeTab} onTabChange={setActiveTab} />
+        <NavigationBar activeTab={activeTab} onTabChange={setActiveTab} showToast={showToast} />
       </Container>
     )
   }
@@ -400,7 +374,7 @@ export default function SettingsPage() {
           </button>
         </div>
         
-        <NavigationBar activeTab={activeTab} onTabChange={setActiveTab} />
+        <NavigationBar activeTab={activeTab} onTabChange={setActiveTab} showToast={showToast} />
       </Container>
     )
   }
@@ -427,7 +401,7 @@ export default function SettingsPage() {
           <span className="text-gray-500 font-medium text-sm">설정</span>
           <h1 className="text-2xl font-semibold mb-1">등록된 아이 목록</h1>
           <p className="text-sm text-gray-600">
-            총 {childrenData.length}명의 아이가 등록되어 있습니다
+            총 {childrenData.length}명의 아이가 등록되어 있습니다.
           </p>
         </div>
 
@@ -492,18 +466,18 @@ export default function SettingsPage() {
         </div>
 
         {childrenData.length === 0 && (
-          <div className="w-full flex flex-col items-center justify-center py-12">
+          <div className="w-full flex flex-col items-center justify-center py-8">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
               <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">등록된 아이가 없습니다</h3>
-            <p className="text-sm text-gray-500 text-center">아이를 등록하여 관리를 시작해보세요</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">등록된 아이가 없습니다.</h3>
+            <p className="text-sm text-gray-500 text-center mb-10">아이를 등록하여 관리를 시작해보세요.</p>
           </div>
         )}
 
-        <div className="w-full mt-8 mb-20 flex gap-3">
+        <div className="w-full mt-20 mb-8 flex gap-3">
           <button
             onClick={() => router.push('/insert-children')}
             className="flex-1 bg-white border-2 border-[#FF6F71] text-[#FF6F71] py-4 px-6 rounded-2xl font-medium hover:bg-[#FF6F71] hover:text-white transition-colors flex items-center justify-center"
@@ -520,7 +494,7 @@ export default function SettingsPage() {
         </div>
       </div>
       
-      <NavigationBar activeTab={activeTab} onTabChange={setActiveTab} />
+      <NavigationBar activeTab={activeTab} onTabChange={setActiveTab} showToast={showToast} />
       
       <DeleteModal
         isOpen={deleteModal.isOpen}

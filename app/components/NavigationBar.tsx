@@ -2,14 +2,17 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
+import { useChild } from "../contexts/ChildContext";
 
 interface NavigationBarProps {
   activeTab?: string;
   onTabChange?: (tab: string) => void;
+  showToast?: (message: string, type: 'success' | 'error' | 'warning') => void;
 }
 
-export default function NavigationBar({ activeTab = "홈", onTabChange }: NavigationBarProps) {
+export default function NavigationBar({ activeTab = "홈", onTabChange, showToast }: NavigationBarProps) {
   const router = useRouter();
+  const { hasChildren } = useChild();
 
   const tabs = [
     {
@@ -33,7 +36,7 @@ export default function NavigationBar({ activeTab = "홈", onTabChange }: Naviga
       )
     },
     {
-      id: "아이목록",
+      id: "아이 목록",
       label: "아이 목록",
       path: "/settings",
       icon: (

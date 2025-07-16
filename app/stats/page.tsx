@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Container from "../components/Container"
 import NavigationBar from "../components/NavigationBar"
+import Toast from "../components/Toast"
 import { useChild } from "../contexts/ChildContext"
 import { 
   getDailyTemperature, 
@@ -57,12 +58,21 @@ const EMOTION_COLORS = {
 
 export default function StatsPage() {
   const router = useRouter()
-  const { isChildMode, selectedChild } = useChild();
+  const { isChildMode, selectedChild, hasChildren, autoSelectFirstChild } = useChild();
   const [childName, setChildName] = useState('신희성')
   const [activeTab, setActiveTab] = useState('통계')
   const [statsUnit, setStatsUnit] = useState<'week' | 'month'>('week')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error' | 'warning';
+    isVisible: boolean;
+  }>({
+    message: '',
+    type: 'warning',
+    isVisible: false
+  })
   
   // API 데이터 상태
   const [dailyTemperatureData, setDailyTemperatureData] = useState<DailyTemperatureData[]>([])
@@ -148,6 +158,33 @@ export default function StatsPage() {
     }
   }, [selectedChild?.id, statsUnit])
 
+  // 토스트 메시지 표시 함수
+  const showToast = (message: string, type: 'success' | 'error' | 'warning') => {
+    setToast({
+      message,
+      type,
+      isVisible: true
+    });
+  };
+
+  const hideToast = () => {
+    setToast(prev => ({ ...prev, isVisible: false }));
+  };
+
+  // 선택된 아이가 없을 때 자동 선택 시도
+  useEffect(() => {
+    if (!selectedChild) {
+      autoSelectFirstChild();
+    }
+  }, [selectedChild, autoSelectFirstChild]);
+
+  // 아이가 없을 때 토스트 메시지 표시
+  useEffect(() => {
+    if (!hasChildren && !selectedChild) {
+      showToast('이동할 수 없습니다. 아이를 생성하거나 연결해주세요.', 'warning');
+    }
+  }, [hasChildren, selectedChild]);
+
   // 계산된 데이터
   const currentAccuracyData = dailyTemperatureData.map(d => d.avgTemp)
   const latestAccuracy = currentAccuracyData.length > 0 ? currentAccuracyData[currentAccuracyData.length - 1] : 0
@@ -162,6 +199,8 @@ export default function StatsPage() {
     }
     return null;
   }
+
+
 
   // 감정 예측 정확도 반원형 게이지 차트 데이터
   const accuracyChartData = {
@@ -367,6 +406,12 @@ export default function StatsPage() {
 
   return (
     <Container className="bg-white">
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+      />
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
         <div className="flex items-center gap-2 rounded-lg px-2 mb-6">
           <span className="text-gray-900 font-semibold text-2xl">{childName}의 통계</span>
@@ -551,7 +596,7 @@ export default function StatsPage() {
         )}
       </div>
       
-      <NavigationBar activeTab={activeTab} onTabChange={setActiveTab} />
+      <NavigationBar activeTab={activeTab} onTabChange={setActiveTab} showToast={showToast} />
     </Container>
   )
 } 
