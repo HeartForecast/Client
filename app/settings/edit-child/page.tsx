@@ -1,11 +1,10 @@
 'use client'
 
-import { useState, useRef, useEffect, Suspense } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import React from 'react';
-import { useRouter, useSearchParams } from "next/navigation";
-import Button from '../../components/Button';
-import Container from '../../components/Container';
+import { useState, useEffect, useRef } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { motion, AnimatePresence } from "framer-motion"
+import Container from "../../components/Container"
+import Toast from "../../components/Toast"
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL
 
@@ -18,64 +17,6 @@ interface ApiChildData {
   createdAt: string
   point: number
   inviteCode: string
-}
-
-interface ToastProps {
-  message: string
-  type: 'success' | 'error'
-  isVisible: boolean
-  onClose: () => void
-}
-
-function Toast({ message, type, isVisible, onClose }: ToastProps) {
-  useEffect(() => {
-    if (isVisible) {
-      const timer = setTimeout(() => {
-        onClose();
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [isVisible, onClose]);
-
-  return (
-    <AnimatePresence>
-      {isVisible && (
-        <motion.div
-          initial={{ opacity: 0, y: -50 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -50 }}
-          className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 ${
-            type === 'success' 
-              ? 'bg-green-500 text-white' 
-              : 'bg-red-500 text-white'
-          }`}
-        >
-          <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
-            type === 'success' ? 'bg-green-400' : 'bg-red-400'
-          }`}>
-            {type === 'success' ? (
-              <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-              </svg>
-            ) : (
-              <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-            )}
-          </div>
-          <span className="font-medium">{message}</span>
-          <button
-            onClick={onClose}
-            className="ml-2 text-white/80 hover:text-white"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
 }
 
 function EditChildPageContent() {
@@ -499,7 +440,7 @@ function EditChildPageContent() {
             variants={fadeInOutVariants}
             className="flex flex-col items-center w-full max-w-sm mt-auto mb-4"
           >
-            <Button
+            <button
               className="flex w-full items-center justify-center gap-1 rounded-lg bg-[#FF6F71] text-white py-3 text-lg font-semibold mb-4 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={handleSave}
               disabled={isSaving}
@@ -512,7 +453,7 @@ function EditChildPageContent() {
               ) : (
                 '수정 완료'
               )}
-            </Button>
+            </button>
           </motion.div> 
         )}
       </div>
@@ -522,15 +463,11 @@ function EditChildPageContent() {
 
 export default function EditChildPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
-          <p className="text-gray-600">로딩 중...</p>
-        </div>
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+        <p className="text-gray-600">로딩 중...</p>
       </div>
-    }>
-      <EditChildPageContent />
-    </Suspense>
+    </div>
   );
 } 

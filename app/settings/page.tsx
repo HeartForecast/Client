@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Container from "../components/Container"
 import NavigationBar from "../components/NavigationBar"
+import Toast from "../components/Toast"
 import { useChild } from "../contexts/ChildContext"
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL
@@ -24,59 +25,6 @@ interface ApiChildData {
   createdAt: string
   point: number
   inviteCode: string
-}
-
-interface ToastProps {
-  message: string
-  type: 'success' | 'error'
-  isVisible: boolean
-  onClose: () => void
-}
-
-function Toast({ message, type, isVisible, onClose }: ToastProps) {
-  useEffect(() => {
-    if (isVisible) {
-      const timer = setTimeout(() => {
-        onClose();
-      }, 5000); // 3초에서 5초로 변경 (1.5배 이상)
-      return () => clearTimeout(timer);
-    }
-  }, [isVisible, onClose]);
-
-  return (
-    <div className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 transition-all duration-300 ${
-      isVisible 
-        ? 'opacity-100 translate-y-0' 
-        : 'opacity-0 -translate-y-2 pointer-events-none'
-    } ${
-      type === 'success' 
-        ? 'bg-green-500 text-white' 
-        : 'bg-red-500 text-white'
-    }`}>
-      <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
-        type === 'success' ? 'bg-green-400' : 'bg-red-400'
-      }`}>
-        {type === 'success' ? (
-          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-          </svg>
-        ) : (
-          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-          </svg>
-        )}
-      </div>
-      <span className="font-medium">{message}</span>
-      <button
-        onClick={onClose}
-        className="ml-2 text-white/80 hover:text-white"
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-    </div>
-  );
 }
 
 interface DeleteModalProps {
