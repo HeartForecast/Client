@@ -167,7 +167,7 @@ function DeleteModal({ isOpen, childId, childName, onClose, onDeleteRelation, on
 
 export default function SettingsPage() {
   const router = useRouter()
-  const { setSelectedChild, isChildMode } = useChild();
+  const { selectedChild, setSelectedChild, isChildMode, autoSelectFirstChild } = useChild();
   const [activeTab, setActiveTab] = useState('아이 목록')
   const [openMenuId, setOpenMenuId] = useState<number | null>(null)
   const [childrenData, setChildrenData] = useState<ChildData[]>([])
@@ -241,10 +241,10 @@ export default function SettingsPage() {
     fetchChildRelations()
   }, [])
 
-  const showToast = (message: string, type: 'success' | 'error') => {
+  const showToast = (message: string, type: 'success' | 'error' | 'warning') => {
     setToast({
       message,
-      type,
+      type: type === 'warning' ? 'error' : type,
       isVisible: true
     });
   };
@@ -291,8 +291,21 @@ export default function SettingsPage() {
         throw new Error(`관계 삭제 실패: ${response.status}`)
       }
 
+      // 삭제된 아이가 현재 선택된 아이인지 확인
+      if (selectedChild?.id === childId) {
+        setSelectedChild(null);
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('selectedChild');
+        }
+      }
+
       setChildrenData(prev => prev.filter(child => child.id !== childId))
       showToast('돌봄관계가 삭제되었습니다.', 'success')
+      
+      // 삭제 후 자동으로 첫 번째 아이 선택
+      setTimeout(() => {
+        autoSelectFirstChild();
+      }, 100);
     } catch (error) {
       console.error('관계 삭제 실패:', error)
       showToast('돌봄관계 삭제에 실패했습니다.', 'error')
@@ -313,8 +326,21 @@ export default function SettingsPage() {
         throw new Error(`아이 삭제 실패: ${response.status}`)
       }
 
+      // 삭제된 아이가 현재 선택된 아이인지 확인
+      if (selectedChild?.id === childId) {
+        setSelectedChild(null);
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('selectedChild');
+        }
+      }
+
       setChildrenData(prev => prev.filter(child => child.id !== childId))
       showToast('아이가 완전히 삭제되었습니다.', 'success')
+      
+      // 삭제 후 자동으로 첫 번째 아이 선택
+      setTimeout(() => {
+        autoSelectFirstChild();
+      }, 100);
     } catch (error) {
       console.error('아이 삭제 실패:', error)
       showToast('아이 삭제에 실패했습니다.', 'error')
@@ -367,7 +393,7 @@ export default function SettingsPage() {
           <p className="text-gray-600">아이 목록을 불러오는 중...</p>
         </div>
         
-        <NavigationBar activeTab={activeTab} onTabChange={setActiveTab} />
+        <NavigationBar activeTab={activeTab} onTabChange={setActiveTab} showToast={showToast} />
       </Container>
     )
   }
@@ -400,7 +426,7 @@ export default function SettingsPage() {
           </button>
         </div>
         
-        <NavigationBar activeTab={activeTab} onTabChange={setActiveTab} />
+        <NavigationBar activeTab={activeTab} onTabChange={setActiveTab} showToast={showToast} />
       </Container>
     )
   }
@@ -427,7 +453,7 @@ export default function SettingsPage() {
           <span className="text-gray-500 font-medium text-sm">설정</span>
           <h1 className="text-2xl font-semibold mb-1">등록된 아이 목록</h1>
           <p className="text-sm text-gray-600">
-            총 {childrenData.length}명의 아이가 등록되어 있습니다
+            총 {childrenData.length}명의 아이가 등록되어 있습니다.
           </p>
         </div>
 
@@ -493,13 +519,13 @@ export default function SettingsPage() {
 
         {childrenData.length === 0 && (
           <div className="w-full flex flex-col items-center justify-center py-12">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
+              <svg className="w-8 h-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">등록된 아이가 없습니다</h3>
-            <p className="text-sm text-gray-500 text-center">아이를 등록하여 관리를 시작해보세요</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">등록된 아이가 없습니다.</h3>
+            <p className="text-sm text-gray-500 text-center mb-4">아이를 생성하거나 연결해야 합니다.</p>
           </div>
         )}
 
@@ -520,7 +546,7 @@ export default function SettingsPage() {
         </div>
       </div>
       
-      <NavigationBar activeTab={activeTab} onTabChange={setActiveTab} />
+      <NavigationBar activeTab={activeTab} onTabChange={setActiveTab} showToast={showToast} />
       
       <DeleteModal
         isOpen={deleteModal.isOpen}

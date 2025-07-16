@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Container from "../components/Container"
 import NavigationBar from "../components/NavigationBar"
+import Toast from "../components/Toast"
 import { useChild } from "../contexts/ChildContext"
 import { 
   getForecastsByDate, 
@@ -33,7 +34,7 @@ interface DiaryData {
 
 export default function Register() {
   const router = useRouter()
-  const { isChildMode, selectedChild, isLoading, exitChildMode, enterChildMode, autoSelectFirstChild } = useChild();
+  const { isChildMode, selectedChild, isLoading, hasChildren, exitChildMode, enterChildMode, autoSelectFirstChild } = useChild();
   const [childName, setChildName] = useState('')
   const [activeTab, setActiveTab] = useState('홈')
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
@@ -42,6 +43,15 @@ export default function Register() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [diaryData, setDiaryData] = useState<Record<string, DiaryData>>({})
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error' | 'warning';
+    isVisible: boolean;
+  }>({
+    message: '',
+    type: 'warning',
+    isVisible: false
+  })
 
   const generateCalendarDays = () => {
     const year = currentMonth.getFullYear();
@@ -210,12 +220,32 @@ export default function Register() {
     }
   }, [selectedChild?.name]);
 
+  // 토스트 메시지 표시 함수
+  const showToast = (message: string, type: 'success' | 'error' | 'warning') => {
+    setToast({
+      message,
+      type,
+      isVisible: true
+    });
+  };
+
+  const hideToast = () => {
+    setToast(prev => ({ ...prev, isVisible: false }));
+  };
+
   // 선택된 아이가 없을 때 자동 선택 시도
   useEffect(() => {
     if (!isLoading && !selectedChild) {
       autoSelectFirstChild();
     }
   }, [isLoading, selectedChild, autoSelectFirstChild]);
+
+  // 아이가 없을 때 토스트 메시지 표시
+  useEffect(() => {
+    if (!isLoading && !hasChildren && !selectedChild) {
+      showToast('이동할 수 없습니다. 아이를 생성하거나 연결해주세요.', 'warning');
+    }
+  }, [isLoading, hasChildren, selectedChild]);
 
   // 아이 모드 전환 함수
   const handleEnterChildMode = () => {
@@ -251,33 +281,16 @@ export default function Register() {
     );
   }
 
-  // 선택된 아이가 없을 때 (자동 선택 후에도 없으면)
-  if (!selectedChild) {
-    return (
-      <Container className="bg-white">
-        <div className="flex flex-col items-center justify-center flex-grow w-full max-w-sm mx-auto mt-4">
-          <div className="text-gray-400 mb-4">
-            <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-          </div>
-          <p className="text-gray-600 text-lg font-medium mb-2">선택된 아이가 없습니다</p>
-          <p className="text-gray-500 text-sm text-center mb-4">
-            아이 목록에서 아이를 선택해주세요
-          </p>
-          <button
-            onClick={() => router.push('/settings')}
-            className="px-6 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600"
-          >
-            아이 목록으로 이동
-          </button>
-        </div>
-      </Container>
-    );
-  }
+
 
   return (
     <Container className="bg-white">
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+      />
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
         <div className="w-full flex justify-between items-center mb-4">
           <span className="text-gray-900 font-semibold text-2xl">{displayChildName}</span>
@@ -487,7 +500,7 @@ export default function Register() {
         )}
       </div>
       {/* 네비게이션바는 보호자 모드에서만 노출 */}
-      {!isChildMode && <NavigationBar activeTab={activeTab} onTabChange={setActiveTab} />}
+      {!isChildMode && <NavigationBar activeTab={activeTab} onTabChange={setActiveTab} showToast={showToast} />}
     </Container>
   )
 }

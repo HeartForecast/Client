@@ -2,14 +2,17 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
+import { useChild } from "../contexts/ChildContext";
 
 interface NavigationBarProps {
   activeTab?: string;
   onTabChange?: (tab: string) => void;
+  showToast?: (message: string, type: 'success' | 'error' | 'warning') => void;
 }
 
-export default function NavigationBar({ activeTab = "홈", onTabChange }: NavigationBarProps) {
+export default function NavigationBar({ activeTab = "홈", onTabChange, showToast }: NavigationBarProps) {
   const router = useRouter();
+  const { hasChildren } = useChild();
 
   const tabs = [
     {
