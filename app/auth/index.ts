@@ -269,6 +269,7 @@ export interface TimezoneEmotionData {
 
 export interface EmotionRatioData {
   emotionName: string;
+  type: string;
   count: number;
   ratio: number;
 }
