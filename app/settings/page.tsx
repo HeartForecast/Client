@@ -477,7 +477,7 @@ export default function SettingsPage() {
           </div>
         )}
 
-        <div className="w-full mt-4 mb-20 flex gap-3">
+        <div className="w-full mt-10 mb-40 flex gap-3">
           <button
             onClick={() => router.push('/insert-children')}
             className="flex-1 bg-white border-2 border-[#FF6F71] text-[#FF6F71] py-4 px-4 rounded-2xl font-medium hover:bg-[#FF6F71] hover:text-white transition-colors flex items-center justify-center"
