@@ -191,113 +191,117 @@ function InsertPageContent() {
 
   if (isLoadingEmotions) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
-          <p className="text-gray-600">감정 목록을 불러오는 중...</p>
+      <div className="container">
+        <div className="min-h-screen flex items-center justify-center bg-white">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+            <p className="text-gray-600">감정 목록을 불러오는 중...</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-black">
-      <div className="flex-1 flex flex-col px-4 pt-10 pb-5">
-        <div className="w-full max-w-sm mx-auto">
-          <button className="mb-4 cursor-pointer" onClick={handleBack}>
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-        </div>
-        <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
-          <div className="text-xs text-gray-400 mb-2">{getCurrentDate()} {TIME_PERIODS[currentStep].label}</div>
-          <div className="text-2xl font-bold leading-tight whitespace-pre-line mb-8">
-            {TIME_PERIODS[currentStep].text}{`\n`}느낄까요?
+    <div className="container">
+      <div className="min-h-screen flex flex-col bg-white text-black">
+        <div className="flex-1 flex flex-col px-4 pt-10 pb-5">
+          <div className="w-full max-w-sm mx-auto">
+            <button className="mb-4 cursor-pointer" onClick={handleBack}>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
           </div>
-          
-          {error && (
-            <div className="w-full mb-4 text-sm text-red-500 text-center">
-              {error}
+          <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
+            <div className="text-xs text-gray-400 mb-2">{getCurrentDate()} {TIME_PERIODS[currentStep].label}</div>
+            <div className="text-2xl font-bold leading-tight whitespace-pre-line mb-8">
+              {TIME_PERIODS[currentStep].text}{`\n`}느낄까요?
             </div>
-          )}
-
-          {isStepCompleted && (
-            <div className="w-full mb-4 text-sm text-green-600 text-center">
-              ✓ {TIME_PERIODS[currentStep].label} 감정이 저장되었습니다
-            </div>
-          )}
-          
-          <div className="w-full space-y-6">
-            {Object.entries(emotionCategories).map(([category, categoryEmotions], categoryIdx) => (
-              <div key={category} className="w-full">
-                <div className="text-sm font-medium text-gray-600 mb-3">{category}</div>
-                <div className="flex flex-wrap gap-2">
-                  {categoryEmotions.map((emotion, emotionIdx) => {
-                    const isSelected = selectedEmotion && 
-                      selectedEmotion.categoryIdx === categoryIdx && 
-                      selectedEmotion.emotionIdx === emotionIdx;
-                    const categoryColor = CATEGORY_COLORS[category as keyof typeof CATEGORY_COLORS];
-                    
-                    return (
-                      <motion.button
-                        key={`${category}-${emotion.id}`}
-                        type="button"
-                        className={`
-                          px-4 py-2 rounded-full text-sm font-medium transition-all duration-200
-                          border inline-flex items-center justify-center
-                          ${isSelected
-                            ? "text-white border-transparent"
-                            : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"
-                          }
-                          focus:outline-none
-                        `}
-                        style={{
-                          fontFamily: 'inherit',
-                          fontWeight: 500,
-                          fontSize: '14px',
-                          minHeight: '36px',
-                          whiteSpace: 'nowrap',
-                          backgroundColor: isSelected ? categoryColor : 'white'
-                        }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => handleEmotionClick(categoryIdx, emotionIdx)}
-                        disabled={isLoading || isStepCompleted}
-                      >
-                        {emotion.name}
-                      </motion.button>
-                    );
-                  })}
-                </div>
+            
+            {error && (
+              <div className="w-full mb-4 text-sm text-red-500 text-center">
+                {error}
               </div>
-            ))}
+            )}
+
+            {isStepCompleted && (
+              <div className="w-full mb-4 text-sm text-green-600 text-center">
+                ✓ {TIME_PERIODS[currentStep].label} 감정이 저장되었습니다
+              </div>
+            )}
+            
+            <div className="w-full space-y-6">
+              {Object.entries(emotionCategories).map(([category, categoryEmotions], categoryIdx) => (
+                <div key={category} className="w-full">
+                  <div className="text-sm font-medium text-gray-600 mb-3">{category}</div>
+                  <div className="flex flex-wrap gap-2">
+                    {categoryEmotions.map((emotion, emotionIdx) => {
+                      const isSelected = selectedEmotion && 
+                        selectedEmotion.categoryIdx === categoryIdx && 
+                        selectedEmotion.emotionIdx === emotionIdx;
+                      const categoryColor = CATEGORY_COLORS[category as keyof typeof CATEGORY_COLORS];
+                      
+                      return (
+                        <motion.button
+                          key={`${category}-${emotion.id}`}
+                          type="button"
+                          className={`
+                            px-4 py-2 rounded-full text-sm font-medium transition-all duration-200
+                            border inline-flex items-center justify-center
+                            ${isSelected
+                              ? "text-white border-transparent"
+                              : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"
+                            }
+                            focus:outline-none
+                          `}
+                          style={{
+                            fontFamily: 'inherit',
+                            fontWeight: 500,
+                            fontSize: '14px',
+                            minHeight: '36px',
+                            whiteSpace: 'nowrap',
+                            backgroundColor: isSelected ? categoryColor : 'white'
+                          }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => handleEmotionClick(categoryIdx, emotionIdx)}
+                          disabled={isLoading || isStepCompleted}
+                        >
+                          {emotion.name}
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
-      <motion.div
-        key="final-button"
-        initial="hidden"
-        animate="visible"
-        variants={fadeInOutVariants}
-        className="flex flex-col items-center w-full max-w-sm mx-auto mb-4 px-4"
-      >
-        <Button
-          className={`flex w-full items-center justify-center gap-1 rounded-lg bg-[#FF6F71] text-white py-3 text-lg font-semibold text-gray-900 mb-4 transition-opacity ${isEmotionSelected && !isLoading && !isStepCompleted ? '' : 'opacity-50 cursor-not-allowed'}`}
-          disabled={!isEmotionSelected || isLoading || isStepCompleted}
-          onClick={createForecast}
+        <motion.div
+          key="final-button"
+          initial="hidden"
+          animate="visible"
+          variants={fadeInOutVariants}
+          className="flex flex-col items-center w-full max-w-sm mx-auto mb-4 px-4"
         >
-          {isLoading ? (
-            <div className="flex items-center gap-2">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-              저장 중...
-            </div>
-          ) : isStepCompleted ? (
-            '완료됨'
-          ) : (
-            '넘어가기'
-          )}
-        </Button>
-      </motion.div>
+          <Button
+            className={`flex w-full items-center justify-center gap-1 rounded-lg bg-[#FF6F71] text-white py-3 text-lg font-semibold text-gray-900 mb-4 transition-opacity ${isEmotionSelected && !isLoading && !isStepCompleted ? '' : 'opacity-50 cursor-not-allowed'}`}
+            disabled={!isEmotionSelected || isLoading || isStepCompleted}
+            onClick={createForecast}
+          >
+            {isLoading ? (
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                저장 중...
+              </div>
+            ) : isStepCompleted ? (
+              '완료됨'
+            ) : (
+              '넘어가기'
+            )}
+          </Button>
+        </motion.div>
+      </div>
     </div>
   );
 }
@@ -305,10 +309,12 @@ function InsertPageContent() {
 export default function InsertPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
-          <p className="text-gray-600">로딩 중...</p>
+      <div className="container">
+        <div className="min-h-screen flex items-center justify-center bg-white">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+            <p className="text-gray-600">로딩 중...</p>
+          </div>
         </div>
       </div>
     }>
