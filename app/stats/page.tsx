@@ -59,7 +59,7 @@ const EMOTION_COLORS = {
 export default function StatsPage() {
   const router = useRouter()
   const { isChildMode, selectedChild, hasChildren, autoSelectFirstChild } = useChild();
-  const [childName, setChildName] = useState('신희성')
+  const [childName, setChildName] = useState('')
   const [activeTab, setActiveTab] = useState('통계')
   const [statsUnit, setStatsUnit] = useState<'week' | 'month'>('week')
   const [loading, setLoading] = useState(true)
