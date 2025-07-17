@@ -13,8 +13,8 @@ import {
   ForecastRecordData,
   isAuthenticated
 } from "../auth/index"
-import ModeToggleButton from "../components/ModeToggleButton"
 import Calendar from "../components/Calendar"
+import HeaderBar from "../components/HeaderBar"
 import { getEmotionColor, fetchEmotionType, EmotionTypeData } from "../utils/emotionUtils";
 
 
@@ -447,29 +447,14 @@ export default function Register() {
         onClose={hideToast}
       />
       <div className="flex flex-col items-start justify-start w-full max-w-sm mx-auto mt-4 pb-20">
-        {/* 사용자 정보 */}
+        {/* 상단바 */}
         <div className="flex items-end justify-between w-full rounded-lg px-2 mb-6">
-          <div className="flex items-end gap-1">
-            <span className="text-gray-900 font-semibold text-2xl">{displayChildName}</span>
-            {selectedChild?.inviteCode && (
-              <span className="text-sm text-gray-500 font-medium">
-                #{selectedChild?.inviteCode || '코드 없음'}
-              </span>
-            )}
-          </div>
-          <div className="flex gap-2">
-            <ModeToggleButton />
-            <button
-              onClick={() => router.push('/childList')}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              title="아이 목록"
-            >
-              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            </button>
-          </div>
+          <HeaderBar 
+            childName={displayChildName}
+            inviteCode={selectedChild?.inviteCode}
+            showChildListButton={false}
+            showSettingsButton={true}
+          />
         </div>
 
         {/* 달력 컴포넌트 */}

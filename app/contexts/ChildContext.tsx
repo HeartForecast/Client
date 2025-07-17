@@ -41,26 +41,33 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
     const savedChild = localStorage.getItem('selectedChild');
     const savedMode = localStorage.getItem('isChildMode');
     
-    if (savedChild && savedMode === 'true') {
-      try {
-        const parsedChild = JSON.parse(savedChild);
-        setSelectedChild(parsedChild);
-        setIsChildMode(true);
-      } catch (error) {
-        console.error('Error parsing saved child:', error);
-        // 파싱 실패 시 localStorage 정리
-        localStorage.removeItem('selectedChild');
-        localStorage.removeItem('isChildMode');
+    // "undefined" 문자열이나 null 값 처리
+    if (savedChild && savedChild !== 'undefined' && savedChild !== 'null') {
+      if (savedMode === 'true') {
+        try {
+          const parsedChild = JSON.parse(savedChild);
+          setSelectedChild(parsedChild);
+          setIsChildMode(true);
+        } catch (error) {
+          console.error('Error parsing saved child:', error);
+          // 파싱 실패 시 localStorage 정리
+          localStorage.removeItem('selectedChild');
+          localStorage.removeItem('isChildMode');
+        }
+      } else {
+        try {
+          const parsedChild = JSON.parse(savedChild);
+          setSelectedChild(parsedChild);
+        } catch (error) {
+          console.error('Error parsing saved child:', error);
+          // 파싱 실패 시 localStorage 정리
+          localStorage.removeItem('selectedChild');
+        }
       }
-    } else if (savedChild) {
-      try {
-        const parsedChild = JSON.parse(savedChild);
-        setSelectedChild(parsedChild);
-      } catch (error) {
-        console.error('Error parsing saved child:', error);
-        // 파싱 실패 시 localStorage 정리
-        localStorage.removeItem('selectedChild');
-      }
+    } else {
+      // 잘못된 값이 저장되어 있으면 정리
+      localStorage.removeItem('selectedChild');
+      localStorage.removeItem('isChildMode');
     }
     
     // 초기 hasChildren 상태 확인
@@ -81,7 +88,7 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
           setHasChildren(data && data.length > 0);
           
           // 저장된 아이가 실제로 존재하는지 확인하고 inviteCode 업데이트
-          if (savedChild && data && data.length > 0) {
+          if (savedChild && savedChild !== 'undefined' && savedChild !== 'null' && data && data.length > 0) {
             try {
               const parsedChild = JSON.parse(savedChild);
               const childExists = data.some((child: any) => child.id === parsedChild.id);
@@ -113,6 +120,9 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
               }
             } catch (error) {
               console.error('Error checking saved child existence:', error);
+              // 파싱 실패 시 localStorage 정리
+              localStorage.removeItem('selectedChild');
+              setSelectedChild(null);
             }
           }
         }
