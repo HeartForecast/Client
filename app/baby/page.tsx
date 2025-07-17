@@ -657,7 +657,6 @@ export default function Present() {
         )}
       </div>
       
-      <ParentNavigationBar activeTab={activeTab} onTabChange={setActiveTab} />
     </Container>
   )
 } 
