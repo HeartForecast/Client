@@ -347,6 +347,12 @@ export default function Present() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChild?.id, currentMonth, isLoading]);
 
+  // 디버깅용 로그
+  useEffect(() => {
+    console.log('Baby page - selectedChild:', selectedChild);
+    console.log('Baby page - selectedChild?.inviteCode:', selectedChild?.inviteCode);
+  }, [selectedChild]);
+
   const calendarDays = generateCalendarDays();
   const selectedDiary = selectedDate && (isPastDate(new Date(selectedDate)) || isToday(new Date(selectedDate))) ? (forecastData[selectedDate] || getDefaultDiary(selectedDate)) : null;
 
@@ -363,7 +369,11 @@ export default function Present() {
         <div className="flex items-end gap-1 rounded-lg px-2 mb-6">
           <span className="text-gray-900 font-semibold text-2xl">{selectedChild?.name || currentName}</span>
           <div className="flex items-center gap-1">
-            <span className="text-sm text-gray-500 font-medium mr-1">{currentId}</span>
+            {selectedChild?.inviteCode && (
+              <span className="text-sm text-gray-500 font-medium mr-1">
+                #{selectedChild?.inviteCode || '코드 없음'}
+              </span>
+            )}
             <ModeToggleButton />
           </div>
         </div>
