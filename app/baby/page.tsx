@@ -213,6 +213,8 @@ export default function Present() {
             const emotionColor = getEmotionColor(emotionName);
             
             transformedData[timeZone] = {
+              id: forecast.id,
+              originalTimeZone: forecast.timeZone, // 원래 예보의 시간대 저장
               predictedEmotions: [{ 
                 emotion: emotionName, 
                 category: emotionCategory,
@@ -531,7 +533,38 @@ export default function Present() {
                           {isToday(new Date(selectedDate)) && (!timeData.actualEmotions || timeData.actualEmotions.length === 0) && (
                             <div className="mt-4">
                               <button
-                                onClick={() => router.push(`/insert?step=${selectedTimeSlot}`)}
+                                onClick={() => {
+                                  // 모든 시간대의 forecastId를 localStorage에 저장
+                                  const allForecastIds = {
+                                    morning: forecastData[selectedDate]?.morning?.id || '',
+                                    afternoon: forecastData[selectedDate]?.afternoon?.id || '',
+                                    evening: forecastData[selectedDate]?.evening?.id || ''
+                                  };
+                                  
+                                  if (typeof window !== 'undefined') {
+                                    localStorage.setItem('allForecastIds', JSON.stringify(allForecastIds));
+                                  }
+                                  
+                                  console.log('저장된 모든 forecastId:', allForecastIds);
+                                  
+                                  // 현재 선택된 시간대의 forecastId 사용
+                                  const forecastId = allForecastIds[selectedTimeSlot];
+                                  
+                                  // 예보의 원래 시간대 가져오기
+                                  const forecastTimeZone = (() => {
+                                    const forecastArr = forecastData[selectedDate] && forecastData[selectedDate][selectedTimeSlot];
+                                    return forecastArr && forecastArr.originalTimeZone ? forecastArr.originalTimeZone : timeSlots.find(t => t.key === selectedTimeSlot)?.label || '아침';
+                                  })();
+                                  
+                                  console.log('라우터 이동:', {
+                                    step: selectedTimeSlot,
+                                    forecastId,
+                                    date: selectedDate,
+                                    timeZone: forecastTimeZone
+                                  });
+                                  
+                                  router.push(`/insert-after?step=${selectedTimeSlot}&forecastId=${forecastId}&date=${selectedDate}&timeZone=${forecastTimeZone}`);
+                                }}
                                 className="w-full bg-[#FF7B6F] hover:bg-[#FF6B5F] text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
                               >
                                 예보 기록 작성하기
