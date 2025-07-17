@@ -73,7 +73,7 @@ export default function Settings() {
                 </p>
                 {selectedChild && (
                   <p className="text-sm text-gray-600 mt-1">
-                    {isChildMode ? `${selectedChild.name}로 로그인됨` : '모든 아이 관리 가능'}
+                    {isChildMode ? `${selectedChild.name}(으)로 선택됨` : '모든 아이 관리 가능'}
                   </p>
                 )}
               </div>
