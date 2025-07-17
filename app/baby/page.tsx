@@ -3,14 +3,12 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Container from "../components/Container"
-import ParentNavigationBar from "../components/ParentNavigationBar"
 import { useChild } from "../contexts/ChildContext"
 import { 
   getForecastsByDate, 
   getForecastRecordsByDate,
   ForecastData,
-  ForecastRecordData,
-  isAuthenticated
+  ForecastRecordData
 } from "../auth/index"
 import { 
   getEmotionColor, 
@@ -46,10 +44,7 @@ interface DiaryData {
 
 export default function Present() {
   const router = useRouter()
-  const { selectedChild, isLoading, exitChildMode } = useChild()
-  const [currentName, setCurrentName] = useState('')
-  const [currentId, setCurrentId] = useState('임시값 백엔드 추가예정')
-  const [activeTab, setActiveTab] = useState('감정비교')
+  const { selectedChild, isLoading } = useChild()
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<'morning' | 'afternoon' | 'evening'>('morning')
   const [currentMonth, setCurrentMonth] = useState(new Date())
@@ -141,14 +136,9 @@ export default function Present() {
 
   const handleDateClick = async (date: Date) => {
     const dateStr = formatDate(date);
-    console.log('Date clicked:', date, 'Formatted date:', dateStr);
-    console.log('Is past date:', isPastDate(date));
-    console.log('Is today:', isToday(date));
-    console.log('Selected child:', selectedChild);
     setSelectedDate(dateStr);
     
     if (isPastDate(date) || isToday(date)) {
-      console.log('Loading forecast data for past date or today...');
       await loadForecastData(dateStr);
     }
   };
@@ -165,44 +155,27 @@ export default function Present() {
 
   const loadForecastData = async (date: string) => {
     if (!selectedChild?.id) {
-      console.log('No selected child, cannot load forecast data');
       return;
     }
     
-    console.log('Loading forecast data for date:', date, 'childId:', selectedChild.id);
     setLoading(true)
     setError(null)
     
     try {
-      console.log('🔍 API 호출 시작:', { childId: selectedChild.id, date });
-      console.log('🔍 API_BASE_URL:', process.env.NEXT_PUBLIC_API_BASE_URL);
-      
       // 예보와 예보 기록을 동시에 가져오기
       const [forecastResponse, recordResponse] = await Promise.all([
         getForecastsByDate(selectedChild.id, date),
         getForecastRecordsByDate(selectedChild.id, date)
       ]);
-      
-      console.log('Forecast response:', forecastResponse);
-      console.log('Record response:', recordResponse);
 
       if (forecastResponse.success && forecastResponse.data) {
-        console.log('✅ API 성공, 데이터 처리 시작');
-        console.log('Processing forecast data:', forecastResponse.data);
-        console.log('데이터 타입:', typeof forecastResponse.data);
-        console.log('데이터 길이:', Array.isArray(forecastResponse.data) ? forecastResponse.data.length : 'not array');
-        
         const transformedData: any = {
           morning: null,
           afternoon: null,
           evening: null
         };
         
-        console.log('API response data length:', forecastResponse.data.length);
         for (const forecast of forecastResponse.data) {
-          console.log('Processing forecast:', forecast);
-          console.log('Forecast timeZone:', forecast.timeZone);
-          
           let timeZone: 'morning' | 'afternoon' | 'evening' | null = null;
           switch (forecast.timeZone) {
             case '아침':
@@ -215,7 +188,6 @@ export default function Present() {
               timeZone = 'evening';
               break;
             default:
-              console.log('Unknown timeZone:', forecast.timeZone);
               continue;
           }
           
@@ -227,7 +199,7 @@ export default function Present() {
             
             transformedData[timeZone] = {
               id: forecast.id,
-              originalTimeZone: forecast.timeZone, // 원래 예보의 시간대 저장
+              originalTimeZone: forecast.timeZone,
               predictedEmotions: [{ 
                 emotion: emotionName, 
                 category: emotionCategory,
@@ -237,17 +209,12 @@ export default function Present() {
               actualEmotions: [],
               actualText: ''
             };
-            console.log('Updated timeZone data:', timeZone, transformedData[timeZone]);
           }
         }
         
         // 예보 기록 데이터 처리
         if (recordResponse.success && recordResponse.data) {
-          console.log('Processing record data:', recordResponse.data);
           for (const record of recordResponse.data) {
-            console.log('Processing record:', record);
-            console.log('Record timeZone:', record.timeZone);
-            
             let timeZone: 'morning' | 'afternoon' | 'evening' | null = null;
             switch (record.timeZone) {
               case '아침':
@@ -260,7 +227,6 @@ export default function Present() {
                 timeZone = 'evening';
                 break;
               default:
-                console.log('Unknown timeZone:', record.timeZone);
                 continue;
             }
             
@@ -276,23 +242,15 @@ export default function Present() {
                 color: emotionColor
               }];
               transformedData[timeZone].actualText = record.memo || '작성된 메모가 없습니다.';
-              console.log('Updated record data for timeZone:', timeZone, transformedData[timeZone]);
             }
           }
         }
         
-        console.log('Transformed forecast data:', transformedData);
-        console.log('저장할 날짜:', date);
-        setForecastData(prev => {
-          const newData = {
-            ...prev,
-            [date]: transformedData
-          };
-          console.log('업데이트된 forecastData:', newData);
-          return newData;
-        });
+        setForecastData(prev => ({
+          ...prev,
+          [date]: transformedData
+        }));
       } else {
-        console.log('Forecast API failed or no data:', forecastResponse);
         setError('예보 데이터를 불러오는데 실패했습니다.');
       }
     } catch (err) {
@@ -347,12 +305,6 @@ export default function Present() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChild?.id, currentMonth, isLoading]);
 
-  // 디버깅용 로그
-  useEffect(() => {
-    console.log('Baby page - selectedChild:', selectedChild);
-    console.log('Baby page - selectedChild?.inviteCode:', selectedChild?.inviteCode);
-  }, [selectedChild]);
-
   const calendarDays = generateCalendarDays();
   const selectedDiary = selectedDate && (isPastDate(new Date(selectedDate)) || isToday(new Date(selectedDate))) ? (forecastData[selectedDate] || getDefaultDiary(selectedDate)) : null;
 
@@ -367,7 +319,7 @@ export default function Present() {
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
         {/* 사용자 정보 */}
         <div className="flex items-end gap-1 rounded-lg px-2 mb-6">
-          <span className="text-gray-900 font-semibold text-2xl">{selectedChild?.name || currentName}</span>
+          <span className="text-gray-900 font-semibold text-2xl">{selectedChild?.name || ''}</span>
           <div className="flex items-center gap-1">
             {selectedChild?.inviteCode && (
               <span className="text-sm text-gray-500 font-medium mr-1">
