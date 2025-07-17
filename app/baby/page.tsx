@@ -502,8 +502,10 @@ export default function Present() {
                     
                     return (
                       <div className="space-y-3">
+                        {/* 예보 섹션 */}
                         <div className="bg-white rounded-2xl p-5 border border-gray-100">
-                          <div className="mb-3">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-sm font-medium text-[#FF6F71]">예보</span>
                             <span className="text-sm text-gray-400">
                               {timeData.predictedEmotions?.map((e: any) => (
                                 <span 
@@ -521,8 +523,10 @@ export default function Present() {
                           </p>
                         </div>
 
+                        {/* 예보 기록 섹션 */}
                         <div className="bg-white rounded-2xl p-5 border border-gray-100">
-                          <div className="mb-3">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-sm font-medium text-[#FF6F71]">예보 기록</span>
                             <span className="text-sm text-gray-400">
                               {timeData.actualEmotions?.map((e: any) => (
                                 <span 
@@ -618,6 +622,9 @@ export default function Present() {
           </div>
         )}
       </div>
+      
+      {/* 하단 여백 */}
+      <div className="h-8"></div>
       
     </Container>
   )
