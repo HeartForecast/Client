@@ -214,7 +214,7 @@ function ReasonPageContent() {
               <textarea
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="어떤 일 때문에 이런 감정을 느낄 거같아요? (선택사항)"
+                placeholder="어떤 일 때문에 이런 감정을 느낄 거같아요?"
                 className="w-full h-132 p-5 border-2 border-gray-200 rounded-xl resize-none focus:border-[#FF6F71] focus:outline-none transition-all duration-300 text-base leading-relaxed placeholder-gray-400"
                 maxLength={500}
               />

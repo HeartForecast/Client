@@ -539,8 +539,8 @@ export default function Present() {
                             {timeData.actualText || (isToday(new Date(selectedDate)) && (!timeData.actualEmotions || timeData.actualEmotions.length === 0) ? '' : '실제 기록이 없습니다.')}
                           </p>
                           
-                          {/* 오늘 날짜이고 예보 기록이 없을 때 버튼 표시 */}
-                          {isToday(new Date(selectedDate)) && (!timeData.actualEmotions || timeData.actualEmotions.length === 0) && (
+                          {/* 오늘 날짜이고 예보가 있지만 예보 기록이 없는 경우에만 버튼 표시 */}
+                          {isToday(new Date(selectedDate)) && timeData.predictedEmotions && timeData.predictedEmotions.length > 0 && (!timeData.actualEmotions || timeData.actualEmotions.length === 0) && (
                             <div className="mt-4">
                               <button
                                 onClick={() => {
