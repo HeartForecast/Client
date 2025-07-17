@@ -140,6 +140,13 @@ export default function SettingsPage() {
     childName: ''
   })
 
+  // 아이 모드일 때 접근 차단 - useEffect로 이동
+  useEffect(() => {
+    if (isChildMode) {
+      router.replace('/home');
+    }
+  }, [isChildMode, router]);
+
   useEffect(() => {
     const fetchChildRelations = async () => {
       try {
@@ -314,14 +321,6 @@ export default function SettingsPage() {
       childId: 0,
       childName: ''
     })
-  }
-
-  // 아이 모드일 때 접근 차단
-  if (isChildMode) {
-    if (typeof window !== 'undefined') {
-      router.replace('/home');
-    }
-    return null;
   }
 
   // 로딩 상태 렌더링

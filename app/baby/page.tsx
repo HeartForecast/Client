@@ -123,7 +123,20 @@ export default function Present() {
   };
 
   const hasDiary = (date: Date) => {
-    return isPastDate(date);
+    const dateStr = formatDate(date);
+    const diaryData = forecastData[dateStr];
+    
+    // 예보 데이터가 있고, 최소 하나의 시간대에 실제 데이터가 있는지 확인
+    if (diaryData) {
+      return Object.values(diaryData).some((timeSlot: any) => 
+        timeSlot && (
+          (timeSlot.predictedEmotions && timeSlot.predictedEmotions.length > 0) ||
+          (timeSlot.actualEmotions && timeSlot.actualEmotions.length > 0)
+        )
+      );
+    }
+    
+    return false;
   };
 
   const handleDateClick = async (date: Date) => {
@@ -313,6 +326,27 @@ export default function Present() {
     };
   };
 
+  // 현재 달의 과거 날짜들에 대한 데이터 미리 로드
+  useEffect(() => {
+    if (selectedChild?.id && !isLoading) {
+      const today = new Date();
+      const year = currentMonth.getFullYear();
+      const month = currentMonth.getMonth();
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      
+      for (let date = new Date(firstDay); date <= lastDay; date.setDate(date.getDate() + 1)) {
+        if (isPastDate(date)) {
+          const dateStr = formatDate(date);
+          if (!forecastData[dateStr]) {
+            loadForecastData(dateStr);
+          }
+        }
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedChild?.id, currentMonth, isLoading]);
+
   const calendarDays = generateCalendarDays();
   const selectedDiary = selectedDate && (isPastDate(new Date(selectedDate)) || isToday(new Date(selectedDate))) ? (forecastData[selectedDate] || getDefaultDiary(selectedDate)) : null;
 
@@ -419,22 +453,16 @@ export default function Present() {
               })}
             </div>
 
-            {/* 내일인 경우 - 예측 버튼 */}
-            {isTomorrow(new Date(selectedDate)) && (
+            {/* 내일 또는2일 이후인 경우 - 감정 등록까지 멀었어요 메시지 */}
+            {(isTomorrow(new Date(selectedDate)) || isMoreThanTwoDaysLater(new Date(selectedDate))) && (
               <div className="w-full text-center py-8">
                 <div className="bg-white rounded-2xl p-5 border border-gray-100">
                   <div className="text-lg font-semibold text-gray-800 mb-4">
-                    내일의 일을 예측해보세요!
+                    감정 등록까지 멀었어요!!
                   </div>
-                  <p className="text-gray-600 text-sm mb-6">
-                    내일 하루 어떤 감정을 느낄지 미리 예측해보아요
+                  <p className="text-gray-500 text-sm">
+                    아직 시간이 많이 남았어요. 조금만 기다려주세요!
                   </p>
-                  <button
-                    onClick={() => router.push('/insert')}
-                    className="bg-purple-500 hover:bg-purple-600 text-white font-medium py-3 px-6 rounded-lg transition-colors"
-                  >
-                    감정 예측하러 가기
-                  </button>
                 </div>
               </div>
             )}
@@ -471,8 +499,28 @@ export default function Present() {
                 </div>
               )}
 
+              {/* 오늘이고, 해당 시간대 예보가 없으면 예측 버튼 */}
+              {isToday(new Date(selectedDate)) && (!selectedDiary || !selectedDiary[selectedTimeSlot]) && (
+                <div className="w-full text-center py-8">
+                  <div className="bg-white rounded-2xl p-5 border border-gray-100">
+                    <div className="text-lg font-semibold text-gray-800 mb-4">
+                      오늘의 일을 예측해보세요!
+                    </div>
+                    <p className="text-gray-600 text-sm mb-6">
+                      오늘 하루 어떤 감정을 느낄지 미리 예측해보아요
+                    </p>
+                    <button
+                      onClick={() => router.push('/insert')}
+                      className="bg-[#FF7B6F] hover:bg-[#e55a5c] text-white font-medium py-3 px-6 rounded-lg transition-colors"
+                    >
+                      감정 예측하러 가기
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* 데이터 표시 */}
-              {!loading && !error && selectedDiary && (
+              {!loading && !error && selectedDiary && selectedDiary[selectedTimeSlot] && (
                 <>
                   {/* 선택된 시간대 일기 */}
                   <div className="text-lg font-semibold text-gray-800 mb-2">
@@ -578,8 +626,8 @@ export default function Present() {
                 </>
               )}
 
-              {/* 데이터가 없는 경우 (2일 이후가 아닌 경우에만) */}
-              {!loading && !error && !selectedDiary && !isMoreThanTwoDaysLater(new Date(selectedDate)) && (
+              {/* 데이터가 없는 경우 (오늘/내일/예측 버튼 조건이 아닌 경우만) */}
+              {!loading && !error && (!selectedDiary || !selectedDiary[selectedTimeSlot]) && !isToday(new Date(selectedDate)) && !isTomorrow(new Date(selectedDate)) && !isMoreThanTwoDaysLater(new Date(selectedDate)) && (
                 <div className="w-full text-center py-8">
                   <div className="text-gray-400 mb-2">
                     <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -587,24 +635,11 @@ export default function Present() {
                     </svg>
                   </div>
                   <p className="text-gray-500 text-sm">
-                    해당 날짜의 예보 데이터가 없습니다.
+                    해당 시간대의 예보 데이터가 없습니다.
                   </p>
                 </div>
               )}
             </div>
-
-            {isMoreThanTwoDaysLater(new Date(selectedDate)) && (
-              <div className="w-full text-center py-8">
-                <div className="bg-white rounded-2xl p-5 border border-gray-100">
-                  <div className="text-lg font-semibold text-gray-800 mb-4">
-                    감정 등록까지 멀었어요!!
-                  </div>
-                  <p className="text-gray-500 text-sm">
-                    아직 시간이 많이 남았어요. 조금만 기다려주세요!
-                  </p>
-                </div>
-              </div>
-            )}
           </div>
         )}
 

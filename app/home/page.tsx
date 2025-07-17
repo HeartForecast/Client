@@ -168,7 +168,20 @@ export default function Register() {
   }
 
   const hasDiary = (date: Date) => {
-    return isPastDate(date) && diaryData[formatDate(date)];
+    const dateStr = formatDate(date);
+    const diaryDataForDate = diaryData[dateStr];
+    
+    // 과거 날짜이고, 실제 데이터가 있는지 확인
+    if (isPastDate(date) && diaryDataForDate) {
+      return Object.values(diaryDataForDate).some((timeSlot: any) => 
+        timeSlot && (
+          (timeSlot.forecast) ||
+          (timeSlot.record)
+        )
+      );
+    }
+    
+    return false;
   };
 
   const handleDateClick = async (date: Date) => {
@@ -248,6 +261,26 @@ export default function Register() {
     }
   }, [isLoading, hasChildren, selectedChild]);
 
+  // 현재 달의 과거 날짜들에 대한 데이터 미리 로드
+  useEffect(() => {
+    if (selectedChild?.id && !isLoading) {
+      const today = new Date();
+      const year = currentMonth.getFullYear();
+      const month = currentMonth.getMonth();
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      
+      for (let date = new Date(firstDay); date <= lastDay; date.setDate(date.getDate() + 1)) {
+        if (isPastDate(date)) {
+          const dateStr = formatDate(date);
+          if (!diaryData[dateStr]) {
+            loadDiaryData(dateStr);
+          }
+        }
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedChild?.id, currentMonth, isLoading]);
 
 
   // 디버깅용 로그
