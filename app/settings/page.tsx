@@ -14,6 +14,7 @@ interface ChildData {
   name: string
   age: number
   registeredDate: string
+  inviteCode: string
 }
 
 interface ApiChildData {
@@ -180,7 +181,8 @@ export default function SettingsPage() {
             id: item.id,
             name: item.username,
             age,
-            registeredDate: formattedDate
+            registeredDate: formattedDate,
+            inviteCode: item.inviteCode
           }
         })
 
