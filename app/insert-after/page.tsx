@@ -29,7 +29,7 @@ const TIME_PERIODS = {
   evening: { label: '저녁', text: '저녁에는 어떤 감정을' }
 };
 
-function InsertPageContent() {
+function InsertAfterPageContent() {
   const { selectedChild } = useChild();
   const [emotions, setEmotions] = useState<EmotionType[]>([]);
   const [emotionCategories, setEmotionCategories] = useState<{[key: string]: EmotionType[]}>({});
@@ -45,6 +45,7 @@ function InsertPageContent() {
   const [savedSteps, setSavedSteps] = useState<Set<string>>(new Set());
   const router = useRouter();
   const searchParams = useSearchParams();
+  const forecastId = searchParams.get('forecastId');
 
   // 감정 목록 조회
   const fetchEmotions = async () => {
@@ -110,77 +111,37 @@ function InsertPageContent() {
     window.history.back();
   };
 
-  const createForecast = async () => {
+  const handleNext = () => {
     if (!selectedEmotion) return;
+    
+    // 현재 선택된 감정을 localStorage에 저장
+    const currentEmotionData = {
+      step: currentStep,
+      emotion: selectedEmotion.emotion,
+      category: Object.keys(emotionCategories)[selectedEmotion.categoryIdx]
+    };
 
-    // 선택된 아이가 없거나 ID가 잘못된 경우 예외 처리
-    if (!selectedChild?.id) {
-      setError('선택된 아이 정보가 없습니다. 다시 시도해주세요.');
-      return;
+    // 기존 데이터 가져오기
+    let allEmotionData = [];
+    if (typeof window !== 'undefined') {
+      const existingData = localStorage.getItem('forecastRecordEmotions');
+      if (existingData) {
+        allEmotionData = JSON.parse(existingData);
+      }
+      
+      // 현재 단계 데이터 업데이트
+      allEmotionData = allEmotionData.filter((data: any) => data.step !== currentStep);
+      allEmotionData.push(currentEmotionData);
+      localStorage.setItem('forecastRecordEmotions', JSON.stringify(allEmotionData));
     }
 
-    try {
-      setIsLoading(true);
-      setError(null);
+    console.log(`${currentStep} 감정 저장:`, currentEmotionData);
 
-      const today = new Date();
-      const dateString = today.toISOString().split('T')[0]; 
-
-      const forecastData = {
-        childId: selectedChild.id,
-        emotionTypeId: selectedEmotion.emotion.id,
-        date: dateString,
-        timeZone: TIME_PERIODS[currentStep].label,
-        memo: selectedEmotion.emotion.name
-      };
-
-      console.log('감정 예보 생성 요청:', forecastData);
-
-      const response = await fetch(`${apiBaseUrl}/api/forecasts/forecast`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(forecastData)
-      });
-
-      console.log('API 응답:', {
-        status: response.status,
-        statusText: response.statusText,
-        ok: response.ok
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API 에러 응답:', errorText);
-        throw new Error('감정 예보 생성에 실패했습니다.');
-      }
-
-      setSavedSteps(prev => new Set([...prev, currentStep]));
-      
-      const steps = ['morning', 'afternoon', 'evening'];
-      const currentIndex = steps.indexOf(currentStep);
-      const nextStep = steps[currentIndex + 1];
-      
-      if (nextStep) {
-        setCurrentStep(nextStep as 'morning' | 'afternoon' | 'evening');
-        setSelectedEmotion(null);
-      } else {
-        // 모든 단계 완료 시 토스트 메시지 표시
-        alert('예보를 작성하였습니다.');
-        router.push('/home');
-      }
-    } catch (error) {
-      console.error('감정 예보 생성 실패:', error);
-      setError('감정 예보 생성에 실패했습니다.');
-    } finally {
-      setIsLoading(false);
-    }
+    // reason 페이지로 이동
+    router.push(`/insert-after/reason?step=${currentStep}&forecastId=${forecastId}&date=${searchParams.get('date')}&timeZone=${searchParams.get('timeZone')}`);
   };
 
   const isEmotionSelected = selectedEmotion !== null;
-  const isStepCompleted = savedSteps.has(currentStep);
 
   // 현재 날짜 포맷팅
   const getCurrentDate = () => {
@@ -224,18 +185,12 @@ function InsertPageContent() {
           <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
             <div className="text-xs text-gray-400 mb-2">{getCurrentDate()} {TIME_PERIODS[currentStep].label}</div>
             <div className="text-2xl font-bold leading-tight whitespace-pre-line mb-8">
-              {TIME_PERIODS[currentStep].text}{`\n`}느낄까요?
+              {TIME_PERIODS[currentStep].text}{`\n`}느꼈나요?
             </div>
             
             {error && (
               <div className="w-full mb-4 text-sm text-red-500 text-center">
                 {error}
-              </div>
-            )}
-
-            {isStepCompleted && (
-              <div className="w-full mb-4 text-sm text-green-600 text-center">
-                ✓ {TIME_PERIODS[currentStep].label} 감정이 저장되었습니다
               </div>
             )}
             
@@ -273,7 +228,7 @@ function InsertPageContent() {
                           }}
                           whileTap={{ scale: 0.95 }}
                           onClick={() => handleEmotionClick(categoryIdx, emotionIdx)}
-                          disabled={isLoading || isStepCompleted}
+                          disabled={isLoading}
                         >
                           {emotion.name}
                         </motion.button>
@@ -293,19 +248,17 @@ function InsertPageContent() {
           className="flex flex-col items-center w-full max-w-sm mx-auto mb-4 px-4"
         >
           <Button
-            className={`flex w-full items-center justify-center gap-1 rounded-lg bg-[#FF6F71] text-white py-3 text-lg font-semibold text-gray-900 mb-4 transition-opacity ${isEmotionSelected && !isLoading && !isStepCompleted ? '' : 'opacity-50 cursor-not-allowed'}`}
-            disabled={!isEmotionSelected || isLoading || isStepCompleted}
-            onClick={createForecast}
+            className={`flex w-full items-center justify-center gap-1 rounded-lg bg-[#FF6F71] text-white py-3 text-lg font-semibold text-gray-900 mb-4 transition-opacity ${isEmotionSelected && !isLoading ? '' : 'opacity-50 cursor-not-allowed'}`}
+            disabled={!isEmotionSelected || isLoading}
+            onClick={handleNext}
           >
             {isLoading ? (
               <div className="flex items-center gap-2">
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                저장 중...
+                처리 중...
               </div>
-            ) : isStepCompleted ? (
-              '완료됨'
             ) : (
-              '넘어가기'
+              '다음으로'
             )}
           </Button>
         </motion.div>
@@ -326,7 +279,7 @@ export default function InsertPage() {
         </div>
       </div>
     }>
-      <InsertPageContent />
+      <InsertAfterPageContent />
     </Suspense>
   );
 }

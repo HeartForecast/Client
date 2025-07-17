@@ -7,6 +7,7 @@ interface ChildData {
   name: string;
   age: number;
   registeredDate: string;
+  inviteCode: string;
 }
 
 interface ChildContextType {
@@ -79,7 +80,7 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
           const data = await response.json();
           setHasChildren(data && data.length > 0);
           
-          // 저장된 아이가 실제로 존재하는지 확인
+          // 저장된 아이가 실제로 존재하는지 확인하고 inviteCode 업데이트
           if (savedChild && data && data.length > 0) {
             try {
               const parsedChild = JSON.parse(savedChild);
@@ -88,6 +89,27 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
                 // 저장된 아이가 더 이상 존재하지 않으면 localStorage 정리
                 localStorage.removeItem('selectedChild');
                 setSelectedChild(null);
+              } else {
+                // 아이가 존재하면 inviteCode를 포함한 최신 데이터로 업데이트
+                const updatedChild = data.find((child: any) => child.id === parsedChild.id);
+                if (updatedChild && !parsedChild.inviteCode) {
+                  const birthYear = new Date(updatedChild.birthdate).getFullYear();
+                  const thisYear = new Date().getFullYear();
+                  const age = thisYear - birthYear;
+
+                  const updatedChildData: ChildData = {
+                    id: updatedChild.id,
+                    name: updatedChild.username,
+                    age,
+                    registeredDate: new Date(updatedChild.createdAt).toLocaleDateString('ko-KR'),
+                    inviteCode: updatedChild.inviteCode || '',
+                  };
+
+                  setSelectedChild(updatedChildData);
+                  if (typeof window !== 'undefined') {
+                    localStorage.setItem('selectedChild', JSON.stringify(updatedChildData));
+                  }
+                }
               }
             } catch (error) {
               console.error('Error checking saved child existence:', error);
@@ -171,7 +193,8 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
           id: firstChild.id,
           name: firstChild.username,
           age,
-          registeredDate: new Date(firstChild.createdAt).toLocaleDateString('ko-KR')
+          registeredDate: new Date(firstChild.createdAt).toLocaleDateString('ko-KR'),
+          inviteCode: firstChild.inviteCode || '',
         };
 
         setSelectedChild(childData);

@@ -3,86 +3,54 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Container from "../components/Container"
-import ParentNavigationBar from "../components/ParentNavigationBar"
+import { useChild } from "../contexts/ChildContext"
+import { 
+  getForecastsByDate, 
+  getForecastRecordsByDate,
+  ForecastData,
+  ForecastRecordData
+} from "../auth/index"
+import { 
+  getEmotionColor, 
+  fetchEmotionType, 
+  EmotionTypeData 
+} from "../utils/emotionUtils"
+import ModeToggleButton from "../components/ModeToggleButton"
 
-// 감정 카테고리 색상
-const EMOTION_COLORS = {
-  즐거움: '#3DC8EF',
-  슬픔: '#FF7B6F',
-  중립: '#FFD340'
-};
+// 감정 타입 인터페이스 (공통 유틸리티 사용)
+type EmotionType = EmotionTypeData;
 
-// 시간대별 일기 데이터 구조
-const diaryData: Record<string, {
-  morning: {
-    predictedEmotions: Array<{emotion: string, category: string}>;
+// 시간대별 일기 데이터 구조 (타입 정의만 유지)
+interface DiaryData {
+  morning?: {
+    predictedEmotions: Array<{emotion: string, category: string, color: string}>;
     predictedText: string;
-    actualEmotions: Array<{emotion: string, category: string}>;
+    actualEmotions: Array<{emotion: string, category: string, color: string}>;
     actualText: string;
   };
-  afternoon: {
-    predictedEmotions: Array<{emotion: string, category: string}>;
+  afternoon?: {
+    predictedEmotions: Array<{emotion: string, category: string, color: string}>;
     predictedText: string;
-    actualEmotions: Array<{emotion: string, category: string}>;
+    actualEmotions: Array<{emotion: string, category: string, color: string}>;
     actualText: string;
   };
-  evening: {
-    predictedEmotions: Array<{emotion: string, category: string}>;
+  evening?: {
+    predictedEmotions: Array<{emotion: string, category: string, color: string}>;
     predictedText: string;
-    actualEmotions: Array<{emotion: string, category: string}>;
+    actualEmotions: Array<{emotion: string, category: string, color: string}>;
     actualText: string;
   };
-}> = {
-  '2024-01-15': {
-    morning: {
-      predictedEmotions: [{ emotion: '기대되는', category: '즐거움' }],
-      predictedText: '오늘은 친구들과 만나서 즐거운 시간을 보낼 것 같아요!',
-      actualEmotions: [{ emotion: '설레는', category: '즐거움' }],
-      actualText: '아침부터 친구들 만날 생각에 정말 설렜어요.'
-    },
-    afternoon: {
-      predictedEmotions: [{ emotion: '활발한', category: '즐거움' }],
-      predictedText: '체육시간에 운동하면서 활기찬 오후가 될 것 같아요.',
-      actualEmotions: [{ emotion: '신나는', category: '즐거움' }, { emotion: '즐거운', category: '즐거움' }],
-      actualText: '체육시간에 축구했는데 너무 재미있었어요! 친구들과 같이 웃으면서 놀았습니다.'
-    },
-    evening: {
-      predictedEmotions: [{ emotion: '만족스러운', category: '즐거움' }],
-      predictedText: '하루를 정리하면서 뿌듯한 저녁이 될 것 같아요.',
-      actualEmotions: [{ emotion: '행복한', category: '즐거움' }],
-      actualText: '정말 완벽한 하루였어요. 친구들과 보낸 시간이 너무 소중했습니다.'
-    }
-  },
-  '2024-01-14': {
-    morning: {
-      predictedEmotions: [{ emotion: '평온한', category: '중립' }],
-      predictedText: '미술시간이 있어서 차분하고 집중된 아침이 될 것 같아요.',
-      actualEmotions: [{ emotion: '집중된', category: '중립' }],
-      actualText: '미술시간에 풍경화를 그렸는데 정말 집중해서 그렸어요.'
-    },
-    afternoon: {
-      predictedEmotions: [{ emotion: '창의적인', category: '즐거움' }],
-      predictedText: '오후에는 더 창의적인 활동을 할 수 있을 것 같아요.',
-      actualEmotions: [{ emotion: '어려운', category: '슬픔' }],
-      actualText: '그림이 생각보다 너무 어려웠어요. 계속 지우고 다시 그렸습니다.'
-    },
-    evening: {
-      predictedEmotions: [{ emotion: '뿌듯한', category: '즐거움' }],
-      predictedText: '완성된 작품을 보면서 성취감을 느낄 것 같아요.',
-      actualEmotions: [{ emotion: '기쁜', category: '즐거움' }],
-      actualText: '선생님이 제 그림을 칭찬해주셔서 정말 기뻤어요!'
-    }
-  }
-};
+}
 
 export default function Present() {
   const router = useRouter()
-  const [currentName, setCurrentName] = useState('신희성')
-  const [currentId, setCurrentId] = useState('#342944')
-  const [activeTab, setActiveTab] = useState('감정비교')
+  const { selectedChild, isLoading } = useChild()
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<'morning' | 'afternoon' | 'evening'>('morning')
   const [currentMonth, setCurrentMonth] = useState(new Date())
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [forecastData, setForecastData] = useState<Record<string, any>>({})
 
   // 현재 달의 날짜들을 생성
   const generateCalendarDays = () => {
@@ -107,7 +75,10 @@ export default function Present() {
   };
 
   const formatDate = (date: Date) => {
-    return date.toISOString().split('T')[0];
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   const isToday = (date: Date) => {
@@ -129,18 +100,47 @@ export default function Present() {
     return compareDate < today;
   };
 
+  const isMoreThanTwoDaysLater = (date: Date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const compareDate = new Date(date);
+    compareDate.setHours(0, 0, 0, 0);
+    
+    // 2일 후 날짜 계산
+    const twoDaysLater = new Date(today);
+    twoDaysLater.setDate(today.getDate() + 2);
+    
+    return compareDate >= twoDaysLater;
+  };
+
   const isCurrentMonth = (date: Date) => {
     return date.getMonth() === currentMonth.getMonth();
   };
 
   const hasDiary = (date: Date) => {
-    // 과거 날짜만 일기가 있다고 표시
-    return isPastDate(date);
+    const dateStr = formatDate(date);
+    const diaryData = forecastData[dateStr];
+    
+    // 예보 데이터가 있고, 최소 하나의 시간대에 실제 데이터가 있는지 확인
+    if (diaryData) {
+      return Object.values(diaryData).some((timeSlot: any) => 
+        timeSlot && (
+          (timeSlot.predictedEmotions && timeSlot.predictedEmotions.length > 0) ||
+          (timeSlot.actualEmotions && timeSlot.actualEmotions.length > 0)
+        )
+      );
+    }
+    
+    return false;
   };
 
-  const handleDateClick = (date: Date) => {
+  const handleDateClick = async (date: Date) => {
     const dateStr = formatDate(date);
     setSelectedDate(dateStr);
+    
+    if (isPastDate(date) || isToday(date)) {
+      await loadForecastData(dateStr);
+    }
   };
 
   const handlePrevMonth = () => {
@@ -151,65 +151,162 @@ export default function Present() {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1));
   };
 
-  // 일기가 없는 날짜에도 기본 일기 내용 제공
-  const getDefaultDiary = (date: string) => {
-    const dayNum = new Date(date).getDate();
-    
-    const sampleMorning = [
-      {
-        predictedEmotions: [{ emotion: '기대되는', category: '즐거움' }],
-        predictedText: '새로운 하루가 시작되네요! 오늘은 뭔가 좋은 일이 있을 것 같아요.',
-        actualEmotions: [{ emotion: '상쾌한', category: '즐거움' }],
-        actualText: '아침에 일어나니 기분이 좋았어요. 날씨도 맑고 컨디션도 좋았습니다.'
-      },
-      {
-        predictedEmotions: [{ emotion: '집중된', category: '중립' }],
-        predictedText: '오늘은 공부에 집중할 수 있을 것 같아요.',
-        actualEmotions: [{ emotion: '차분한', category: '중립' }],
-        actualText: '아침 시간에 조용히 책을 읽었어요. 마음이 평온했습니다.'
-      }
-    ];
 
-    const sampleAfternoon = [
-      {
-        predictedEmotions: [{ emotion: '활발한', category: '즐거움' }],
-        predictedText: '오후에는 친구들과 활동적인 시간을 보낼 거예요.',
-        actualEmotions: [{ emotion: '즐거운', category: '즐거움' }],
-        actualText: '친구들과 함께 놀면서 정말 재미있는 시간을 보냈어요.'
-      },
-      {
-        predictedEmotions: [{ emotion: '호기심 많은', category: '즐거움' }],
-        predictedText: '새로운 것을 배우는 시간이 될 것 같아요.',
-        actualEmotions: [{ emotion: '뿌듯한', category: '즐거움' }],
-        actualText: '새로운 지식을 배워서 뿌듯했어요. 점점 실력이 늘고 있는 것 같습니다.'
-      }
-    ];
 
-    const sampleEvening = [
-      {
-        predictedEmotions: [{ emotion: '평온한', category: '중립' }],
-        predictedText: '저녁에는 가족과 함께 편안한 시간을 보낼 거예요.',
-        actualEmotions: [{ emotion: '따뜻한', category: '즐거움' }],
-        actualText: '가족과 함께 저녁을 먹으며 하루 이야기를 나누었어요. 정말 따뜻한 시간이었습니다.'
-      },
-      {
-        predictedEmotions: [{ emotion: '만족스러운', category: '즐거움' }],
-        predictedText: '하루를 마무리하며 성취감을 느낄 것 같아요.',
-        actualEmotions: [{ emotion: '감사한', category: '중립' }],
-        actualText: '오늘 하루를 돌이켜보니 정말 감사한 마음이 들었어요.'
-      }
-    ];
+  const loadForecastData = async (date: string) => {
+    if (!selectedChild?.id) {
+      return;
+    }
     
-    const index = dayNum % 2;
+    setLoading(true)
+    setError(null)
+    
+    try {
+      // 예보와 예보 기록을 동시에 가져오기
+      const [forecastResponse, recordResponse] = await Promise.all([
+        getForecastsByDate(selectedChild.id, date),
+        getForecastRecordsByDate(selectedChild.id, date)
+      ]);
+
+      if (forecastResponse.success && forecastResponse.data) {
+        const transformedData: any = {
+          morning: null,
+          afternoon: null,
+          evening: null
+        };
+        
+        for (const forecast of forecastResponse.data) {
+          let timeZone: 'morning' | 'afternoon' | 'evening' | null = null;
+          switch (forecast.timeZone) {
+            case '아침':
+              timeZone = 'morning';
+              break;
+            case '점심':
+              timeZone = 'afternoon';
+              break;
+            case '저녁':
+              timeZone = 'evening';
+              break;
+            default:
+              continue;
+          }
+          
+          if (timeZone) {
+            const emotionType = await fetchEmotionType(forecast.emotionTypeId);
+            const emotionName = emotionType?.name || '알 수 없음';
+            const emotionCategory = emotionType?.type || '알 수 없음';
+            const emotionColor = getEmotionColor(emotionName);
+            
+            transformedData[timeZone] = {
+              id: forecast.id,
+              originalTimeZone: forecast.timeZone,
+              predictedEmotions: [{ 
+                emotion: emotionName, 
+                category: emotionCategory,
+                color: emotionColor
+              }],
+              predictedText: forecast.memo || '작성된 메모가 없습니다.',
+              actualEmotions: [],
+              actualText: ''
+            };
+          }
+        }
+        
+        // 예보 기록 데이터 처리
+        if (recordResponse.success && recordResponse.data) {
+          for (const record of recordResponse.data) {
+            let timeZone: 'morning' | 'afternoon' | 'evening' | null = null;
+            switch (record.timeZone) {
+              case '아침':
+                timeZone = 'morning';
+                break;
+              case '점심':
+                timeZone = 'afternoon';
+                break;
+              case '저녁':
+                timeZone = 'evening';
+                break;
+              default:
+                continue;
+            }
+            
+            if (timeZone && transformedData[timeZone]) {
+              const emotionType = await fetchEmotionType(record.emotionTypeId);
+              const emotionName = emotionType?.name || '알 수 없음';
+              const emotionCategory = emotionType?.type || '알 수 없음';
+              const emotionColor = getEmotionColor(emotionName);
+              
+              transformedData[timeZone].actualEmotions = [{ 
+                emotion: emotionName, 
+                category: emotionCategory,
+                color: emotionColor
+              }];
+              transformedData[timeZone].actualText = record.memo || '작성된 메모가 없습니다.';
+            }
+          }
+        }
+        
+        setForecastData(prev => ({
+          ...prev,
+          [date]: transformedData
+        }));
+      } else {
+        setError('예보 데이터를 불러오는데 실패했습니다.');
+      }
+    } catch (err) {
+      console.error('Forecast loading error:', err);
+      setError('예보 데이터를 불러오는데 실패했습니다.');
+    } finally {
+      setLoading(false)
+    }
+  };
+
+  const getDefaultDiary = (date: string): DiaryData => {
     return {
-      morning: sampleMorning[index],
-      afternoon: sampleAfternoon[index],
-      evening: sampleEvening[index]
+      morning: {
+        predictedEmotions: [{ emotion: '예상 감정', category: '알 수 없음', color: '#6B7280' }],
+        predictedText: '작성된 메모가 없습니다.',
+        actualEmotions: [],
+        actualText: ''
+      },
+      afternoon: {
+        predictedEmotions: [{ emotion: '예상 감정', category: '알 수 없음', color: '#6B7280' }],
+        predictedText: '작성된 메모가 없습니다.',
+        actualEmotions: [],
+        actualText: ''
+      },
+      evening: {
+        predictedEmotions: [{ emotion: '예상 감정', category: '알 수 없음', color: '#6B7280' }],
+        predictedText: '작성된 메모가 없습니다.',
+        actualEmotions: [],
+        actualText: ''
+      }
     };
   };
 
+  // 현재 달의 과거 날짜들에 대한 데이터 미리 로드
+  useEffect(() => {
+    if (selectedChild?.id && !isLoading) {
+      const today = new Date();
+      const year = currentMonth.getFullYear();
+      const month = currentMonth.getMonth();
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      
+      for (let date = new Date(firstDay); date <= lastDay; date.setDate(date.getDate() + 1)) {
+        if (isPastDate(date)) {
+          const dateStr = formatDate(date);
+          if (!forecastData[dateStr]) {
+            loadForecastData(dateStr);
+          }
+        }
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedChild?.id, currentMonth, isLoading]);
+
   const calendarDays = generateCalendarDays();
-  const selectedDiary = selectedDate && isPastDate(new Date(selectedDate)) ? (diaryData[selectedDate] || getDefaultDiary(selectedDate)) : null;
+  const selectedDiary = selectedDate && (isPastDate(new Date(selectedDate)) || isToday(new Date(selectedDate))) ? (forecastData[selectedDate] || getDefaultDiary(selectedDate)) : null;
 
   const timeSlots = [
     { key: 'morning', label: '아침', time: '오전' },
@@ -222,9 +319,14 @@ export default function Present() {
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
         {/* 사용자 정보 */}
         <div className="flex items-end gap-1 rounded-lg px-2 mb-6">
-          <span className="text-gray-900 font-semibold text-2xl">{currentName}</span>
+          <span className="text-gray-900 font-semibold text-2xl">{selectedChild?.name || ''}</span>
           <div className="flex items-center gap-1">
-            <span className="text-sm text-gray-500 font-medium mr-1">{currentId}</span>
+            {selectedChild?.inviteCode && (
+              <span className="text-sm text-gray-500 font-medium mr-1">
+                #{selectedChild?.inviteCode || '코드 없음'}
+              </span>
+            )}
+            <ModeToggleButton />
           </div>
         </div>
 
@@ -313,66 +415,8 @@ export default function Present() {
               })}
             </div>
 
-            {/* 내일인 경우 - 예측 버튼 */}
-            {isTomorrow(new Date(selectedDate)) && (
-              <div className="w-full text-center py-8">
-                <div className="bg-white rounded-2xl p-5 border border-gray-100">
-                  <div className="text-lg font-semibold text-gray-800 mb-4">
-                    내일의 일을 예측해보세요!
-                  </div>
-                  <p className="text-gray-600 text-sm mb-6">
-                    내일 하루 어떤 감정을 느낄지 미리 예측해보아요
-                  </p>
-                  <button
-                    onClick={() => router.push('/insert')}
-                    className="bg-purple-500 hover:bg-purple-600 text-white font-medium py-3 px-6 rounded-lg transition-colors"
-                  >
-                    감정 예측하러 가기
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* 과거 날짜인 경우 - 일기 표시 */}
-            {selectedDiary && (
-              <div className="w-full">
-                {/* 선택된 시간대 일기 */}
-                <div className="text-lg font-semibold text-gray-800 mb-2">
-                  {timeSlots.find(t => t.key === selectedTimeSlot)?.label} 기록
-                </div>
-                
-                {(() => {
-                  const timeData = selectedDiary[selectedTimeSlot];
-                  return (
-                    <div className="space-y-3">
-                      <div className="bg-white rounded-2xl p-5 border border-gray-100">
-                        <div className="mb-3">
-                          <span className="text-sm text-gray-400">
-                            {timeData.predictedEmotions.map(e => e.emotion).join(', ')}
-                          </span>
-                        </div>
-                        <p className="text-base text-gray-600 leading-normal">
-                          {timeData.predictedText}
-                        </p>
-                      </div>
-
-                      <div className="bg-white rounded-2xl p-5 border border-gray-100">
-                        <div className="mb-3">
-                          <span className="text-sm text-gray-400">
-                            {timeData.actualEmotions.map(e => e.emotion).join(', ')}
-                          </span>
-                        </div>
-                        <p className="text-base text-gray-600 leading-normal">
-                          {timeData.actualText}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
-            )}
-
-            {!isPastDate(new Date(selectedDate)) && !isTomorrow(new Date(selectedDate)) && (
+            {/* 내일 또는2일 이후인 경우 - 감정 등록까지 멀었어요 메시지 */}
+            {(isTomorrow(new Date(selectedDate)) || isMoreThanTwoDaysLater(new Date(selectedDate))) && (
               <div className="w-full text-center py-8">
                 <div className="bg-white rounded-2xl p-5 border border-gray-100">
                   <div className="text-lg font-semibold text-gray-800 mb-4">
@@ -384,6 +428,180 @@ export default function Present() {
                 </div>
               </div>
             )}
+
+            {/* 과거 날짜인 경우 - 일기 표시 */}
+            <div className="w-full">
+              {/* 로딩 상태 */}
+              {loading && (
+                <div className="w-full text-center py-8">
+                  <div className="text-gray-400 mb-2">
+                    <svg className="w-8 h-8 mx-auto animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </div>
+                  <p className="text-gray-500 text-sm">예보 데이터를 불러오는 중...</p>
+                </div>
+              )}
+
+              {/* 에러 상태 */}
+              {error && (
+                <div className="w-full text-center py-8">
+                  <div className="text-red-400 mb-2">
+                    <svg className="w-8 h-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <p className="text-red-500 text-sm">{error}</p>
+                  <button 
+                    onClick={() => selectedDate && loadForecastData(selectedDate)}
+                    className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600"
+                  >
+                    다시 시도
+                  </button>
+                </div>
+              )}
+
+              {/* 오늘이고, 해당 시간대 예보가 없으면 예측 버튼 */}
+              {isToday(new Date(selectedDate)) && (!selectedDiary || !selectedDiary[selectedTimeSlot]) && (
+                <div className="w-full text-center py-8">
+                  <div className="bg-white rounded-2xl p-5 border border-gray-100">
+                    <div className="text-lg font-semibold text-gray-800 mb-4">
+                      오늘의 일을 예측해보세요!
+                    </div>
+                    <p className="text-gray-600 text-sm mb-6">
+                      오늘 하루 어떤 감정을 느낄지 미리 예측해보아요
+                    </p>
+                    <button
+                      onClick={() => router.push('/insert')}
+                      className="bg-[#FF7B6F] hover:bg-[#e55a5c] text-white font-medium py-3 px-6 rounded-lg transition-colors"
+                    >
+                      감정 예측하러 가기
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* 데이터 표시 */}
+              {!loading && !error && selectedDiary && selectedDiary[selectedTimeSlot] && (
+                <>
+                  {/* 선택된 시간대 일기 */}
+                  <div className="text-lg font-semibold text-gray-800 mb-2">
+                    {timeSlots.find(t => t.key === selectedTimeSlot)?.label} 기록
+                  </div>
+                  
+                  {(() => {
+                    const timeData = selectedDiary[selectedTimeSlot];
+                    
+                    if (!timeData) {
+                      return (
+                        <div className="text-center py-8">
+                          <p className="text-gray-500 text-sm">해당 시간대의 예보 데이터가 없습니다.</p>
+                        </div>
+                      );
+                    }
+                    
+                    return (
+                      <div className="space-y-3">
+                        <div className="bg-white rounded-2xl p-5 border border-gray-100">
+                          <div className="mb-3">
+                            <span className="text-sm text-gray-400">
+                              {timeData.predictedEmotions?.map((e: any) => (
+                                <span 
+                                  key={e.emotion} 
+                                  className="inline-block px-2 py-1 rounded-full text-xs font-medium mr-1"
+                                  style={{ backgroundColor: e.color + '20', color: e.color }}
+                                >
+                                  {e.emotion}
+                                </span>
+                              )) || '예상 감정'}
+                            </span>
+                          </div>
+                          <p className="text-base text-gray-600 leading-normal">
+                            {timeData.predictedText || '예보 메모가 없습니다.'}
+                          </p>
+                        </div>
+
+                        <div className="bg-white rounded-2xl p-5 border border-gray-100">
+                          <div className="mb-3">
+                            <span className="text-sm text-gray-400">
+                              {timeData.actualEmotions?.map((e: any) => (
+                                <span 
+                                  key={e.emotion} 
+                                  className="inline-block px-2 py-1 rounded-full text-xs font-medium mr-1"
+                                  style={{ backgroundColor: e.color + '20', color: e.color }}
+                                >
+                                  {e.emotion}
+                                </span>
+                              )) || '실제 감정'}
+                            </span>
+                          </div>
+                          <p className="text-base text-gray-600 leading-normal">
+                            {timeData.actualText || (isToday(new Date(selectedDate)) && (!timeData.actualEmotions || timeData.actualEmotions.length === 0) ? '' : '실제 기록이 없습니다.')}
+                          </p>
+                          
+                          {/* 오늘 날짜이고 예보 기록이 없을 때 버튼 표시 */}
+                          {isToday(new Date(selectedDate)) && (!timeData.actualEmotions || timeData.actualEmotions.length === 0) && (
+                            <div className="mt-4">
+                              <button
+                                onClick={() => {
+                                  // 모든 시간대의 forecastId를 localStorage에 저장
+                                  const allForecastIds = {
+                                    morning: forecastData[selectedDate]?.morning?.id || '',
+                                    afternoon: forecastData[selectedDate]?.afternoon?.id || '',
+                                    evening: forecastData[selectedDate]?.evening?.id || ''
+                                  };
+                                  
+                                  if (typeof window !== 'undefined') {
+                                    localStorage.setItem('allForecastIds', JSON.stringify(allForecastIds));
+                                  }
+                                  
+                                  console.log('저장된 모든 forecastId:', allForecastIds);
+                                  
+                                  // 현재 선택된 시간대의 forecastId 사용
+                                  const forecastId = allForecastIds[selectedTimeSlot];
+                                  
+                                  // 예보의 원래 시간대 가져오기
+                                  const forecastTimeZone = (() => {
+                                    const forecastArr = forecastData[selectedDate] && forecastData[selectedDate][selectedTimeSlot];
+                                    return forecastArr && forecastArr.originalTimeZone ? forecastArr.originalTimeZone : timeSlots.find(t => t.key === selectedTimeSlot)?.label || '아침';
+                                  })();
+                                  
+                                  console.log('라우터 이동:', {
+                                    step: selectedTimeSlot,
+                                    forecastId,
+                                    date: selectedDate,
+                                    timeZone: forecastTimeZone
+                                  });
+                                  
+                                  router.push(`/insert-after?step=${selectedTimeSlot}&forecastId=${forecastId}&date=${selectedDate}&timeZone=${forecastTimeZone}`);
+                                }}
+                                className="w-full bg-[#FF7B6F] hover:bg-[#FF6B5F] text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
+                              >
+                                예보 기록 작성하기
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </>
+              )}
+
+              {/* 데이터가 없는 경우 (오늘/내일/예측 버튼 조건이 아닌 경우만) */}
+              {!loading && !error && (!selectedDiary || !selectedDiary[selectedTimeSlot]) && !isToday(new Date(selectedDate)) && !isTomorrow(new Date(selectedDate)) && !isMoreThanTwoDaysLater(new Date(selectedDate)) && (
+                <div className="w-full text-center py-8">
+                  <div className="text-gray-400 mb-2">
+                    <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <p className="text-gray-500 text-sm">
+                    해당 시간대의 예보 데이터가 없습니다.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -401,7 +619,6 @@ export default function Present() {
         )}
       </div>
       
-      <ParentNavigationBar activeTab={activeTab} onTabChange={setActiveTab} />
     </Container>
   )
 } 

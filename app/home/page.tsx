@@ -13,6 +13,7 @@ import {
   ForecastRecordData,
   isAuthenticated
 } from "../auth/index"
+import ModeToggleButton from "../components/ModeToggleButton"
 
 
 
@@ -167,7 +168,20 @@ export default function Register() {
   }
 
   const hasDiary = (date: Date) => {
-    return isPastDate(date) && diaryData[formatDate(date)];
+    const dateStr = formatDate(date);
+    const diaryDataForDate = diaryData[dateStr];
+    
+    // 과거 날짜이고, 실제 데이터가 있는지 확인
+    if (isPastDate(date) && diaryDataForDate) {
+      return Object.values(diaryDataForDate).some((timeSlot: any) => 
+        timeSlot && (
+          (timeSlot.forecast) ||
+          (timeSlot.record)
+        )
+      );
+    }
+    
+    return false;
   };
 
   const handleDateClick = async (date: Date) => {
@@ -247,12 +261,27 @@ export default function Register() {
     }
   }, [isLoading, hasChildren, selectedChild]);
 
-  // 아이 모드 전환 함수
-  const handleEnterChildMode = () => {
-    if (selectedChild) {
-      enterChildMode(selectedChild);
+  // 현재 달의 과거 날짜들에 대한 데이터 미리 로드
+  useEffect(() => {
+    if (selectedChild?.id && !isLoading) {
+      const today = new Date();
+      const year = currentMonth.getFullYear();
+      const month = currentMonth.getMonth();
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      
+      for (let date = new Date(firstDay); date <= lastDay; date.setDate(date.getDate() + 1)) {
+        if (isPastDate(date)) {
+          const dateStr = formatDate(date);
+          if (!diaryData[dateStr]) {
+            loadDiaryData(dateStr);
+          }
+        }
+      }
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedChild?.id, currentMonth, isLoading]);
+
 
   // 디버깅용 로그
   console.log('Home page - isLoading:', isLoading);
@@ -295,21 +324,7 @@ export default function Register() {
         <div className="w-full flex justify-between items-center mb-4">
           <span className="text-gray-900 font-semibold text-2xl">{displayChildName}</span>
           <div className="flex gap-2">
-            {isChildMode ? (
-              <button
-                onClick={exitChildMode}
-                className="px-3 py-1 bg-gray-200 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-300"
-              >
-                보호자 모드
-              </button>
-            ) : selectedChild && (
-              <button
-                onClick={handleEnterChildMode}
-                className="px-3 py-1 bg-blue-200 text-blue-700 rounded-lg text-xs font-medium hover:bg-blue-300"
-              >
-                아이 모드
-              </button>
-            )}
+            <ModeToggleButton />
           </div>
         </div>
 
