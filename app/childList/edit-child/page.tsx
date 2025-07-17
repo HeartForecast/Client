@@ -165,7 +165,7 @@ function EditChildPageContent() {
       
       // 성공 후 잠시 대기 후 페이지 이동
       setTimeout(() => {
-        router.push('/settings');
+        router.push('/childList');
       }, 1500);
     } catch (error) {
       console.error("수정 실패:", error);
@@ -194,7 +194,7 @@ function EditChildPageContent() {
 
   const handleBack = () => {
     if (currentDisplayStep === 1) {
-      router.push('/settings');
+      router.push('/childList');
     } else {
       setCurrentDisplayStep(prev => Math.max(1, prev - 1));
     }
@@ -247,10 +247,10 @@ function EditChildPageContent() {
           <h3 className="text-lg font-medium text-gray-900 mb-2">오류가 발생했습니다</h3>
           <p className="text-sm text-gray-500 text-center mb-4">{error}</p>
           <button 
-            onClick={() => router.push('/settings')}
+            onClick={() => router.push('/childList')}
             className="px-4 py-2 bg-[#FF6F71] text-white rounded-lg hover:bg-[#e55a5c] transition-colors"
           >
-            설정으로 돌아가기
+            아이 목록으로 돌아가기
           </button>
         </div>
       </Container>
@@ -276,7 +276,7 @@ function EditChildPageContent() {
 
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
         <div className="w-full mb-8">
-          <span className="text-gray-500 font-medium text-sm">설정</span>
+          <span className="text-gray-500 font-medium text-sm">아이 관리</span>
           <h1 className="text-2xl font-semibold mb-3">아이 정보 수정</h1>
           <p className="text-sm text-gray-600">아이의 정보를 수정해주세요</p>
         </div>

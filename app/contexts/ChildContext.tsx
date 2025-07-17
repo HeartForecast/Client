@@ -205,7 +205,7 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
         setHasChildren(false);
         // 아이가 없으면 아이 목록 페이지로 이동
         if (typeof window !== 'undefined') {
-          window.location.href = '/settings';
+          window.location.href = '/childList';
         }
       }
     } catch (error) {

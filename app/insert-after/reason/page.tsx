@@ -48,7 +48,7 @@ function ReasonPageContent() {
     if (typeof window !== 'undefined') {
       const savedEmotions = localStorage.getItem('forecastRecordEmotions');
       if (savedEmotions) {
-        try {
+      try {
           const emotions = JSON.parse(savedEmotions);
           console.log('저장된 감정 데이터:', emotions);
           
@@ -63,11 +63,11 @@ function ReasonPageContent() {
             console.error('현재 단계의 감정 데이터를 찾을 수 없습니다.');
             setError('감정 데이터를 찾을 수 없습니다.');
           }
-        } catch (error) {
-          console.error('감정 데이터 파싱 오류:', error);
+      } catch (error) {
+        console.error('감정 데이터 파싱 오류:', error);
           setError('감정 데이터를 불러오는데 실패했습니다.');
-        }
-      } else {
+      }
+    } else {
         console.error('저장된 감정 데이터가 없습니다.');
         setError('감정 데이터를 찾을 수 없습니다.');
       }

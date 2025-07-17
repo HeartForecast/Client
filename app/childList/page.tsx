@@ -114,10 +114,10 @@ function DeleteModal({ isOpen, childId, childName, onClose, onDeleteRelation, on
   )
 }
 
-export default function SettingsPage() {
+export default function ChildListPage() {
   const router = useRouter()
   const { selectedChild, setSelectedChild, isChildMode, autoSelectFirstChild } = useChild();
-  const [activeTab, setActiveTab] = useState('아이 목록')
+  const [activeTab, setActiveTab] = useState('childList')
   const [openMenuId, setOpenMenuId] = useState<number | null>(null)
   const [childrenData, setChildrenData] = useState<ChildData[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -221,7 +221,7 @@ export default function SettingsPage() {
   const handleEdit = (childId: number, childName: string) => {
     console.log('Edit child:', childId, childName)
     setOpenMenuId(null)
-    router.push(`/settings/edit-child?id=${childId}`)
+    router.push(`/childList/edit-child?id=${childId}`)
   }
 
   const handleDelete = (childId: number, childName: string) => {
@@ -399,7 +399,7 @@ export default function SettingsPage() {
 
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
         <div className="w-full mb-8">
-          <span className="text-gray-500 font-medium text-sm">설정</span>
+          <span className="text-gray-500 font-medium text-sm">아이 관리</span>
           <h1 className="text-2xl font-semibold mb-1">등록된 아이 목록</h1>
           <p className="text-sm text-gray-600">
             총 {childrenData.length}명의 아이가 등록되어 있습니다.

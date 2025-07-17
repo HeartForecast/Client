@@ -14,7 +14,7 @@ import {
   AverageTemperatureData,
   EmotionRatioData
 } from "../auth/index"
-import { 
+import {
   EMOTION_COLORS, 
   getEmotionType, 
   getEmotionColor, 
