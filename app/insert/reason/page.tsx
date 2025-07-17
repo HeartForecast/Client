@@ -86,7 +86,6 @@ function ReasonPageContent() {
   };
 
   const handleNext = async () => {
-    if (reason.trim().length === 0) return;
     if (!currentEmotion || !selectedChild?.id) {
       setError('필수 정보가 누락되었습니다.');
       return;
@@ -156,7 +155,7 @@ function ReasonPageContent() {
     }
   };
 
-  const isComplete = reason.trim().length > 0;
+  const isComplete = true; // 메모는 선택사항이므로 항상 true
 
   const fadeInOutVariants = {
     hidden: { opacity: 0, y: 10 },
@@ -215,7 +214,7 @@ function ReasonPageContent() {
               <textarea
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="어떤 일 때문에 이런 감정을 느낄 거같아요?"
+                placeholder="어떤 일 때문에 이런 감정을 느낄 거같아요? (선택사항)"
                 className="w-full h-132 p-5 border-2 border-gray-200 rounded-xl resize-none focus:border-[#FF6F71] focus:outline-none transition-all duration-300 text-base leading-relaxed placeholder-gray-400"
                 maxLength={500}
               />
@@ -224,7 +223,7 @@ function ReasonPageContent() {
               </div>
             </div>
             <div className="mt-3 text-sm text-gray-500 text-center">
-              🫶 자세히 적을수록 더 좋아요
+              🫶 자세히 적을수록 더 좋아요 (선택사항)
             </div>
           </div>
         </div>
@@ -237,8 +236,8 @@ function ReasonPageContent() {
           className="flex flex-col items-center w-full max-w-sm mt-auto mb-4"
         >
           <Button
-            className={`flex w-full items-center justify-center gap-1 rounded-lg bg-[#FF6F71] text-white py-3 text-lg font-semibold text-gray-900 mb-4 transition-opacity ${isComplete && !isLoading ? '' : 'opacity-50 cursor-not-allowed'}`}
-            disabled={!isComplete || isLoading}
+            className={`flex w-full items-center justify-center gap-1 rounded-lg bg-[#FF6F71] text-white py-3 text-lg font-semibold text-gray-900 mb-4 transition-opacity ${!isLoading ? '' : 'opacity-50 cursor-not-allowed'}`}
+            disabled={isLoading}
             onClick={handleNext}
           >
             {isLoading ? (
