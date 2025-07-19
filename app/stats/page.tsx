@@ -388,7 +388,7 @@ export default function StatsPage() {
       />
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4 pb-24">
         {/* 상단바 */}
-        <PageHeader />
+        <PageHeader showLogo={true} />
 
         {/* 로딩 상태 */}
         {loading && (

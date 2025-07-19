@@ -78,6 +78,13 @@ function InsertPageContent() {
     <div className="container">
       <div className="min-h-screen flex flex-col bg-white text-black">
         <div className="flex-1 flex flex-col px-4 pt-10 pb-5">
+          {/* 로고 */}
+          <div className="flex justify-center mb-4 w-full">
+            <div className="flex items-center gap-2">
+              <img src="/logo_not_title.svg" alt="HeartForecast" className="w-10 h-10" />
+            </div>
+          </div>
+          
           <div className="w-full max-w-sm mx-auto">
             <button className="mb-4 cursor-pointer" onClick={handleBack}>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>

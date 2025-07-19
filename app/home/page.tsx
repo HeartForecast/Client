@@ -405,7 +405,7 @@ export default function Register() {
       />
       <div className="flex flex-col items-start justify-start w-full max-w-sm mx-auto mt-4 pb-20">
         {/* 상단바 */}
-        <PageHeader />
+        <PageHeader showLogo={true} />
 
         {/* 달력 컴포넌트 */}
         <Calendar

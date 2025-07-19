@@ -88,7 +88,7 @@ export default function Settings() {
         </div>
 
         {/* 현재 모드 표시 */}
-        <div className="w-full mb-6">
+        <div className="w-full mb-16">
           <div className="bg-gray-50 rounded-2xl p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -173,7 +173,14 @@ export default function Settings() {
         </div>
 
         {/* 하단 여백 */}
-        <div className="h-8"></div>
+        <div className="h-12"></div>
+        
+        {/* 로고 */}
+        <div className="flex justify-center mt-12 w-full">
+          <div className="flex items-center gap-2">
+            <img src="/logo_not_title.svg" alt="HeartForecast" className="w-10 h-10" />
+          </div>
+        </div>
       </div>
     </Container>
   );

@@ -378,7 +378,7 @@ export default function ChildListPage() {
 
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
         {/* 상단바 */}
-        <PageHeader />
+        <PageHeader showLogo={true} />
         
         <div className="w-full mb-8">
           <h1 className="text-2xl font-semibold mb-1">등록된 아이 목록</h1>
