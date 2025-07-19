@@ -52,7 +52,7 @@ ChartJS.register(
 
 export default function StatsPage() {
   const router = useRouter()
-  const { isChildMode, selectedChild, hasChildren, autoSelectFirstChild } = useChild();
+  const { isChildMode, selectedChild, hasChildren, autoSelectFirstChild, isLoading: childContextLoading } = useChild();
   const [childName, setChildName] = useState('')
   const [activeTab, setActiveTab] = useState('통계')
   const [statsUnit, setStatsUnit] = useState<'week' | 'month'>('week')
@@ -158,10 +158,10 @@ export default function StatsPage() {
   }, [selectedChild, loading, autoSelectFirstChild]);
 
   useEffect(() => {
-    if (!hasChildren && !selectedChild) {
+    if (!childContextLoading && !hasChildren && !selectedChild) {
       showToast('이동할 수 없습니다. 아이를 생성하거나 연결해주세요.', 'warning');
     }
-  }, [hasChildren, selectedChild]);
+  }, [hasChildren, selectedChild, childContextLoading]);
 
   const currentAccuracyData = dailyTemperatureData.map(d => d.avgTemp)
   const latestAccuracy = currentAccuracyData.length > 0 ? currentAccuracyData[currentAccuracyData.length - 1] : 0
