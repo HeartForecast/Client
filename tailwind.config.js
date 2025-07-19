@@ -9,6 +9,7 @@ module.exports = {
     extend: {
       fontFamily: {
         'pretendard': ['Pretendard-Regular', 'sans-serif'],
+        'cafe24': ['Cafe24Syongsyong', 'sans-serif'],
       },
     },
   },
