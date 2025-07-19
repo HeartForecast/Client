@@ -15,7 +15,8 @@ import {
   fetchEmotionType, 
   EmotionTypeData 
 } from "../utils/emotionUtils"
-import ModeToggleButton from "../components/ModeToggleButton"
+import Calendar from "../components/Calendar"
+import HeaderBar from "../components/HeaderBar"
 
 // 감정 타입 인터페이스 (공통 유틸리티 사용)
 type EmotionType = EmotionTypeData;
@@ -52,27 +53,7 @@ export default function Present() {
   const [error, setError] = useState<string | null>(null)
   const [forecastData, setForecastData] = useState<Record<string, any>>({})
 
-  // 현재 달의 날짜들을 생성
-  const generateCalendarDays = () => {
-    const year = currentMonth.getFullYear();
-    const month = currentMonth.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const startDate = new Date(firstDay);
-    startDate.setDate(startDate.getDate() - firstDay.getDay());
-    
-    const days = [];
-    const endDate = new Date(lastDay);
-    endDate.setDate(endDate.getDate() + (6 - lastDay.getDay()));
-    
-    const current = new Date(startDate);
-    while (current <= endDate) {
-      days.push(new Date(current));
-      current.setDate(current.getDate() + 1);
-    }
-    
-    return days;
-  };
+
 
   const formatDate = (date: Date) => {
     const year = date.getFullYear();
@@ -143,13 +124,7 @@ export default function Present() {
     }
   };
 
-  const handlePrevMonth = () => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1));
-  };
 
-  const handleNextMonth = () => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1));
-  };
 
 
 
@@ -305,7 +280,7 @@ export default function Present() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChild?.id, currentMonth, isLoading]);
 
-  const calendarDays = generateCalendarDays();
+
   const selectedDiary = selectedDate && (isPastDate(new Date(selectedDate)) || isToday(new Date(selectedDate))) ? (forecastData[selectedDate] || getDefaultDiary(selectedDate)) : null;
 
   const timeSlots = [
@@ -317,67 +292,27 @@ export default function Present() {
   return (
     <Container>
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
-        {/* 사용자 정보 */}
-        <div className="flex items-end gap-1 rounded-lg px-2 mb-6">
-          <span className="text-gray-900 font-semibold text-2xl">{selectedChild?.name || ''}</span>
-          <div className="flex items-center gap-1">
-            {selectedChild?.inviteCode && (
-              <span className="text-sm text-gray-500 font-medium mr-1">
-                #{selectedChild?.inviteCode || '코드 없음'}
-              </span>
-            )}
-            <ModeToggleButton />
-          </div>
+        {/* 상단바 */}
+        <div className="flex items-end justify-between w-full rounded-lg px-2 mb-6">
+          <HeaderBar 
+            childName={selectedChild?.name || ''}
+            inviteCode={selectedChild?.inviteCode}
+            showChildListButton={false}
+            showSettingsButton={true}
+          />
         </div>
 
-        {/* 달력 */}
-        <div className="w-full mb-4">
-          <div className="flex items-center justify-between mb-4">
-            <button onClick={handlePrevMonth} className="p-2 hover:bg-gray-100 rounded-lg">
-              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <h2 className="text-lg font-semibold text-gray-900">
-              {currentMonth.getFullYear()}년 {currentMonth.getMonth() + 1}월
-            </h2>
-            <button onClick={handleNextMonth} className="p-2 hover:bg-gray-100 rounded-lg">
-              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
-
-          {/* 요일 헤더 */}
-          <div className="grid grid-cols-7 gap-1 mb-2">
-            {['일', '월', '화', '수', '목', '금', '토'].map(day => (
-              <div key={day} className="text-center text-sm font-medium text-gray-500 py-2">
-                {day}
-              </div>
-            ))}
-          </div>
-
-          {/* 날짜 그리드 */}
-          <div className="grid grid-cols-7 gap-1">
-            {calendarDays.map(date => (
-              <button
-                key={date.toISOString()}
-                onClick={() => handleDateClick(date)}
-                className={`
-                  relative h-10 text-sm rounded-lg transition-colors hover:bg-gray-100
-                  ${isCurrentMonth(date) ? 'text-gray-900' : 'text-gray-300'}
-                  ${isToday(date) ? 'bg-blue-100 text-blue-600 font-semibold' : ''}
-                  ${selectedDate === formatDate(date) ? 'bg-[#FF6F71] text-white' : ''}
-                `}
-              >
-                {date.getDate()}
-                {hasDiary(date) && (
-                  <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-[#FF6F71] rounded-full"></div>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* 달력 컴포넌트 */}
+        <Calendar
+          selectedDate={selectedDate}
+          onDateSelect={handleDateClick}
+          hasDiary={hasDiary}
+          isToday={isToday}
+          isPastDate={isPastDate}
+          isCurrentMonth={isCurrentMonth}
+          formatDate={formatDate}
+          readOnly={false}
+        />
 
         {/* 시간대 선택 버튼 */}
         {selectedDate && (
@@ -495,15 +430,17 @@ export default function Present() {
                     if (!timeData) {
                       return (
                         <div className="text-center py-8">
-                          <p className="text-gray-500 text-sm">해당 시간대의 예보 데이터가 없습니다.</p>
+                          <p className="text-gray-500 text-sm">해당 시간대의 예보가 없습니다.</p>
                         </div>
                       );
                     }
                     
                     return (
                       <div className="space-y-3">
+                        {/* 예보 섹션 */}
                         <div className="bg-white rounded-2xl p-5 border border-gray-100">
-                          <div className="mb-3">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-sm font-medium text-[#FF6F71]">예보</span>
                             <span className="text-sm text-gray-400">
                               {timeData.predictedEmotions?.map((e: any) => (
                                 <span 
@@ -521,8 +458,10 @@ export default function Present() {
                           </p>
                         </div>
 
+                        {/* 예보 기록 섹션 */}
                         <div className="bg-white rounded-2xl p-5 border border-gray-100">
-                          <div className="mb-3">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-sm font-medium text-[#FF6F71]">예보 기록</span>
                             <span className="text-sm text-gray-400">
                               {timeData.actualEmotions?.map((e: any) => (
                                 <span 
@@ -539,8 +478,8 @@ export default function Present() {
                             {timeData.actualText || (isToday(new Date(selectedDate)) && (!timeData.actualEmotions || timeData.actualEmotions.length === 0) ? '' : '실제 기록이 없습니다.')}
                           </p>
                           
-                          {/* 오늘 날짜이고 예보 기록이 없을 때 버튼 표시 */}
-                          {isToday(new Date(selectedDate)) && (!timeData.actualEmotions || timeData.actualEmotions.length === 0) && (
+                          {/* 오늘 날짜이고 예보가 있지만 예보 기록이 없는 경우에만 버튼 표시 */}
+                          {isToday(new Date(selectedDate)) && timeData.predictedEmotions && timeData.predictedEmotions.length > 0 && (!timeData.actualEmotions || timeData.actualEmotions.length === 0) && (
                             <div className="mt-4">
                               <button
                                 onClick={() => {
@@ -591,13 +530,13 @@ export default function Present() {
               {/* 데이터가 없는 경우 (오늘/내일/예측 버튼 조건이 아닌 경우만) */}
               {!loading && !error && (!selectedDiary || !selectedDiary[selectedTimeSlot]) && !isToday(new Date(selectedDate)) && !isTomorrow(new Date(selectedDate)) && !isMoreThanTwoDaysLater(new Date(selectedDate)) && (
                 <div className="w-full text-center py-8">
-                  <div className="text-gray-400 mb-2">
-                    <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2z" />
+                  <div className="text-gray-400 mb-2 px-4">
+                    <svg className="w-12 h-12 mx-auto mb-2" fill="none" viewBox="0 0 24 26">
+                      <path d="M22 2H19V1C19 0.734784 18.8946 0.48043 18.7071 0.292893C18.5196 0.105357 18.2652 0 18 0C17.7348 0 17.4804 0.105357 17.2929 0.292893C17.1054 0.48043 17 0.734784 17 1V2H7V1C7 0.734784 6.89464 0.48043 6.70711 0.292893C6.51957 0.105357 6.26522 0 6 0C5.73478 0 5.48043 0.105357 5.29289 0.292893C5.10536 0.48043 5 0.734784 5 1V2H2C1.46957 2 0.960859 2.21071 0.585786 2.58579C0.210714 2.96086 0 3.46957 0 4V24C0 24.5304 0.210714 25.0391 0.585786 25.4142C0.960859 25.7893 1.46957 26 2 26H22C22.5304 26 23.0391 25.7893 23.4142 25.4142C23.7893 25.0391 24 24.5304 24 24V4C24 3.46957 23.7893 2.96086 23.4142 2.58579C23.0391 2.21071 22.5304 2 22 2ZM5 4V5C5 5.26522 5.10536 5.51957 5.29289 5.70711C5.48043 5.89464 5.73478 6 6 6C6.26522 6 6.51957 5.89464 6.70711 5.70711C6.89464 5.51957 7 5.26522 7 5V4H17V5C17 5.26522 17.1054 5.51957 17.2929 5.70711C17.4804 5.89464 17.7348 6 18 6C18.2652 6 18.5196 5.89464 18.7071 5.70711C18.8946 5.51957 19 5.26522 19 5V4H22V8H2V4H5ZM22 24H2V10H22V24ZM16 17C16 17.2652 15.8946 17.5196 15.7071 17.7071C15.5196 17.8946 15.2652 18 15 18H9C8.73478 18 8.48043 17.8946 8.29289 17.7071C8.10536 17.5196 8 17.2652 8 17C8 16.7348 8.10536 16.4804 8.29289 16.2929C8.48043 16.1054 8.73478 16 9 16H15C15.2652 16 15.5196 16.1054 15.7071 16.2929C15.8946 16.4804 16 16.7348 16 17Z" fill="currentColor"/>
                     </svg>
                   </div>
                   <p className="text-gray-500 text-sm">
-                    해당 시간대의 예보 데이터가 없습니다.
+                    해당 시간대의 예보가 없습니다.
                   </p>
                 </div>
               )}
@@ -607,9 +546,9 @@ export default function Present() {
 
         {!selectedDate && (
           <div className="w-full text-center py-8">
-            <div className="text-gray-400 mb-2">
-              <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            <div className="text-gray-400 mb-2 px-4">
+              <svg className="w-12 h-12 mx-auto mb-2" fill="none" viewBox="0 0 24 26">
+                <path d="M22 2H19V1C19 0.734784 18.8946 0.48043 18.7071 0.292893C18.5196 0.105357 18.2652 0 18 0C17.7348 0 17.4804 0.105357 17.2929 0.292893C17.1054 0.48043 17 0.734784 17 1V2H7V1C7 0.734784 6.89464 0.48043 6.70711 0.292893C6.51957 0.105357 6.26522 0 6 0C5.73478 0 5.48043 0.105357 5.29289 0.292893C5.10536 0.48043 5 0.734784 5 1V2H2C1.46957 2 0.960859 2.21071 0.585786 2.58579C0.210714 2.96086 0 3.46957 0 4V24C0 24.5304 0.210714 25.0391 0.585786 25.4142C0.960859 25.7893 1.46957 26 2 26H22C22.5304 26 23.0391 25.7893 23.4142 25.4142C23.7893 25.0391 24 24.5304 24 24V4C24 3.46957 23.7893 2.96086 23.4142 2.58579C23.0391 2.21071 22.5304 2 22 2ZM5 4V5C5 5.26522 5.10536 5.51957 5.29289 5.70711C5.48043 5.89464 5.73478 6 6 6C6.26522 6 6.51957 5.89464 6.70711 5.70711C6.89464 5.51957 7 5.26522 7 5V4H17V5C17 5.26522 17.1054 5.51957 17.2929 5.70711C17.4804 5.89464 17.7348 6 18 6C18.2652 6 18.5196 5.89464 18.7071 5.70711C18.8946 5.51957 19 5.26522 19 5V4H22V8H2V4H5ZM22 24H2V10H22V24ZM16 17C16 17.2652 15.8946 17.5196 15.7071 17.7071C15.5196 17.8946 15.2652 18 15 18H9C8.73478 18 8.48043 17.8946 8.29289 17.7071C8.10536 17.5196 8 17.2652 8 17C8 16.7348 8.10536 16.4804 8.29289 16.2929C8.48043 16.1054 8.73478 16 9 16H15C15.2652 16 15.5196 16.1054 15.7071 16.2929C15.8946 16.4804 16 16.7348 16 17Z" fill="currentColor"/>
               </svg>
             </div>
             <p className="text-gray-500 text-sm">
@@ -618,6 +557,9 @@ export default function Present() {
           </div>
         )}
       </div>
+      
+      {/* 하단 여백 */}
+      <div className="h-8"></div>
       
     </Container>
   )

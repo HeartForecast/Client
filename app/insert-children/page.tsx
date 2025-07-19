@@ -127,9 +127,12 @@ export default function Register() {
     if (event.key === 'Enter') {
       event.preventDefault();
 
+      // 마지막 단계(4단계)에서는 엔터키 동작하지 않음 - 클릭으로만 진행
+      if (currentDisplayStep === 4) return;
+
+      // 각 단계별 입력 검증
       if (currentDisplayStep === 1 && name.trim() === '') return;
       if (currentDisplayStep === 2 && dob.trim() === '') return;
-      if (currentDisplayStep === 4 && healthStatus.trim() === '') return;
 
       advanceStep();
     }
@@ -194,15 +197,6 @@ export default function Register() {
                     value={name}
                     onChange={(e) => {
                       setName(e.target.value);
-                      const koreanCharCount = e.target.value.match(/[\uAC00-\uD7A3]/g)?.length || 0;
-                      if (nameAdvanceTimeout.current) {
-                        clearTimeout(nameAdvanceTimeout.current);
-                      }
-                      if (currentDisplayStep === 1 && koreanCharCount === 3) {
-                        nameAdvanceTimeout.current = setTimeout(() => {
-                          advanceStep();
-                        }, 500);
-                      }
                     }}
                     onKeyDown={handleKeyDown}
                   />
@@ -243,9 +237,6 @@ export default function Register() {
                         formatted = value.slice(0, 4) + '-' + value.slice(4, 6) + '-' + value.slice(6);
                       }
                       setDob(formatted);
-                      if (currentDisplayStep === 2 && value.length === 8) {
-                        advanceStep();
-                      }
                     }}
                     onKeyDown={handleKeyDown}
                   />
@@ -315,7 +306,12 @@ export default function Register() {
                     placeholder="ex) 알레르기, 복용 약... 등"
                     value={healthStatus}
                     onChange={(e) => setHealthStatus(e.target.value)}
-                    onKeyDown={handleKeyDown}
+                    onKeyDown={(e) => {
+                      // 메모 단계에서는 엔터키 동작하지 않음
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                      }
+                    }}
                   />
                 </div>
                 <p className="text-gray-500 text-sm mt-2">알레르기와 같은 참고해야할 사항이 있다면 적어주세요.</p>

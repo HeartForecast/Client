@@ -4,90 +4,158 @@ import React, { useState, useEffect, Suspense } from "react";
 import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "../../components/Button";
+import { useChild } from "../../contexts/ChildContext";
 
-interface SelectedEmotion {
-  category: string;
-  emotion: string;
-  color: string;
-}
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 interface EmotionData {
   step: string;
-  emotions: SelectedEmotion[];
-  reason: string;
+  emotion: {
+    id: number;
+    name: string;
+    type: string;
+    temp: number;
+    image: string;
+  };
+  category: string;
 }
 
 const TIME_PERIODS = {
-  morning: { label: '오전', text: '왜 이런 감정을' },
-  afternoon: { label: '오후', text: '왜 이런 감정을' },
+  morning: { label: '아침', text: '왜 이런 감정을' },
+  afternoon: { label: '점심', text: '왜 이런 감정을' },
   evening: { label: '저녁', text: '왜 이런 감정을' }
 };
 
 function ReasonPageContent() {
-  const [selectedEmotions, setSelectedEmotions] = useState<SelectedEmotion[]>([]);
-  const [reason, setReason] = useState('');
+  const { selectedChild } = useChild();
+  const [currentEmotion, setCurrentEmotion] = useState<EmotionData | null>(null);
   const [currentStep, setCurrentStep] = useState<'morning' | 'afternoon' | 'evening'>('morning');
+  const [reason, setReason] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    const emotionsParam = searchParams.get('emotions');
-    const stepParam = searchParams.get('step') as 'morning' | 'afternoon' | 'evening';
-    
-    if (emotionsParam && stepParam) {
-      try {
-        const emotions = JSON.parse(emotionsParam);
-        setSelectedEmotions(emotions);
-        setCurrentStep(stepParam);
-      } catch (error) {
-        console.error('감정 데이터 파싱 오류:', error);
-        router.push('/insert');
-      }
-    } else {
-      router.push('/insert');
+    const step = searchParams.get('step') as 'morning' | 'afternoon' | 'evening';
+    if (step && ['morning', 'afternoon', 'evening'].includes(step)) {
+      setCurrentStep(step);
     }
-  }, [searchParams, router]);
+
+    // localStorage에서 현재 단계의 감정 데이터 가져오기
+    if (typeof window !== 'undefined') {
+      const savedEmotions = localStorage.getItem('forecastEmotions');
+      if (savedEmotions) {
+        try {
+          const emotions = JSON.parse(savedEmotions);
+          console.log('저장된 감정 데이터:', emotions);
+          
+          const currentEmotionData = emotions.find((item: any) => item.step === step);
+          if (currentEmotionData) {
+            setCurrentEmotion({
+              step: currentEmotionData.step,
+              emotion: currentEmotionData.emotion,
+              category: currentEmotionData.category
+            });
+          } else {
+            console.error('현재 단계의 감정 데이터를 찾을 수 없습니다.');
+            setError('감정 데이터를 찾을 수 없습니다.');
+          }
+        } catch (error) {
+          console.error('감정 데이터 파싱 오류:', error);
+          setError('감정 데이터를 불러오는데 실패했습니다.');
+        }
+      } else {
+        console.error('저장된 감정 데이터가 없습니다.');
+        setError('감정 데이터를 찾을 수 없습니다.');
+      }
+    }
+  }, [searchParams]);
 
   const handleBack = () => {
-    window.history.back();
+    const steps = ['morning', 'afternoon', 'evening'];
+    const currentIndex = steps.indexOf(currentStep);
+    const prevStep = steps[currentIndex - 1];
+    
+    if (prevStep) {
+      router.push(`/insert/reason?step=${prevStep}`);
+    } else {
+      window.history.back();
+    }
   };
 
-  const handleNext = () => {
-    if (reason.trim().length === 0) return;
-    
-    const currentData: EmotionData = {
-      step: currentStep,
-      emotions: selectedEmotions,
-      reason: reason
-    };
+  const handleNext = async () => {
+    if (!currentEmotion || !selectedChild?.id) {
+      setError('필수 정보가 누락되었습니다.');
+      return;
+    }
 
-    let allData: EmotionData[] = [];
-    
-    if (typeof window !== 'undefined') {
-      const existingData = localStorage.getItem('emotionData');
-      
-      if (existingData) {
-        allData = JSON.parse(existingData);
-        allData = allData.filter(data => data.step !== currentStep);
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      const dateString = `${year}-${month}-${day}`;
+
+      console.log('현재 날짜 정보:', {
+        today: today,
+        year,
+        month,
+        day,
+        dateString,
+        toISOString: today.toISOString(),
+        toLocaleDateString: today.toLocaleDateString('ko-KR')
+      });
+
+      // 예보 생성
+      const forecastData = {
+        childId: selectedChild.id,
+        emotionTypeId: currentEmotion.emotion.id,
+        date: dateString,
+        timeZone: TIME_PERIODS[currentStep].label,
+        memo: reason.trim()
+      };
+
+      console.log(`${currentStep} 예보 생성:`, forecastData);
+
+      const response = await fetch(`${apiBaseUrl}/api/forecasts/forecast`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(forecastData)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`예보 생성 실패: ${errorText}`);
       }
-      
-      allData.push(currentData);
-      localStorage.setItem('emotionData', JSON.stringify(allData));
-    }
 
-    console.log(`${currentStep} 데이터 저장:`, currentData);
+      console.log(`${currentStep} 예보 생성 완료`);
 
-    if (currentStep === 'morning') {
-      router.push('/insert?step=afternoon');
-    } else if (currentStep === 'afternoon') {
-      router.push('/insert?step=evening');
-    } else if (currentStep === 'evening') {
-      console.log('모든 단계 완료! 전체 데이터:', allData);
-      router.push('/home');
+      // 다음 단계로 이동
+      const steps = ['morning', 'afternoon', 'evening'];
+      const currentIndex = steps.indexOf(currentStep);
+      const nextStep = steps[currentIndex + 1];
+
+      if (nextStep) {
+        router.push(`/insert?step=${nextStep}`);
+      } else {
+        // 모든 단계 완료
+        setShowCompletionModal(true);
+      }
+    } catch (error) {
+      console.error('예보 생성 실패:', error);
+      setError('예보 생성에 실패했습니다.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const isComplete = reason.trim().length > 0;
+  const isComplete = true; // 메모는 선택사항이므로 항상 true
 
   const fadeInOutVariants = {
     hidden: { opacity: 0, y: 10 },
@@ -99,6 +167,24 @@ function ReasonPageContent() {
     if (currentStep === 'evening') return '완료';
     return '다음으로';
   };
+
+  if (!currentEmotion) {
+    return (
+      <div className="container">
+        <div className="min-h-screen flex items-center justify-center bg-white">
+          <div className="text-center">
+            <p className="text-gray-600">감정 데이터를 찾을 수 없습니다.</p>
+            <button 
+              onClick={() => router.push('/insert')}
+              className="mt-4 px-4 py-2 bg-[#FF6F71] text-white rounded-lg"
+            >
+              돌아가기
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container">
@@ -112,10 +198,16 @@ function ReasonPageContent() {
         </div>
         
         <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
-          <div className="text-xs text-gray-400 mb-2">7월 12일 토요일 {TIME_PERIODS[currentStep].label}</div>
+          <div className="text-xs text-gray-400 mb-2">{new Date().toLocaleDateString('ko-KR')} {TIME_PERIODS[currentStep].label}</div>
           <div className="text-2xl font-bold leading-tight whitespace-pre-line mb-8">
             {TIME_PERIODS[currentStep].text}{`\n`}느낄 것 같나요?
           </div>
+          
+          {error && (
+            <div className="w-full mb-4 text-sm text-red-500 text-center">
+              {error}
+            </div>
+          )}
           
           <div className="w-full flex-grow">
             <div className="relative">
@@ -131,7 +223,7 @@ function ReasonPageContent() {
               </div>
             </div>
             <div className="mt-3 text-sm text-gray-500 text-center">
-              🫶 자세히 적을수록 더 좋아요
+              🫶 자세히 적을수록 더 좋아요 (선택사항)
             </div>
           </div>
         </div>
@@ -144,14 +236,48 @@ function ReasonPageContent() {
           className="flex flex-col items-center w-full max-w-sm mt-auto mb-4"
         >
           <Button
-            className={`flex w-full items-center justify-center gap-1 rounded-lg bg-[#FF6F71] text-white py-3 text-lg font-semibold text-gray-900 mb-4 transition-opacity ${isComplete ? '' : 'opacity-50 cursor-not-allowed'}`}
-            disabled={!isComplete}
+            className={`flex w-full items-center justify-center gap-1 rounded-lg bg-[#FF6F71] text-white py-3 text-lg font-semibold text-gray-900 mb-4 transition-opacity ${!isLoading ? '' : 'opacity-50 cursor-not-allowed'}`}
+            disabled={isLoading}
             onClick={handleNext}
           >
-            {getButtonText()}
+            {isLoading ? (
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                처리 중...
+              </div>
+            ) : (
+              getButtonText()
+            )}
           </Button>
         </motion.div>
       </div>
+      
+      {/* 완료 모달 */}
+      {showCompletionModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 mx-4 max-w-sm w-full">
+            <div className="text-center">
+              <div className="text-6xl mb-4">🎉</div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">예보 작성 완료!</h3>
+              <p className="text-gray-600 mb-6">
+                오늘 하루의 감정 예보를 모두 작성했어요.
+              </p>
+              <button
+                onClick={() => {
+                  // localStorage 정리
+                  if (typeof window !== 'undefined') {
+                    localStorage.removeItem('forecastEmotions');
+                  }
+                  router.push('/baby');
+                }}
+                className="w-full bg-[#FF6F71] text-white font-medium py-3 px-6 rounded-lg hover:bg-[#e55a5c] transition-colors"
+              >
+                홈으로 가기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
