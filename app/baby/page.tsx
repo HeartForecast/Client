@@ -12,42 +12,36 @@ import {
 } from "../auth/index"
 import { 
   getEmotionColor, 
-  fetchEmotionType, 
-  EmotionTypeData 
+  fetchEmotionType
 } from "../utils/emotionUtils"
 import Calendar from "../components/Calendar"
 import PageHeader from "../components/PageHeader"
+import { 
+  DiaryData, 
+  DiaryTimeData, 
+  TimeSlot,
+  TIME_PERIODS
+} from "../types/common"
+import { 
+  formatDate, 
+  isToday, 
+  isPastDate, 
+  isCurrentMonth, 
+  generateCalendarDays 
+} from "../utils/dateUtils"
+import LoadingSpinner from "../components/LoadingSpinner"
+import ErrorMessage from "../components/ErrorMessage"
+import EmptyState from "../components/EmptyState"
+import TimeSlotSelector from "../components/TimeSlotSelector"
+import DiaryCard from "../components/DiaryCard"
 
-// 감정 타입 인터페이스 (공통 유틸리티 사용)
-type EmotionType = EmotionTypeData;
-
-// 시간대별 일기 데이터 구조 (타입 정의만 유지)
-interface DiaryData {
-  morning?: {
-    predictedEmotions: Array<{emotion: string, category: string, color: string}>;
-    predictedText: string;
-    actualEmotions: Array<{emotion: string, category: string, color: string}>;
-    actualText: string;
-  };
-  afternoon?: {
-    predictedEmotions: Array<{emotion: string, category: string, color: string}>;
-    predictedText: string;
-    actualEmotions: Array<{emotion: string, category: string, color: string}>;
-    actualText: string;
-  };
-  evening?: {
-    predictedEmotions: Array<{emotion: string, category: string, color: string}>;
-    predictedText: string;
-    actualEmotions: Array<{emotion: string, category: string, color: string}>;
-    actualText: string;
-  };
-}
+// 공통 타입 사용
 
 export default function Present() {
   const router = useRouter()
   const { selectedChild, isLoading } = useChild()
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<'morning' | 'afternoon' | 'evening'>('morning')
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot>('morning')
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -55,30 +49,10 @@ export default function Present() {
 
 
 
-  const formatDate = (date: Date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
-  const isToday = (date: Date) => {
-    const today = new Date();
-    return date.toDateString() === today.toDateString();
-  };
-
   const isTomorrow = (date: Date) => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     return date.toDateString() === tomorrow.toDateString();
-  };
-
-  const isPastDate = (date: Date) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const compareDate = new Date(date);
-    compareDate.setHours(0, 0, 0, 0);
-    return compareDate < today;
   };
 
   const isMoreThanTwoDaysLater = (date: Date) => {
@@ -92,10 +66,6 @@ export default function Present() {
     twoDaysLater.setDate(today.getDate() + 2);
     
     return compareDate >= twoDaysLater;
-  };
-
-  const isCurrentMonth = (date: Date) => {
-    return date.getMonth() === currentMonth.getMonth();
   };
 
   const hasDiary = (date: Date) => {

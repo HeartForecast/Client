@@ -15,37 +15,29 @@ import {
 } from "../auth/index"
 import Calendar from "../components/Calendar"
 import PageHeader from "../components/PageHeader"
-import { getEmotionColor, fetchEmotionType, EmotionTypeData } from "../utils/emotionUtils";
+import { getEmotionColor, fetchEmotionType } from "../utils/emotionUtils"
+import { 
+  DiaryData, 
+  DiaryTimeData, 
+  TimeSlot, 
+  ToastState,
+  TIME_PERIODS
+} from "../types/common"
+import { 
+  formatDate, 
+  isToday, 
+  isPastDate, 
+  isCurrentMonth, 
+  generateCalendarDays 
+} from "../utils/dateUtils"
+import LoadingSpinner from "../components/LoadingSpinner"
+import ErrorMessage from "../components/ErrorMessage"
+import EmptyState from "../components/EmptyState"
+import TimeSlotSelector from "../components/TimeSlotSelector"
+import DiaryCard from "../components/DiaryCard"
 
 
-// API 데이터 타입 정의
-interface DiaryData {
-  morning?: {
-    predictedEmotions: Array<{emotion: string, category: string, color: string}>;
-    predictedText: string;
-    actualEmotions: Array<{emotion: string, category: string, color: string}>;
-    actualText: string;
-  };
-  afternoon?: {
-    predictedEmotions: Array<{emotion: string, category: string, color: string}>;
-    predictedText: string;
-    actualEmotions: Array<{emotion: string, category: string, color: string}>;
-    actualText: string;
-  };
-  evening?: {
-    predictedEmotions: Array<{emotion: string, category: string, color: string}>;
-    predictedText: string;
-    actualEmotions: Array<{emotion: string, category: string, color: string}>;
-    actualText: string;
-  };
-}
-
-type DiaryTimeData = {
-  predictedEmotions: Array<{emotion: string, category: string, color: string}>;
-  predictedText: string;
-  actualEmotions: Array<{emotion: string, category: string, color: string}>;
-  actualText: string;
-};
+// 공통 타입 사용
 
 export default function Register() {
   const router = useRouter()
@@ -53,64 +45,20 @@ export default function Register() {
   const [childName, setChildName] = useState('')
   const [activeTab, setActiveTab] = useState('홈')
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<'morning' | 'afternoon' | 'evening'>('morning')
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot>('morning')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [diaryData, setDiaryData] = useState<Record<string, DiaryData>>({})
-  const [toast, setToast] = useState<{
-    message: string;
-    type: 'success' | 'error' | 'warning';
-    isVisible: boolean;
-  }>({
+  const [toast, setToast] = useState<ToastState>({
     message: '',
     type: 'warning',
     isVisible: false
   })
 
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [forecastData, setForecastData] = useState<Record<string, Record<'morning' | 'afternoon' | 'evening', Partial<DiaryTimeData>>>>({});
+  const [forecastData, setForecastData] = useState<Record<string, Record<TimeSlot, Partial<DiaryTimeData>>>>({});
 
-  const generateCalendarDays = () => {
-    const year = currentMonth.getFullYear();
-    const month = currentMonth.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const startDate = new Date(firstDay);
-    startDate.setDate(startDate.getDate() - firstDay.getDay());
-    const days = [];
-    const endDate = new Date(lastDay);
-    endDate.setDate(endDate.getDate() + (6 - lastDay.getDay()));
-    const current = new Date(startDate);
-    while (current <= endDate) {
-      days.push(new Date(current));
-      current.setDate(current.getDate() + 1);
-    }
-    return days;
-  };
 
-  const formatDate = (date: Date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
-  const isToday = (date: Date) => {
-    const today = new Date();
-    return date.toDateString() === today.toDateString();
-  };
-
-  const isPastDate = (date: Date) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const compareDate = new Date(date);
-    compareDate.setHours(0, 0, 0, 0);
-    return compareDate < today;
-  };
-
-  const isCurrentMonth = (date: Date) => {
-    return date.getMonth() === currentMonth.getMonth();
-  };
 
   // 데이터 로딩 함수
   const loadDiaryData = async (date: string) => {
@@ -353,13 +301,9 @@ export default function Register() {
     };
   };
 
-  const timeSlots: { key: 'morning' | 'afternoon' | 'evening'; label: string; time?: string }[] = [
-    { key: 'morning', label: '아침', time: '오전' },
-    { key: 'afternoon', label: '점심', time: '오후' },
-    { key: 'evening', label: '저녁', time: '저녁' }
-  ];
 
-  const calendarDays = generateCalendarDays();
+
+
   const selectedDiary: DiaryData | null =
     selectedDate && (isPastDate(new Date(selectedDate)) || isToday(new Date(selectedDate)))
       ? (diaryData[selectedDate] || getDefaultDiary(selectedDate))
@@ -476,25 +420,10 @@ export default function Register() {
         />
 
         {selectedDate && (isPastDate(new Date(selectedDate)) || isToday(new Date(selectedDate))) && (
-          <div className="w-full mb-4">
-            <div className="flex bg-gray-100 rounded-xl p-1">
-              {timeSlots.map((timeSlot: typeof timeSlots[number]) => (
-                <button
-                  key={timeSlot.key}
-                  onClick={() => setSelectedTimeSlot(timeSlot.key as 'morning' | 'afternoon' | 'evening')}
-                  className={`
-                    flex-1 py-2 px-4 text-sm font-medium rounded-lg transition-all
-                    ${selectedTimeSlot === timeSlot.key 
-                      ? 'bg-white text-gray-900 shadow-sm' 
-                      : 'text-gray-500 hover:text-gray-700'
-                    }
-                  `}
-                >
-                  {timeSlot.label}
-                </button>
-              ))}
-            </div>
-          </div>
+          <TimeSlotSelector
+            selectedTimeSlot={selectedTimeSlot}
+            onTimeSlotChange={setSelectedTimeSlot}
+          />
         )}
 
         {selectedDate && (isPastDate(new Date(selectedDate)) || isToday(new Date(selectedDate))) && (
@@ -510,32 +439,15 @@ export default function Register() {
 
             {/* 로딩 상태 */}
             {loading && (
-              <div className="w-full text-center py-8">
-                <div className="text-gray-400 mb-2">
-                  <svg className="w-8 h-8 mx-auto animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                </div>
-                <p className="text-gray-500 text-sm">일기 데이터를 불러오는 중...</p>
-              </div>
+              <LoadingSpinner message="일기 데이터를 불러오는 중..." />
             )}
 
             {/* 에러 상태 */}
             {error && (
-              <div className="w-full text-center py-8">
-                <div className="text-red-400 mb-2">
-                  <svg className="w-8 h-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <p className="text-red-500 text-sm">{error}</p>
-                <button 
-                  onClick={() => selectedDate && loadDiaryData(selectedDate)}
-                  className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600"
-                >
-                  다시 시도
-                </button>
-              </div>
+              <ErrorMessage 
+                message={error}
+                onRetry={() => selectedDate && loadDiaryData(selectedDate)}
+              />
             )}
 
             {/* 데이터 표시 */}
@@ -543,7 +455,7 @@ export default function Register() {
               <>
                 {/* 선택된 시간대 일기 */}
                 <div className="text-lg font-semibold text-gray-800 mb-2">
-                  {timeSlots.find(t => t.key === selectedTimeSlot)?.label} 기록
+                  {TIME_PERIODS[selectedTimeSlot].label} 기록
                 </div>
                 
                 {(() => {
@@ -560,46 +472,18 @@ export default function Register() {
                   return (
                     <div className="space-y-3">
                       {/* 예보 섹션 */}
-                      <div className="bg-white rounded-2xl p-5 border border-gray-100">
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="text-sm font-medium text-[#FF6F71]">예보</span>
-                          <span className="text-sm text-gray-400">
-                            {timeData.predictedEmotions?.map((e: any) => (
-                              <span 
-                                key={e.emotion} 
-                                className="inline-block px-2 py-1 rounded-full text-xs font-medium mr-1"
-                                style={{ backgroundColor: e.color + '20', color: e.color }}
-                              >
-                                {e.emotion}
-                              </span>
-                            )) || '예상 감정'}
-                          </span>
-                        </div>
-                        <p className="text-base text-gray-600 leading-normal">
-                          {timeData.predictedText || '예보 메모가 없습니다.'}
-                        </p>
-                      </div>
+                      <DiaryCard 
+                        title="예보"
+                        data={timeData}
+                        type="forecast"
+                      />
 
                       {/* 예보 기록 섹션 */}
-                      <div className="bg-white rounded-2xl p-5 border border-gray-100">
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="text-sm font-medium text-[#FF6F71]">예보 기록</span>
-                          <span className="text-sm text-gray-400">
-                            {timeData.actualEmotions?.map((e: any) => (
-                              <span 
-                                key={e.emotion} 
-                                className="inline-block px-2 py-1 rounded-full text-xs font-medium mr-1"
-                                style={{ backgroundColor: e.color + '20', color: e.color }}
-                              >
-                                {e.emotion}
-                              </span>
-                            )) || '실제 감정'}
-                          </span>
-                        </div>
-                        <p className="text-base text-gray-600 leading-normal">
-                          {timeData.actualText || '실제 기록이 없습니다.'}
-                        </p>
-                      </div>
+                      <DiaryCard 
+                        title="예보 기록"
+                        data={timeData}
+                        type="record"
+                      />
                     </div>
                   );
                 })()}
@@ -608,16 +492,7 @@ export default function Register() {
 
             {/* 데이터가 없는 경우 */}
             {!loading && !error && (!selectedDiary || !selectedDiary[selectedTimeSlot]) && selectedDate && (
-              <div className="w-full text-center py-8">
-                <div className="text-gray-400 mb-2 px-4">
-                  <svg className="w-12 h-12 mx-auto mb-2" fill="none" viewBox="0 0 24 26">
-                    <path d="M22 2H19V1C19 0.734784 18.8946 0.48043 18.7071 0.292893C18.5196 0.105357 18.2652 0 18 0C17.7348 0 17.4804 0.105357 17.2929 0.292893C17.1054 0.48043 17 0.734784 17 1V2H7V1C7 0.734784 6.89464 0.48043 6.70711 0.292893C6.51957 0.105357 6.26522 0 6 0C5.73478 0 5.48043 0.105357 5.29289 0.292893C5.10536 0.48043 5 0.734784 5 1V2H2C1.46957 2 0.960859 2.21071 0.585786 2.58579C0.210714 2.96086 0 3.46957 0 4V24C0 24.5304 0.210714 25.0391 0.585786 25.4142C0.960859 25.7893 1.46957 26 2 26H22C22.5304 26 23.0391 25.7893 23.4142 25.4142C23.7893 25.0391 24 24.5304 24 24V4C24 3.46957 23.7893 2.96086 23.4142 2.58579C23.0391 2.21071 22.5304 2 22 2ZM5 4V5C5 5.26522 5.10536 5.51957 5.29289 5.70711C5.48043 5.89464 5.73478 6 6 6C6.26522 6 6.51957 5.89464 6.70711 5.70711C6.89464 5.51957 7 5.26522 7 5V4H17V5C17 5.26522 17.1054 5.51957 17.2929 5.70711C17.4804 5.89464 17.7348 6 18 6C18.2652 6 18.5196 5.89464 18.7071 5.70711C18.8946 5.51957 19 5.26522 19 5V4H22V8H2V4H5ZM22 24H2V10H22V24ZM16 17C16 17.2652 15.8946 17.5196 15.7071 17.7071C15.5196 17.8946 15.2652 18 15 18H9C8.73478 18 8.48043 17.8946 8.29289 17.7071C8.10536 17.5196 8 17.2652 8 17C8 16.7348 8.10536 16.4804 8.29289 16.2929C8.48043 16.1054 8.73478 16 9 16H15C15.2652 16 15.5196 16.1054 15.7071 16.2929C15.8946 16.4804 16 16.7348 16 17Z" fill="currentColor"/>
-                  </svg>
-                </div>
-                <p className="text-gray-500 text-sm">
-                  해당 시간대의 예보가 없습니다.
-                </p>
-              </div>
+              <EmptyState message="해당 시간대의 예보가 없습니다." />
             )}
           </div>
         )}
