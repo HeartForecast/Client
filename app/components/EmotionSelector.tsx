@@ -95,50 +95,58 @@ export default function EmotionSelector({
     );
   }
 
+  // 카테고리 순서 정의
+  const categoryOrder = ['긍정', '중립', '부정'];
+
   return (
     <div className={`w-full space-y-6 ${className}`}>
-      {Object.entries(emotionCategories).map(([category, categoryEmotions]) => (
-        <motion.div
-          key={category}
-          variants={fadeInOutVariants}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-          className="w-full"
-        >
-          <div className="text-sm font-medium text-gray-600 mb-3">{category}</div>
-          <div className="flex flex-wrap gap-2">
-            {categoryEmotions.map((emotion) => {
-              const isSelected = selectedEmotion?.id === emotion.id;
-              const categoryColor = CATEGORY_COLORS[category as keyof typeof CATEGORY_COLORS];
-              
-              return (
-                <motion.button
-                  key={`${category}-${emotion.id}`}
-                  type="button"
-                  className={`
-                    px-4 py-2 rounded-full text-sm font-medium transition-all duration-200
-                    border inline-flex items-center justify-center
-                    ${isSelected 
-                      ? 'text-white shadow-lg transform scale-105' 
-                      : 'text-gray-700 hover:shadow-md hover:scale-105'
-                    }
-                  `}
-                  style={{
-                    backgroundColor: isSelected ? categoryColor : 'transparent',
-                    borderColor: categoryColor,
-                  }}
-                  onClick={() => handleEmotionClick(category, emotion)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  {emotion.name}
-                </motion.button>
-              );
-            })}
-          </div>
-        </motion.div>
-      ))}
+      {categoryOrder.map((category) => {
+        const categoryEmotions = emotionCategories[category];
+        if (!categoryEmotions) return null;
+
+        return (
+          <motion.div
+            key={category}
+            variants={fadeInOutVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className="w-full"
+          >
+            <div className="text-sm font-medium text-gray-600 mb-3">{category}</div>
+            <div className="flex flex-wrap gap-2">
+              {categoryEmotions.map((emotion) => {
+                const isSelected = selectedEmotion?.id === emotion.id;
+                const categoryColor = CATEGORY_COLORS[category as keyof typeof CATEGORY_COLORS];
+                
+                return (
+                  <motion.button
+                    key={`${category}-${emotion.id}`}
+                    type="button"
+                    className={`
+                      px-4 py-2 rounded-full text-sm font-medium transition-all duration-200
+                      border inline-flex items-center justify-center
+                      ${isSelected 
+                        ? 'text-white shadow-lg transform scale-105' 
+                        : 'text-gray-700 hover:shadow-md hover:scale-105'
+                      }
+                    `}
+                    style={{
+                      backgroundColor: isSelected ? categoryColor : 'transparent',
+                      borderColor: categoryColor,
+                    }}
+                    onClick={() => handleEmotionClick(category, emotion)}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {emotion.name}
+                  </motion.button>
+                );
+              })}
+            </div>
+          </motion.div>
+        );
+      })}
     </div>
   );
 } 

@@ -27,6 +27,12 @@ function InsertPageContent() {
   }, [searchParams]);
 
   const handleEmotionSelect = (emotion: EmotionType, category: string) => {
+    console.log('감정 선택됨:', {
+      emotion: emotion.name,
+      image: emotion.image,
+      temp: emotion.temp,
+      category: category
+    });
     setSelectedEmotion(emotion);
     setSelectedCategory(category);
   };
@@ -68,6 +74,7 @@ function InsertPageContent() {
     }
 
     console.log(`${currentStep} 감정 저장:`, currentEmotionData);
+    console.log('저장된 감정의 이미지 URL:', currentEmotionData.emotion.image);
 
     // reason 페이지로 이동
     router.push(`/insert/reason?step=${currentStep}`);

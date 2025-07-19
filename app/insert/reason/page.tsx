@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "../../components/Button";
 import { useChild } from "../../contexts/ChildContext";
-import EmotionResultPopup from "../../components/EmotionResultPopup";
+import EmotionForecastPopup from "../../components/EmotionForecastPopup";
 import { getCurrentDate } from "../../utils/dateUtils";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -212,14 +212,19 @@ function ReasonPageContent() {
         <div className="flex flex-col items-start justify-start flex-1 w-full max-w-sm mx-auto">
           
           {/* 결과 팝업 */}
-          <EmotionResultPopup
-            isVisible={showResultPopup}
+          <EmotionForecastPopup
+            isOpen={showResultPopup}
             onClose={() => {
               setShowResultPopup(false);
               localStorage.removeItem('forecastEmotions'); // 저장된 감정 데이터 정리
-              router.push('/home'); // 홈으로 이동
             }}
-            emotions={allEmotions}
+            forecasts={allEmotions.map((emotion: any) => ({
+              timeSlot: emotion.step,
+              emotion: emotion.emotion.name,
+              temperature: emotion.emotion.temp,
+              image: emotion.emotion.image,
+              category: emotion.category
+            }))}
           />
           <div className="text-xs text-gray-400 mb-2">{getCurrentDate()} {TIME_PERIODS[currentStep].label}</div>
           <div className="text-2xl font-bold leading-tight whitespace-pre-line mb-8">
