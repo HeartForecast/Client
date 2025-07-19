@@ -1,12 +1,12 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Container from '../components/Container';
 import { useChild } from '../contexts/ChildContext';
 import { clearAuthState } from '../auth/index';
 
-export default function Settings() {
+function SettingsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isChildMode, selectedChild, exitChildMode, enterChildMode } = useChild();
@@ -183,5 +183,22 @@ export default function Settings() {
         </div>
       </div>
     </Container>
+  );
+}
+
+export default function Settings() {
+  return (
+    <Suspense fallback={
+      <Container className="bg-white">
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF6F71] mx-auto mb-4"></div>
+            <p className="text-gray-600">페이지를 불러오는 중...</p>
+          </div>
+        </div>
+      </Container>
+    }>
+      <SettingsContent />
+    </Suspense>
   );
 } 
