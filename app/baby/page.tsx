@@ -12,42 +12,36 @@ import {
 } from "../auth/index"
 import { 
   getEmotionColor, 
-  fetchEmotionType, 
-  EmotionTypeData 
+  fetchEmotionType
 } from "../utils/emotionUtils"
 import Calendar from "../components/Calendar"
-import HeaderBar from "../components/HeaderBar"
+import PageHeader from "../components/PageHeader"
+import { 
+  DiaryData, 
+  DiaryTimeData, 
+  TimeSlot,
+  TIME_PERIODS
+} from "../types/common"
+import { 
+  formatDate, 
+  isToday, 
+  isPastDate, 
+  isCurrentMonth, 
+  generateCalendarDays 
+} from "../utils/dateUtils"
+import LoadingSpinner from "../components/LoadingSpinner"
+import ErrorMessage from "../components/ErrorMessage"
+import EmptyState from "../components/EmptyState"
+import TimeSlotSelector from "../components/TimeSlotSelector"
+import DiaryCard from "../components/DiaryCard"
 
-// 감정 타입 인터페이스 (공통 유틸리티 사용)
-type EmotionType = EmotionTypeData;
-
-// 시간대별 일기 데이터 구조 (타입 정의만 유지)
-interface DiaryData {
-  morning?: {
-    predictedEmotions: Array<{emotion: string, category: string, color: string}>;
-    predictedText: string;
-    actualEmotions: Array<{emotion: string, category: string, color: string}>;
-    actualText: string;
-  };
-  afternoon?: {
-    predictedEmotions: Array<{emotion: string, category: string, color: string}>;
-    predictedText: string;
-    actualEmotions: Array<{emotion: string, category: string, color: string}>;
-    actualText: string;
-  };
-  evening?: {
-    predictedEmotions: Array<{emotion: string, category: string, color: string}>;
-    predictedText: string;
-    actualEmotions: Array<{emotion: string, category: string, color: string}>;
-    actualText: string;
-  };
-}
+// 공통 타입 사용
 
 export default function Present() {
   const router = useRouter()
   const { selectedChild, isLoading } = useChild()
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<'morning' | 'afternoon' | 'evening'>('morning')
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot>('morning')
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -55,30 +49,10 @@ export default function Present() {
 
 
 
-  const formatDate = (date: Date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
-  const isToday = (date: Date) => {
-    const today = new Date();
-    return date.toDateString() === today.toDateString();
-  };
-
   const isTomorrow = (date: Date) => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     return date.toDateString() === tomorrow.toDateString();
-  };
-
-  const isPastDate = (date: Date) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const compareDate = new Date(date);
-    compareDate.setHours(0, 0, 0, 0);
-    return compareDate < today;
   };
 
   const isMoreThanTwoDaysLater = (date: Date) => {
@@ -92,10 +66,6 @@ export default function Present() {
     twoDaysLater.setDate(today.getDate() + 2);
     
     return compareDate >= twoDaysLater;
-  };
-
-  const isCurrentMonth = (date: Date) => {
-    return date.getMonth() === currentMonth.getMonth();
   };
 
   const hasDiary = (date: Date) => {
@@ -259,7 +229,7 @@ export default function Present() {
     };
   };
 
-  // 현재 달의 과거 날짜들에 대한 데이터 미리 로드
+  // 현재 달의 과거 날짜들과 오늘 날짜에 대한 데이터 미리 로드
   useEffect(() => {
     if (selectedChild?.id && !isLoading) {
       const today = new Date();
@@ -269,7 +239,7 @@ export default function Present() {
       const lastDay = new Date(year, month + 1, 0);
       
       for (let date = new Date(firstDay); date <= lastDay; date.setDate(date.getDate() + 1)) {
-        if (isPastDate(date)) {
+        if (isPastDate(date) || isToday(date)) {
           const dateStr = formatDate(date);
           if (!forecastData[dateStr]) {
             loadForecastData(dateStr);
@@ -293,14 +263,7 @@ export default function Present() {
     <Container>
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
         {/* 상단바 */}
-        <div className="flex items-end justify-between w-full rounded-lg px-2 mb-6">
-          <HeaderBar 
-            childName={selectedChild?.name || ''}
-            inviteCode={selectedChild?.inviteCode}
-            showChildListButton={false}
-            showSettingsButton={true}
-          />
-        </div>
+        <PageHeader showLogo={true} />
 
         {/* 달력 컴포넌트 */}
         <Calendar

@@ -41,6 +41,8 @@ body {
   -moz-text-size-adjust: 100%;
   -ms-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  overflow-x: hidden;
+  position: relative;
 }
 
 body, input, textarea, select, button, p, h1, h2, h3, h4, h5, h6, span, div, a {
@@ -53,6 +55,7 @@ body, input, textarea, select, button, p, h1, h2, h3, h4, h5, h6, span, div, a {
   min-height: 100vh;
   background: white;
   position: relative;
+  overflow-x: hidden;
 }
 
 .app-content {

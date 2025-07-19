@@ -8,7 +8,7 @@ interface CalendarProps {
   hasDiary: (date: Date) => boolean;
   isToday: (date: Date) => boolean;
   isPastDate: (date: Date) => boolean;
-  isCurrentMonth: (date: Date) => boolean;
+  isCurrentMonth: (date: Date, currentMonth: Date) => boolean;
   formatDate: (date: Date) => string;
   readOnly?: boolean; // 읽기 전용 모드 (home 페이지용)
   showEmptyIcon?: boolean; // 빈 상태 아이콘 표시 여부
@@ -106,7 +106,7 @@ export default function Calendar({
               disabled={!isClickable}
               className={`
                 relative h-10 text-sm rounded-lg transition-colors
-                ${isCurrentMonth(date) ? 'text-gray-900' : 'text-gray-300'}
+                ${isCurrentMonth(date, currentMonth) ? 'text-gray-900' : 'text-gray-300'}
                 ${isToday(date) ? 'bg-blue-100 text-blue-600 font-semibold' : ''}
                 ${selectedDate === formatDate(date) ? 'bg-[#FF6F71] text-white' : ''}
                 ${isClickable ? 'hover:bg-gray-100 cursor-pointer' : 'cursor-not-allowed opacity-50'}

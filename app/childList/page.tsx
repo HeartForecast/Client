@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Container from "../components/Container"
 import NavigationBar from "../components/NavigationBar"
+import PageHeader from "../components/PageHeader"
 import Toast from "../components/Toast"
 import { useChild } from "../contexts/ChildContext"
 
@@ -210,9 +211,7 @@ export default function ChildListPage() {
     setToast(prev => ({ ...prev, isVisible: false }));
   };
 
-  const handleBack = () => {
-    window.history.back()
-  }
+
 
   const handleChildClick = (childId: number) => {
     console.log('Child clicked:', childId)
@@ -329,13 +328,6 @@ export default function ChildListPage() {
   if (isLoading) {
     return (
       <Container>
-        <div className="w-full max-w-sm mx-auto">
-          <button className="mb-4 cursor-pointer" onClick={handleBack}>
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-        </div>
         
         <div className="flex flex-col items-center justify-center min-h-[60vh]">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF6F71] mx-auto mb-4"></div>
@@ -351,13 +343,6 @@ export default function ChildListPage() {
   if (error) {
     return (
       <Container>
-        <div className="w-full max-w-sm mx-auto">
-          <button className="mb-4 cursor-pointer" onClick={handleBack}>
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-        </div>
         
         <div className="flex flex-col items-center justify-center min-h-[60vh]">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
@@ -389,17 +374,13 @@ export default function ChildListPage() {
         onClose={hideToast}
       />
       
-      <div className="w-full max-w-sm mx-auto">
-        <button className="mb-4 cursor-pointer" onClick={handleBack}>
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-      </div>
+
 
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
+        {/* 상단바 */}
+        <PageHeader showLogo={true} />
+        
         <div className="w-full mb-8">
-          <span className="text-gray-500 font-medium text-sm">아이 관리</span>
           <h1 className="text-2xl font-semibold mb-1">등록된 아이 목록</h1>
           <p className="text-sm text-gray-600">
             총 {childrenData.length}명의 아이가 등록되어 있습니다.

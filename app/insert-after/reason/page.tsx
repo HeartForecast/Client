@@ -79,7 +79,6 @@ function ReasonPageContent() {
   };
 
   const handleNext = async () => {
-    if (reason.trim().length === 0) return;
     if (!currentEmotion || !selectedChild?.id || !forecastId) {
       setError('필수 정보가 누락되었습니다.');
       return;
@@ -167,7 +166,7 @@ function ReasonPageContent() {
     }
   };
 
-  const isComplete = reason.trim().length > 0;
+  const isComplete = true; // 메모는 선택사항이므로 항상 true
 
   const fadeInOutVariants = {
     hidden: { opacity: 0, y: 10 },
@@ -200,70 +199,71 @@ function ReasonPageContent() {
 
   return (
     <div className="container">
-      <div className="min-h-screen flex flex-col items-center justify-center px-4 pt-10 pb-5 bg-white text-black">
-        <div className="w-full max-w-sm mx-auto">
-          <button className="mb-4 cursor-pointer" onClick={handleBack}>
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-        </div>
-        
-        <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
-          <div className="text-xs text-gray-400 mb-2">
-            {searchParams.get('date') || new Date().toISOString().split('T')[0]} {TIME_PERIODS[currentStep].label}
-          </div>
-          <div className="text-2xl font-bold leading-tight whitespace-pre-line mb-8">
-            {TIME_PERIODS[currentStep].text}{`\n`}느꼈나요?
+      <div className="min-h-screen flex flex-col bg-white text-black overflow-hidden">
+        <div className="flex-1 flex flex-col px-4 pt-10 pb-5">
+          <div className="w-full max-w-sm mx-auto">
+            <button className="mb-4 cursor-pointer" onClick={handleBack}>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
           </div>
           
-          {error && (
-            <div className="w-full mb-4 text-sm text-red-500 text-center">
-              {error}
+          <div className="flex flex-col items-start justify-start flex-1 w-full max-w-sm mx-auto">
+            <div className="text-xs text-gray-400 mb-2">
+              {searchParams.get('date') || new Date().toISOString().split('T')[0]} {TIME_PERIODS[currentStep].label}
             </div>
-          )}
-          
-          <div className="w-full flex-grow">
-            <div className="relative">
-              <textarea
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                placeholder="어떤 일 때문에 이런 감정을 느꼈나요?"
-                className="w-full h-100 p-5 border-2 border-gray-200 rounded-xl resize-none focus:border-[#FF6F71] focus:outline-none transition-all duration-300 text-base leading-relaxed placeholder-gray-400"
-                maxLength={500}
-              />
-              <div className="absolute bottom-4 right-4 text-xs text-gray-400">
-                {reason.length}/500
+            <div className="text-xl sm:text-2xl font-bold leading-tight whitespace-pre-line mb-6">
+              {TIME_PERIODS[currentStep].text}{`\n`}느꼈나요?
+            </div>
+            
+            {error && (
+              <div className="w-full mb-4 text-sm text-red-500 text-center">
+                {error}
               </div>
-            </div>
-            <div className="mt-3  mb-8 text-sm text-gray-500 text-center">
-              🫶 자세히 적을수록 더 좋아요
-            </div>
-          </div>
-        </div>
-        
-        <motion.div
-          key="final-button"
-          initial="hidden"
-          animate="visible"
-          variants={fadeInOutVariants}
-          className="flex flex-col items-center w-full max-w-sm mt-auto mb-4"
-        >
-          <Button
-            className={`flex w-full items-center justify-center gap-1 rounded-lg bg-[#FF6F71] text-white py-3 text-lg font-semibold text-gray-900 mb-4 transition-opacity ${isComplete && !isLoading ? '' : 'opacity-50 cursor-not-allowed'}`}
-            disabled={!isComplete || isLoading}
-            onClick={handleNext}
-          >
-            {isLoading ? (
-              <div className="flex items-center gap-2">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                저장 중...
-              </div>
-            ) : (
-              getButtonText()
             )}
-          </Button>
-        </motion.div>
+            
+            <div className="w-full flex-1 flex flex-col">
+              <div className="relative flex-1">
+                <textarea
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  placeholder="어떤 일 때문에 이런 감정을 느꼈나요?"
+                  className="w-full h-full min-h-[200px] p-4 border-2 border-gray-200 rounded-xl resize-none focus:border-[#FF6F71] focus:outline-none transition-all duration-300 text-base leading-relaxed placeholder-gray-400"
+                  maxLength={500}
+                />
+                <div className="absolute bottom-4 right-4 text-xs text-gray-400">
+                  {reason.length}/500
+                </div>
+              </div>
+              <div className="mt-3 text-sm text-gray-500 text-center">
+                🫶 자세히 적을수록 더 좋아요 (선택사항)
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="px-4 pb-5">
+          <motion.div
+            key="final-button"
+            initial="hidden"
+            animate="visible"
+            variants={fadeInOutVariants}
+            className="flex flex-col items-center w-full max-w-sm mx-auto"
+          >
+            <Button
+              className={`flex w-full items-center justify-center gap-1 rounded-lg bg-[#FF6F71] text-white py-3 text-lg font-semibold transition-opacity ${!isLoading ? '' : 'opacity-50 cursor-not-allowed'}`}
+              disabled={isLoading}
+              onClick={handleNext}
+            >
+              {isLoading ? (
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              ) : (
+                getButtonText()
+              )}
+            </Button>
+          </motion.div>
+        </div>
       </div>
       
       {/* 완료 모달 */}
@@ -273,16 +273,20 @@ function ReasonPageContent() {
             <div className="text-6xl mb-4">🎉</div>
             <h2 className="text-xl font-bold text-gray-800 mb-2">완료!</h2>
             <p className="text-gray-600 mb-6">
-              모든 예보 기록을 작성하였습니다.
+              오늘 하루의 예보 기록을 모두 작성했어요.
             </p>
             <button
               onClick={() => {
+                // localStorage 정리
+                if (typeof window !== 'undefined') {
+                  localStorage.removeItem('forecastRecordEmotions');
+                }
                 setShowCompletionModal(false);
                 router.push('/baby');
               }}
               className="w-full bg-[#FF6F71] hover:bg-[#e55a5c] text-white font-medium py-3 px-6 rounded-lg transition-colors"
             >
-              확인
+              홈으로 가기
             </button>
           </div>
         </div>

@@ -1,8 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { motion, AnimatePresence } from "framer-motion"
 import Container from "../../components/Container"
 import Toast from "../../components/Toast"
 
@@ -24,7 +23,6 @@ function EditChildPageContent() {
   const searchParams = useSearchParams();
   const childId = searchParams.get('id');
 
-  const [currentDisplayStep, setCurrentDisplayStep] = useState(1);
   const [name, setName] = useState('');
   const [dob, setDob] = useState('');
   const [gender, setGender] = useState('');
@@ -45,7 +43,6 @@ function EditChildPageContent() {
   const nameRef = useRef<HTMLInputElement>(null);
   const dobRef = useRef<HTMLInputElement>(null);
   const healthStatusRef = useRef<HTMLInputElement>(null);
-  const nameAdvanceTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const fetchChildData = async () => {
@@ -95,24 +92,6 @@ function EditChildPageContent() {
     fetchChildData();
   }, [childId]);
 
-  useEffect(() => {
-    switch (currentDisplayStep) {
-      case 1:
-        nameRef.current?.focus();
-        break;
-      case 2:
-        dobRef.current?.focus();
-        break;
-      case 3:
-        break;
-      case 4:
-        healthStatusRef.current?.focus();
-        break;
-      default:
-        break;
-    }
-  }, [currentDisplayStep]);
-
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({
       message,
@@ -123,14 +102,6 @@ function EditChildPageContent() {
 
   const hideToast = () => {
     setToast(prev => ({ ...prev, isVisible: false }));
-  };
-
-  const advanceStep = () => {
-    if (currentDisplayStep < 4) {
-      setCurrentDisplayStep(prevStep => prevStep + 1);
-    } else {
-      handleSave();
-    }
   };
 
   const handleSave = async () => {
@@ -162,6 +133,7 @@ function EditChildPageContent() {
       }
 
       showToast('아이 정보가 성공적으로 수정되었습니다!', 'success');
+      setIsSaving(false);
       
       // 성공 후 잠시 대기 후 페이지 이동
       setTimeout(() => {
@@ -170,40 +142,16 @@ function EditChildPageContent() {
     } catch (error) {
       console.error("수정 실패:", error);
       showToast('아이 정보 수정에 실패했습니다. 다시 시도해주세요.', 'error');
-    } finally {
       setIsSaving(false);
-    }
-  };
-
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-
-      if (currentDisplayStep === 1 && name.trim() === '') return;
-      if (currentDisplayStep === 2 && dob.trim() === '') return;
-      if (currentDisplayStep === 4 && healthStatus.trim() === '') return;
-
-      advanceStep();
     }
   };
 
   const handleGenderSelect = (selectedGender: string) => {
     setGender(selectedGender);
-    advanceStep();
   };
 
   const handleBack = () => {
-    if (currentDisplayStep === 1) {
-      router.push('/childList');
-    } else {
-      setCurrentDisplayStep(prev => Math.max(1, prev - 1));
-    }
-  };
-
-  const fadeInOutVariants = {
-    hidden: { opacity: 0, y: 10 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-    exit: { opacity: 0, y: -10, transition: { duration: 0.3 } },
+    router.push('/childList');
   };
 
   if (isLoading) {
@@ -281,181 +229,121 @@ function EditChildPageContent() {
           <p className="text-sm text-gray-600">아이의 정보를 수정해주세요</p>
         </div>
         
-        <AnimatePresence mode="wait" initial={false}>
-          {currentDisplayStep >= 1 && (
-            <motion.div
-              key="step1-name"
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              variants={fadeInOutVariants}
-              className="w-full mb-12"
-            >
-              <label htmlFor="name" className="text-gray-500 text-sm font-semibold mb-2 block">
-                이름 <span className="text-red-500">*</span>
-              </label>
-              <div className="w-full border-b-2 border-gray-300 pb-2">
-                <input
-                  type="text"
-                  id="name"
-                  ref={nameRef}
-                  className="w-full text-xl focus:outline-none placeholder-gray-400"
-                  placeholder="이름을 입력해주세요."
-                  value={name}
-                  onChange={(e) => {
-                    setName(e.target.value);
-                    const koreanCharCount = e.target.value.match(/[\uAC00-\uD7A3]/g)?.length || 0;
-                    if (nameAdvanceTimeout.current) {
-                      clearTimeout(nameAdvanceTimeout.current);
-                    }
-                    if (currentDisplayStep === 1 && koreanCharCount === 3) {
-                      nameAdvanceTimeout.current = setTimeout(() => {
-                        advanceStep();
-                      }, 500);
-                    }
-                  }}
-                  onKeyDown={handleKeyDown}
-                />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <div className="w-full mb-12">
+          <label htmlFor="name" className="text-gray-500 text-sm font-semibold mb-2 block">
+            이름 <span className="text-red-500">*</span>
+          </label>
+          <div className="w-full border-b-2 border-gray-300 pb-2">
+            <input
+              type="text"
+              id="name"
+              ref={nameRef}
+              className="w-full text-xl focus:outline-none placeholder-gray-400"
+              placeholder="이름을 입력해주세요."
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value);
+              }}
+            />
+          </div>
+        </div>
 
-        <AnimatePresence mode="wait" initial={false}>
-          {currentDisplayStep >= 2 && (
-            <motion.div
-              key="step2-dob"
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              variants={fadeInOutVariants}
-              className="w-full mb-12"
-            >
-              <label htmlFor="dob" className="text-gray-500 text-sm font-semibold mb-2 block">
-                생년월일 <span className="text-red-500">*</span>
-              </label>
-              <div className="w-full border-b-2 border-gray-300 pb-2">
-                <input
-                  type="text"
-                  id="dob"
-                  ref={dobRef}
-                  className="w-full text-xl focus:outline-none placeholder-gray-400"
-                  placeholder="생년월일을 입력해주세요."
-                  value={dob}
-                  onChange={(e) => {
-                    let value = e.target.value.replace(/[^0-9]/g, '');
-                    if (value.length > 8) value = value.slice(0, 8);
-                    let formatted = value;
-                    if (value.length > 4) {
-                      formatted = value.slice(0, 4) + '-' + value.slice(4);
-                    }
-                    if (value.length > 6) {
-                      formatted = value.slice(0, 4) + '-' + value.slice(4, 6) + '-' + value.slice(6);
-                    }
-                    setDob(formatted);
-                    if (currentDisplayStep === 2 && value.length === 8) {
-                      advanceStep();
-                    }
-                  }}
-                  onKeyDown={handleKeyDown}
-                />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <div className="w-full mb-12">
+          <label htmlFor="dob" className="text-gray-500 text-sm font-semibold mb-2 block">
+            생년월일 <span className="text-red-500">*</span>
+          </label>
+          <div className="w-full border-b-2 border-gray-300 pb-2">
+            <input
+              type="text"
+              id="dob"
+              ref={dobRef}
+              className="w-full text-xl focus:outline-none placeholder-gray-400"
+              placeholder="생년월일을 입력해주세요."
+              value={dob}
+              onChange={(e) => {
+                let value = e.target.value.replace(/[^0-9]/g, '');
+                if (value.length > 8) value = value.slice(0, 8);
+                let formatted = value;
+                if (value.length > 4) {
+                  formatted = value.slice(0, 4) + '-' + value.slice(4);
+                }
+                if (value.length > 6) {
+                  formatted = value.slice(0, 4) + '-' + value.slice(4, 6) + '-' + value.slice(6);
+                }
+                setDob(formatted);
+              }}
+            />
+          </div>
+        </div>
 
-        <AnimatePresence mode="wait" initial={false}>
-          {currentDisplayStep >= 3 && (
-            <motion.div
-              key="step3-gender"
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              variants={fadeInOutVariants}
-              className="w-full mb-12"
-            >
-              <label htmlFor="gender" className="text-gray-500 text-sm font-semibold mb-2 block">
-                성별 <span className="text-red-500">*</span>
-              </label>
-              <div className="flex flex-row space-x-8 mt-2">
-                <label className="flex items-center space-x-3">
-                  <input
-                    type="radio"
-                    name="gender"
-                    value="male"
-                    checked={gender === 'male'}
-                    onChange={() => handleGenderSelect('male')}
-                    className="form-radio h-5 w-5 text-[#FF6F71] focus:ring-[#FF6F71]"
-                  />
-                  <span className="text-black text-xl font-medium">남자</span>
-                </label>
-                <label className="flex items-center space-x-3">
-                  <input
-                    type="radio"
-                    name="gender"
-                    value="female"
-                    checked={gender === 'female'}
-                    onChange={() => handleGenderSelect('female')}
-                    className="form-radio h-5 w-5 text-[#FF6F71] focus:ring-[#FF6F71]"
-                  />
-                  <span className="text-black text-xl font-medium">여자</span>
-                </label>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <div className="w-full mb-12">
+          <label htmlFor="gender" className="text-gray-500 text-sm font-semibold mb-2 block">
+            성별 <span className="text-red-500">*</span>
+          </label>
+          <div className="flex flex-row space-x-8 mt-2">
+            <label className="flex items-center space-x-3">
+              <input
+                type="radio"
+                name="gender"
+                value="male"
+                checked={gender === 'male'}
+                onChange={() => handleGenderSelect('male')}
+                className="form-radio h-5 w-5 text-[#FF6F71] focus:ring-[#FF6F71]"
+              />
+              <span className="text-black text-xl font-medium">남자</span>
+            </label>
+            <label className="flex items-center space-x-3">
+              <input
+                type="radio"
+                name="gender"
+                value="female"
+                checked={gender === 'female'}
+                onChange={() => handleGenderSelect('female')}
+                className="form-radio h-5 w-5 text-[#FF6F71] focus:ring-[#FF6F71]"
+              />
+              <span className="text-black text-xl font-medium">여자</span>
+            </label>
+          </div>
+        </div>
 
-        <AnimatePresence mode="wait" initial={false}>
-          {currentDisplayStep >= 4 && (
-            <motion.div
-              key="step4-health"
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              variants={fadeInOutVariants}
-              className="w-full mb-12"
-            >
-              <label htmlFor="healthStatus" className="text-gray-500 text-sm font-semibold mb-2 block">건강 상태</label>
-              <div className="w-full border-b-2 border-gray-300 pb-2">
-                <input
-                  type="text"
-                  id="healthStatus"
-                  ref={healthStatusRef}
-                  className="w-full text-xl focus:outline-none placeholder-gray-400"
-                  placeholder="ex) 알레르기, 복용 약... 등"
-                  value={healthStatus}
-                  onChange={(e) => setHealthStatus(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <div className="w-full mb-12">
+          <label htmlFor="healthStatus" className="text-gray-500 text-sm font-semibold mb-2 block">건강 상태</label>
+          <div className="w-full border-b-2 border-gray-300 pb-2">
+            <input
+              type="text"
+              id="healthStatus"
+              ref={healthStatusRef}
+              className="w-full text-xl focus:outline-none placeholder-gray-400"
+              placeholder="ex) 알레르기, 복용 약... 등"
+              value={healthStatus}
+              onChange={(e) => setHealthStatus(e.target.value)}
+              onKeyDown={(e) => {
+                // 메모 단계에서는 엔터키 동작하지 않음
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                }
+              }}
+            />
+          </div>
+          <p className="text-gray-500 text-sm mt-2">알레르기와 같은 참고해야할 사항이 있다면 적어주세요.</p>
+        </div>
 
-        {currentDisplayStep === 4 && (
-          <motion.div
-            key="final-button"
-            initial="hidden"
-            animate="visible"
-            variants={fadeInOutVariants}
-            className="flex flex-col items-center w-full max-w-sm mt-auto mb-4"
+        <div className="flex flex-col items-center w-full max-w-sm mt-auto mb-4">
+          <button
+            className="flex w-full items-center justify-center gap-1 rounded-lg bg-[#FF6F71] text-white py-3 text-lg font-semibold mb-4 disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={handleSave}
+            disabled={isSaving}
           >
-            <button
-              className="flex w-full items-center justify-center gap-1 rounded-lg bg-[#FF6F71] text-white py-3 text-lg font-semibold mb-4 disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={handleSave}
-              disabled={isSaving}
-            >
-              {isSaving ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  수정 중...
-                </>
-              ) : (
-                '수정 완료'
-              )}
-            </button>
-          </motion.div> 
-        )}
+            {isSaving ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                수정 중...
+              </>
+            ) : (
+              '수정 완료'
+            )}
+          </button>
+        </div>
       </div>
     </Container>
   );
@@ -463,11 +351,17 @@ function EditChildPageContent() {
 
 export default function EditChildPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
-        <p className="text-gray-600">로딩 중...</p>
-      </div>
-    </div>
+    <Suspense fallback={
+      <Container>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF6F71] mx-auto mb-4"></div>
+            <p className="text-gray-600">페이지를 불러오는 중...</p>
+          </div>
+        </div>
+      </Container>
+    }>
+      <EditChildPageContent />
+    </Suspense>
   );
 } 

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Container from "../components/Container"
 import NavigationBar from "../components/NavigationBar"
+import PageHeader from "../components/PageHeader"
 import Toast from "../components/Toast"
 import { useChild } from "../contexts/ChildContext"
 import { 
@@ -52,7 +53,7 @@ ChartJS.register(
 
 export default function StatsPage() {
   const router = useRouter()
-  const { isChildMode, selectedChild, hasChildren, autoSelectFirstChild } = useChild();
+  const { isChildMode, selectedChild, hasChildren, autoSelectFirstChild, isLoading: childContextLoading } = useChild();
   const [childName, setChildName] = useState('')
   const [activeTab, setActiveTab] = useState('통계')
   const [statsUnit, setStatsUnit] = useState<'week' | 'month'>('week')
@@ -158,10 +159,10 @@ export default function StatsPage() {
   }, [selectedChild, loading, autoSelectFirstChild]);
 
   useEffect(() => {
-    if (!hasChildren && !selectedChild) {
+    if (!childContextLoading && !hasChildren && !selectedChild) {
       showToast('이동할 수 없습니다. 아이를 생성하거나 연결해주세요.', 'warning');
     }
-  }, [hasChildren, selectedChild]);
+  }, [hasChildren, selectedChild, childContextLoading]);
 
   const currentAccuracyData = dailyTemperatureData.map(d => d.avgTemp)
   const latestAccuracy = currentAccuracyData.length > 0 ? currentAccuracyData[currentAccuracyData.length - 1] : 0
@@ -184,11 +185,11 @@ export default function StatsPage() {
       {
         data: [latestAccuracy, 100 - latestAccuracy],
         backgroundColor: [
-          latestAccuracy >= 90 ? '#10B981' : latestAccuracy >= 70 ? '#3B82F6' : '#F59E0B',
+          latestAccuracy >= 90 ? '#FF7B6F' : latestAccuracy >= 70 ? '#3B82F6' : '#F59E0B',
           'rgba(243, 244, 246, 0.3)'
         ],
         borderColor: [
-          latestAccuracy >= 90 ? '#10B981' : latestAccuracy >= 70 ? '#3B82F6' : '#F59E0B',
+          latestAccuracy >= 90 ? '#FF7B6F' : latestAccuracy >= 70 ? '#3B82F6' : '#F59E0B',
           'rgba(229, 231, 235, 0.5)'
         ],
         borderWidth: 0,
@@ -386,9 +387,8 @@ export default function StatsPage() {
         onClose={hideToast}
       />
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4 pb-24">
-        <div className="flex items-center gap-3 rounded-lg px-3 py-2 mb-6">
-          <span className="text-gray-900 font-semibold text-2xl">{childName}의 통계</span>
-        </div>
+        {/* 상단바 */}
+        <PageHeader showLogo={true} />
 
         {/* 로딩 상태 */}
         {loading && (

@@ -1,15 +1,17 @@
 'use client'
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Container from '../components/Container';
 import { useChild } from '../contexts/ChildContext';
 import { clearAuthState } from '../auth/index';
 
-export default function Settings() {
+function SettingsContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isChildMode, selectedChild, exitChildMode, enterChildMode } = useChild();
   const [isLoading, setIsLoading] = useState(false);
+  const [fromPage, setFromPage] = useState('/home');
 
   const handleLogout = async () => {
     setIsLoading(true);
@@ -55,8 +57,16 @@ export default function Settings() {
     }
   };
 
+  // URL 쿼리 파라미터에서 원래 페이지 정보 가져오기
+  useEffect(() => {
+    const from = searchParams.get('from');
+    if (from) {
+      setFromPage(decodeURIComponent(from));
+    }
+  }, [searchParams]);
+
   const handleBackToHome = () => {
-    router.push('/home');
+    router.push(fromPage);
   };
 
   return (
@@ -78,7 +88,7 @@ export default function Settings() {
         </div>
 
         {/* 현재 모드 표시 */}
-        <div className="w-full mb-6">
+        <div className="w-full mb-16">
           <div className="bg-gray-50 rounded-2xl p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -95,7 +105,7 @@ export default function Settings() {
               <div className={`px-3 py-1 rounded-full text-xs font-medium ${
                 isChildMode 
                   ? 'bg-blue-100 text-blue-700' 
-                  : 'bg-green-100 text-green-700'
+                  : 'bg-red-100 text-red-700'
               }`}>
                 {isChildMode ? '아이' : '보호자'}
               </div>
@@ -163,8 +173,32 @@ export default function Settings() {
         </div>
 
         {/* 하단 여백 */}
-        <div className="h-8"></div>
+        <div className="h-12"></div>
+        
+        {/* 로고 */}
+        <div className="flex justify-center mt-12 w-full">
+          <div className="flex items-center gap-2">
+            <img src="/logo_not_title.svg" alt="HeartForecast" className="w-10 h-10" />
+          </div>
+        </div>
       </div>
     </Container>
+  );
+}
+
+export default function Settings() {
+  return (
+    <Suspense fallback={
+      <Container className="bg-white">
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF6F71] mx-auto mb-4"></div>
+            <p className="text-gray-600">페이지를 불러오는 중...</p>
+          </div>
+        </div>
+      </Container>
+    }>
+      <SettingsContent />
+    </Suspense>
   );
 } 

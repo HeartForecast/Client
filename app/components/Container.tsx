@@ -8,7 +8,7 @@ interface ContainerProps {
 export default function Container({ children, className = "" }: ContainerProps) {
   return (
     <div className={`container ${className}`}>
-      <div className="min-h-screen flex flex-col items-center justify-center px-4 pt-10 pb-0 text-black">
+      <div className="min-h-screen flex flex-col items-center justify-center px-4 pt-10 pb-0 text-black overflow-hidden">
         {children}
       </div>
     </div>
