@@ -79,7 +79,6 @@ function ReasonPageContent() {
   };
 
   const handleNext = async () => {
-    if (reason.trim().length === 0) return;
     if (!currentEmotion || !selectedChild?.id || !forecastId) {
       setError('필수 정보가 누락되었습니다.');
       return;
@@ -167,7 +166,7 @@ function ReasonPageContent() {
     }
   };
 
-  const isComplete = reason.trim().length > 0;
+  const isComplete = true; // 메모는 선택사항이므로 항상 true
 
   const fadeInOutVariants = {
     hidden: { opacity: 0, y: 10 },
@@ -236,8 +235,8 @@ function ReasonPageContent() {
                 {reason.length}/500
               </div>
             </div>
-            <div className="mt-3  mb-8 text-sm text-gray-500 text-center">
-              🫶 자세히 적을수록 더 좋아요
+            <div className="mt-3 text-sm text-gray-500 text-center">
+              🫶 자세히 적을수록 더 좋아요 (선택사항)
             </div>
           </div>
         </div>
@@ -250,15 +249,12 @@ function ReasonPageContent() {
           className="flex flex-col items-center w-full max-w-sm mt-auto mb-4"
         >
           <Button
-            className={`flex w-full items-center justify-center gap-1 rounded-lg bg-[#FF6F71] text-white py-3 text-lg font-semibold text-gray-900 mb-4 transition-opacity ${isComplete && !isLoading ? '' : 'opacity-50 cursor-not-allowed'}`}
-            disabled={!isComplete || isLoading}
+            className={`flex w-full items-center justify-center gap-1 rounded-lg bg-[#FF6F71] text-white py-3 text-lg font-semibold text-gray-900 mb-4 transition-opacity ${!isLoading ? '' : 'opacity-50 cursor-not-allowed'}`}
+            disabled={isLoading}
             onClick={handleNext}
           >
             {isLoading ? (
-              <div className="flex items-center gap-2">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                저장 중...
-              </div>
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
             ) : (
               getButtonText()
             )}
@@ -273,16 +269,20 @@ function ReasonPageContent() {
             <div className="text-6xl mb-4">🎉</div>
             <h2 className="text-xl font-bold text-gray-800 mb-2">완료!</h2>
             <p className="text-gray-600 mb-6">
-              모든 예보 기록을 작성하였습니다.
+              오늘 하루의 예보 기록을 모두 작성했어요.
             </p>
             <button
               onClick={() => {
+                // localStorage 정리
+                if (typeof window !== 'undefined') {
+                  localStorage.removeItem('forecastRecordEmotions');
+                }
                 setShowCompletionModal(false);
                 router.push('/baby');
               }}
               className="w-full bg-[#FF6F71] hover:bg-[#e55a5c] text-white font-medium py-3 px-6 rounded-lg transition-colors"
             >
-              확인
+              홈으로 가기
             </button>
           </div>
         </div>
