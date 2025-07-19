@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Container from "../components/Container"
 import NavigationBar from "../components/NavigationBar"
-import HeaderBar from "../components/HeaderBar"
+import PageHeader from "../components/PageHeader"
 import Toast from "../components/Toast"
 import { useChild } from "../contexts/ChildContext"
 import { 
@@ -388,14 +388,7 @@ export default function StatsPage() {
       />
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4 pb-24">
         {/* 상단바 */}
-        <div className="flex items-end justify-between w-full rounded-lg px-2 mb-6">
-          <HeaderBar 
-            childName={childName}
-            inviteCode={selectedChild?.inviteCode}
-            showChildListButton={false}
-            showSettingsButton={true}
-          />
-        </div>
+        <PageHeader />
 
         {/* 로딩 상태 */}
         {loading && (

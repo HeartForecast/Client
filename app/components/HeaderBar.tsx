@@ -40,8 +40,8 @@ export default function HeaderBar({
   };
 
   return (
-    <div className="flex items-end justify-between w-full">
-      <div className="flex items-end gap-1">
+    <div className="flex items-center justify-between w-full">
+      <div className="flex items-center gap-1">
         <span className="text-gray-900 font-semibold text-2xl">{childName}</span>
         {inviteCode && (
           <span className="text-sm text-gray-500 font-medium">

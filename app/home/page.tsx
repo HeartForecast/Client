@@ -14,7 +14,7 @@ import {
   isAuthenticated
 } from "../auth/index"
 import Calendar from "../components/Calendar"
-import HeaderBar from "../components/HeaderBar"
+import PageHeader from "../components/PageHeader"
 import { getEmotionColor, fetchEmotionType, EmotionTypeData } from "../utils/emotionUtils";
 
 
@@ -461,14 +461,7 @@ export default function Register() {
       />
       <div className="flex flex-col items-start justify-start w-full max-w-sm mx-auto mt-4 pb-20">
         {/* 상단바 */}
-        <div className="flex items-end justify-between w-full rounded-lg px-2 mb-6">
-          <HeaderBar 
-            childName={displayChildName}
-            inviteCode={selectedChild?.inviteCode}
-            showChildListButton={false}
-            showSettingsButton={true}
-          />
-        </div>
+        <PageHeader />
 
         {/* 달력 컴포넌트 */}
         <Calendar

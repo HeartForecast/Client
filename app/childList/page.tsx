@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Container from "../components/Container"
 import NavigationBar from "../components/NavigationBar"
-import HeaderBar from "../components/HeaderBar"
+import PageHeader from "../components/PageHeader"
 import Toast from "../components/Toast"
 import { useChild } from "../contexts/ChildContext"
 
@@ -378,14 +378,7 @@ export default function ChildListPage() {
 
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
         {/* 상단바 */}
-        <div className="flex items-end justify-between w-full rounded-lg mb-6">
-          <HeaderBar 
-            childName={selectedChild?.name || ''}
-            inviteCode={selectedChild?.inviteCode}
-            showChildListButton={false}
-            showSettingsButton={true}
-          />
-        </div>
+        <PageHeader />
         
         <div className="w-full mb-8">
           <h1 className="text-2xl font-semibold mb-1">등록된 아이 목록</h1>

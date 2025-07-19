@@ -16,7 +16,7 @@ import {
   EmotionTypeData 
 } from "../utils/emotionUtils"
 import Calendar from "../components/Calendar"
-import HeaderBar from "../components/HeaderBar"
+import PageHeader from "../components/PageHeader"
 
 // 감정 타입 인터페이스 (공통 유틸리티 사용)
 type EmotionType = EmotionTypeData;
@@ -293,14 +293,7 @@ export default function Present() {
     <Container>
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
         {/* 상단바 */}
-        <div className="flex items-end justify-between w-full rounded-lg px-2 mb-6">
-          <HeaderBar 
-            childName={selectedChild?.name || ''}
-            inviteCode={selectedChild?.inviteCode}
-            showChildListButton={false}
-            showSettingsButton={true}
-          />
-        </div>
+        <PageHeader />
 
         {/* 달력 컴포넌트 */}
         <Calendar
