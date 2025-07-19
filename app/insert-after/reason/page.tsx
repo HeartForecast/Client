@@ -98,8 +98,39 @@ function ReasonPageContent() {
       setIsLoading(true);
       setError(null);
 
-      const date = searchParams.get('date');
-      const timeZone = searchParams.get('timeZone');
+      // 원래 예보 정보 조회
+      console.log(`🔍 예보 ID ${forecastId} 정보 조회 시작`);
+      const forecastResponse = await fetch(`${apiBaseUrl}/api/forecasts/forecast/${forecastId}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+      });
+
+      if (!forecastResponse.ok) {
+        throw new Error('원래 예보 정보를 가져올 수 없습니다.');
+      }
+
+      const forecastData = await forecastResponse.json();
+      console.log('📅 원래 예보 정보:', {
+        forecastId: forecastData.id,
+        date: forecastData.date,
+        timeZone: forecastData.timeZone,
+        childId: forecastData.childId
+      });
+
+      // 현재 단계에 맞는 시간대 매핑
+      const timeZoneMapping: Record<string, string> = {
+        'morning': '아침',
+        'afternoon': '점심', 
+        'evening': '저녁'
+      };
+
+      // 원래 예보의 시간대와 현재 단계가 일치하는지 확인
+      const expectedTimeZone = timeZoneMapping[currentStep];
+      if (forecastData.timeZone !== expectedTimeZone) {
+        console.error(`❌ 시간대 불일치: 원래 예보(${forecastData.timeZone}) vs 현재 단계(${expectedTimeZone})`);
+        throw new Error(`잘못된 예보 ID입니다. ${expectedTimeZone} 시간대의 예보를 사용해주세요.`);
+      }
 
       // 예보 기록 생성
       const recordData = {
@@ -107,11 +138,19 @@ function ReasonPageContent() {
         emotionTypeId: currentEmotion.emotion.id,
         memo: reason.trim(),
         childId: selectedChild.id,
-        date: date,
-        timeZone: timeZone
+        date: forecastData.date,
+        timeZone: forecastData.timeZone // 원래 예보의 시간대 사용
       };
 
-      console.log(`${currentStep} 예보 기록 생성:`, recordData);
+      console.log(`📝 ${currentStep} 예보 기록 생성:`, {
+        forecastId: recordData.forecastId,
+        emotionTypeId: recordData.emotionTypeId,
+        emotionName: currentEmotion.emotion.name,
+        date: recordData.date,
+        timeZone: recordData.timeZone,
+        childId: recordData.childId,
+        memoLength: recordData.memo.length
+      });
 
       const response = await fetch(`${apiBaseUrl}/api/forecastRecords/forecastRecord`, {
         method: 'POST',
@@ -122,10 +161,17 @@ function ReasonPageContent() {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`예보 기록 생성 실패: ${errorText}`);
+        const errorData = JSON.parse(errorText);
+        
+        // 이미 존재하는 예보 기록인 경우 오류 처리
+        if (errorData.errorCode === 'FORECAST_RECORD_ALREADY_EXISTS') {
+          throw new Error('이미 해당 시간대의 예보 기록이 존재합니다.');
+        } else {
+          throw new Error(`예보 기록 생성 실패: ${errorText}`);
+        }
       }
 
-      console.log(`${currentStep} 예보 기록 생성 완료`);
+      console.log(`✅ ${currentStep} 예보 기록 생성 완료 - ${new Date().toLocaleString('ko-KR')}`);
 
       // 다음 단계로 이동
       const steps = ['morning', 'afternoon', 'evening'];
@@ -133,7 +179,7 @@ function ReasonPageContent() {
       const nextStep = steps[currentIndex + 1];
 
       if (nextStep) {
-        router.push(`/insert-after?step=${nextStep}&forecastId=${forecastId}&date=${date}&timeZone=${timeZone}`);
+        router.push(`/insert-after?step=${nextStep}&forecastId=${forecastId}&date=${forecastData.date}&timeZone=${TIME_PERIODS[nextStep as keyof typeof TIME_PERIODS].label}`);
       } else {
         // 모든 단계 완료 - 결과 팝업 표시
         const savedEmotions = localStorage.getItem('forecastRecordEmotions');
@@ -209,22 +255,16 @@ function ReasonPageContent() {
             emotions={allEmotions}
           />
           
-          <div className="text-xs text-gray-400 mb-1">{new Date().toLocaleDateString('ko-KR')} {TIME_PERIODS[currentStep].label}</div>
-          <div className="text-xl sm:text-2xl font-bold leading-tight whitespace-pre-line mb-4">
+          <div className="text-xs text-gray-400 mb-2">{new Date().toLocaleDateString('ko-KR')} {TIME_PERIODS[currentStep].label}</div>
+          <div className="text-2xl font-bold leading-tight whitespace-pre-line mb-8">
             {TIME_PERIODS[currentStep].text}{`\n`}느꼈나요?
           </div>
           
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            variants={fadeInOutVariants}
-            className="w-full flex-1 flex flex-col"
-          >
-            <div className="relative flex-1">
+          <div className="w-full flex-grow">
+            <div className="relative">
               <textarea
                 id="reason"
-                className="w-full h-full min-h-[400px] p-4 border-2 border-gray-200 rounded-xl resize-none focus:border-[#FF6F71] focus:outline-none transition-all duration-300 text-base leading-relaxed placeholder-gray-400"
+                className="w-full h-90 p-4 border-2 border-gray-200 rounded-xl resize-none focus:border-[#FF6F71] focus:outline-none transition-all duration-300 text-base leading-relaxed placeholder-gray-400"
                 placeholder="어떤 일 때문에 이런 감정을 느꼈나요?"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
@@ -243,24 +283,30 @@ function ReasonPageContent() {
             <div className="mt-3 text-sm text-gray-500 text-center">
               🫶 자세히 적을수록 더 좋아요 (선택사항)
             </div>
-          </motion.div>
-
-          <div className="flex flex-col items-center w-full max-w-sm mt-8">
-            <Button
-              onClick={handleNext}
-              disabled={!isComplete || isLoading}
-              className="w-full"
-            >
-              {isLoading ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                  처리 중...
-                </>
-              ) : (
-                getButtonText()
-              )}
-            </Button>
           </div>
+
+        <motion.div
+          key="final-button"
+          initial="hidden"
+          animate="visible"
+          variants={fadeInOutVariants}
+          className="flex flex-col items-center w-full max-w-sm mx-auto mt-auto mb-4"
+        >
+          <Button
+            className={`flex w-full items-center justify-center gap-1 rounded-lg bg-[#FF6F71] text-white py-3 text-lg font-semibold text-gray-900 mb-4 transition-opacity ${!isLoading ? '' : 'opacity-50 cursor-not-allowed'}`}
+            disabled={isLoading}
+            onClick={handleNext}
+          >
+            {isLoading ? (
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                처리 중...
+              </div>
+            ) : (
+              getButtonText()
+            )}
+          </Button>
+        </motion.div>
         </div>
       </div>
     </div>
