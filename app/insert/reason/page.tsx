@@ -268,7 +268,7 @@ function ReasonPageContent() {
                   if (typeof window !== 'undefined') {
                     localStorage.removeItem('forecastEmotions');
                   }
-                  router.push('/home');
+                  router.push('/baby');
                 }}
                 className="w-full bg-[#FF6F71] text-white font-medium py-3 px-6 rounded-lg hover:bg-[#e55a5c] transition-colors"
               >
