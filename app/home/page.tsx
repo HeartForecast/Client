@@ -382,9 +382,9 @@ export default function Register() {
     }
   }, [isLoading, selectedChild, autoSelectFirstChild]);
 
-  // 아이가 없을 때 토스트 메시지 표시
+  // 아이가 없을 때 토스트 메시지 표시 (hasChildren이 로딩 완료된 후에만)
   useEffect(() => {
-    if (!isLoading && !hasChildren && !selectedChild) {
+    if (!isLoading && hasChildren === false && !selectedChild) {
       showToast('이동할 수 없습니다. 아이를 생성하거나 연결해주세요.', 'warning');
     }
   }, [isLoading, hasChildren, selectedChild]);

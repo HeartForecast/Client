@@ -14,7 +14,7 @@ interface ChildContextType {
   selectedChild: ChildData | null;
   isChildMode: boolean;
   isLoading: boolean;
-  hasChildren: boolean;
+  hasChildren: boolean | undefined;
   setSelectedChild: (child: ChildData | null) => void;
   enterChildMode: (child: ChildData) => void;
   exitChildMode: () => void;
@@ -27,7 +27,7 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
   const [selectedChild, setSelectedChild] = useState<ChildData | null>(null);
   const [isChildMode, setIsChildMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasChildren, setHasChildren] = useState(false);
+  const [hasChildren, setHasChildren] = useState<boolean | undefined>(undefined);
   const [justExitedChildMode, setJustExitedChildMode] = useState(false);
 
   // localStorage에서 상태 복원 및 초기 hasChildren 확인
@@ -126,14 +126,16 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
             }
           }
         }
-      } catch (error) {
-        console.error('hasChildren 확인 실패:', error);
-        setHasChildren(false);
-      }
+              } catch (error) {
+          console.error('hasChildren 확인 실패:', error);
+          setHasChildren(false);
+        } finally {
+          // hasChildren 확인이 완료되면 로딩 상태 해제
+          setIsLoading(false);
+        }
     };
 
     checkHasChildren();
-    setIsLoading(false);
 
     // 안전장치: 3초 후에도 로딩이 끝나지 않으면 강제로 로딩 종료
     const timeout = setTimeout(() => {
