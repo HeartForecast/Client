@@ -185,11 +185,11 @@ export default function StatsPage() {
       {
         data: [latestAccuracy, 100 - latestAccuracy],
         backgroundColor: [
-          latestAccuracy >= 90 ? '#10B981' : latestAccuracy >= 70 ? '#3B82F6' : '#F59E0B',
+          latestAccuracy >= 90 ? '#FF7B6F' : latestAccuracy >= 70 ? '#3B82F6' : '#F59E0B',
           'rgba(243, 244, 246, 0.3)'
         ],
         borderColor: [
-          latestAccuracy >= 90 ? '#10B981' : latestAccuracy >= 70 ? '#3B82F6' : '#F59E0B',
+          latestAccuracy >= 90 ? '#FF7B6F' : latestAccuracy >= 70 ? '#3B82F6' : '#F59E0B',
           'rgba(229, 231, 235, 0.5)'
         ],
         borderWidth: 0,

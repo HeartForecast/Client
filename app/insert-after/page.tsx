@@ -18,9 +18,9 @@ interface EmotionType {
 }
 
 const CATEGORY_COLORS = {
-  긍정: '#3DC8EF',
+  긍정: '#FF7B6F',
   중립: '#FFD340',
-  부정: '#FF7B6F'
+  부정: '#3DC8EF'
 };
 
 const TIME_PERIODS = {
