@@ -12,7 +12,23 @@ function SettingsContent() {
   const { isChildMode, selectedChild, exitChildMode, enterChildMode } = useChild();
   const [fromPage, setFromPage] = useState('/home');
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    console.log('🔐 로그아웃 시작');
+    
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/logout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+      
+      console.log('📡 서버 로그아웃 응답:', response.status);
+    } catch (error) {
+      console.log('⚠️ 서버 로그아웃 실패 (클라이언트 로그아웃 계속 진행):', error);
+    }
+    
     // 클라이언트에서 직접 관련 정보 삭제
     console.log('🔐 클라이언트 로그아웃 시작');
     
@@ -32,22 +48,17 @@ function SettingsContent() {
     localStorage.removeItem('diaryData');
     localStorage.removeItem('forecastData');
     
-    // 쿠키 삭제
+    // 일반 쿠키 삭제
     const deleteCookie = (name: string) => {
       document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
       document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
       document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${window.location.hostname};`;
     };
     
-    // 일반적인 인증 쿠키들 삭제
-    deleteCookie('JSESSIONID');
     deleteCookie('access_token');
     deleteCookie('refresh_token');
-    deleteCookie('auth_token');
-    deleteCookie('session');
-    deleteCookie('token');
     
-    console.log('✅ 클라이언트 로그아웃 완료 - 모든 관련 데이터와 쿠키 삭제됨');
+    console.log('✅ 로그아웃 완료 - 서버와 클라이언트 모든 데이터 삭제됨');
     
     // 홈페이지로 이동
     router.push('/');
