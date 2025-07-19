@@ -289,15 +289,28 @@ export default function Register() {
 
   const hasDiary = (date: Date) => {
     const dateStr = formatDate(date);
+    
+    // diaryData 확인
     const data = diaryData[dateStr];
     if (data) {
-      return Object.values(data).some((timeSlot: any) => 
+      const hasDiaryData = Object.values(data).some((timeSlot: any) => 
         timeSlot && (
           (timeSlot.predictedEmotions && timeSlot.predictedEmotions.length > 0) ||
           (timeSlot.actualEmotions && timeSlot.actualEmotions.length > 0)
         )
       );
+      if (hasDiaryData) return true;
     }
+    
+    // forecastData 확인
+    const forecastDataForDate = forecastData[dateStr];
+    if (forecastDataForDate) {
+      const hasForecastData = Object.values(forecastDataForDate).some((timeSlot: any) => 
+        timeSlot && timeSlot.predictedEmotions && timeSlot.predictedEmotions.length > 0
+      );
+      if (hasForecastData) return true;
+    }
+    
     return false;
   };
 
@@ -491,7 +504,7 @@ export default function Register() {
           </div>
         )}
 
-        {selectedDate && (
+        {selectedDate && (isPastDate(new Date(selectedDate)) || isToday(new Date(selectedDate))) && (
           <div className="w-full space-y-4">
             <div className="text-xs text-gray-400 mb-2">
               {new Date(selectedDate).toLocaleDateString('ko-KR', { 
@@ -616,21 +629,16 @@ export default function Register() {
           </div>
         )}
 
-        {!selectedDate && (
-          <div className="w-full text-center py-8">
-            <div className="text-gray-400 mb-2 px-4">
-              <svg className="w-12 h-12 mx-auto mb-2" fill="none" viewBox="0 0 24 26">
-                <path d="M22 2H19V1C19 0.734784 18.8946 0.48043 18.7071 0.292893C18.5196 0.105357 18.2652 0 18 0C17.7348 0 17.4804 0.105357 17.2929 0.292893C17.1054 0.48043 17 0.734784 17 1V2H7V1C7 0.734784 6.89464 0.48043 6.70711 0.292893C6.51957 0.105357 6.26522 0 6 0C5.73478 0 5.48043 0.105357 5.29289 0.292893C5.10536 0.48043 5 0.734784 5 1V2H2C1.46957 2 0.960859 2.21071 0.585786 2.58579C0.210714 2.96086 0 3.46957 0 4V24C0 24.5304 0.210714 25.0391 0.585786 25.4142C0.960859 25.7893 1.46957 26 2 26H22C22.5304 26 23.0391 25.7893 23.4142 25.4142C23.7893 25.0391 24 24.5304 24 24V4C24 3.46957 23.7893 2.96086 23.4142 2.58579C23.0391 2.21071 22.5304 2 22 2ZM5 4V5C5 5.26522 5.10536 5.51957 5.29289 5.70711C5.48043 5.89464 5.73478 6 6 6C6.26522 6 6.51957 5.89464 6.70711 5.70711C6.89464 5.51957 7 5.26522 7 5V4H17V5C17 5.26522 17.1054 5.51957 17.2929 5.70711C17.4804 5.89464 17.7348 6 18 6C18.2652 6 18.5196 5.89464 18.7071 5.70711C18.8946 5.51957 19 5.26522 19 5V4H22V8H2V4H5ZM22 24H2V10H22V24ZM16 17C16 17.2652 15.8946 17.5196 15.7071 17.7071C15.5196 17.8946 15.2652 18 15 18H9C8.73478 18 8.48043 17.8946 8.29289 17.7071C8.10536 17.5196 8 17.2652 8 17C8 16.7348 8.10536 16.4804 8.29289 16.2929C8.48043 16.1054 8.73478 16 9 16H15C15.2652 16 15.5196 16.1054 15.7071 16.2929C15.8946 16.4804 16 16.7348 16 17Z" fill="currentColor"/>
-              </svg>
-            </div>
+        {/* 날짜가 선택되지 않았거나 미래 날짜인 경우 간소화된 메시지 */}
+        {(!selectedDate || !isPastDate(new Date(selectedDate)) && !isToday(new Date(selectedDate))) && (
+          <div className="w-full text-center py-4">
             <p className="text-gray-500 text-sm">
               과거 날짜를 클릭해서 {childName || '아이'}의 감정 일기를 확인해보세요
             </p>
-            <p className="text-xs text-gray-400 mt-1">
-              예보와 실제 기록을 비교하여 확인할 수 있습니다
-            </p>
           </div>
         )}
+
+
       </div>
       
       {/* 하단 여백 */}
