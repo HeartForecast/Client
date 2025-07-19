@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "../../components/Button";
 import { useChild } from "../../contexts/ChildContext";
+import EmotionResultPopup from "../../components/EmotionResultPopup";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -34,6 +35,8 @@ function ReasonPageContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [showResultPopup, setShowResultPopup] = useState(false);
+  const [allEmotions, setAllEmotions] = useState<any[]>([]);
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -144,8 +147,15 @@ function ReasonPageContent() {
       if (nextStep) {
         router.push(`/insert?step=${nextStep}`);
       } else {
-        // 모든 단계 완료
-        setShowCompletionModal(true);
+        // 모든 단계 완료 - 결과 팝업 표시
+        const savedEmotions = localStorage.getItem('forecastEmotions');
+        if (savedEmotions) {
+          const emotions = JSON.parse(savedEmotions);
+          setAllEmotions(emotions);
+          setShowResultPopup(true);
+        } else {
+          setShowCompletionModal(true);
+        }
       }
     } catch (error) {
       console.error('예보 생성 실패:', error);
@@ -205,6 +215,17 @@ function ReasonPageContent() {
         </div>
         
         <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
+          
+          {/* 결과 팝업 */}
+          <EmotionResultPopup
+            isVisible={showResultPopup}
+            onClose={() => {
+              setShowResultPopup(false);
+              localStorage.removeItem('forecastEmotions'); // 저장된 감정 데이터 정리
+              router.push('/home'); // 홈으로 이동
+            }}
+            emotions={allEmotions}
+          />
           <div className="text-xs text-gray-400 mb-2">{new Date().toLocaleDateString('ko-KR')} {TIME_PERIODS[currentStep].label}</div>
           <div className="text-2xl font-bold leading-tight whitespace-pre-line mb-8">
             {TIME_PERIODS[currentStep].text}{`\n`}느낄 것 같나요?

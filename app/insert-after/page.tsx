@@ -7,6 +7,7 @@ import { useChild } from "../contexts/ChildContext";
 import { EmotionType, TIME_PERIODS, TimeSlot } from "../types/common";
 import { getCurrentDate } from "../utils/dateUtils";
 import EmotionSelector from "../components/EmotionSelector";
+import EmotionResultPopup from "../components/EmotionResultPopup";
 
 function InsertAfterPageContent() {
   const { selectedChild } = useChild();

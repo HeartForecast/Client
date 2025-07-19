@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "../../components/Button";
 import { useChild } from "../../contexts/ChildContext";
+import EmotionResultPopup from "../../components/EmotionResultPopup";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -33,7 +34,8 @@ function ReasonPageContent() {
   const [reason, setReason] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [showResultPopup, setShowResultPopup] = useState(false);
+  const [allEmotions, setAllEmotions] = useState<any[]>([]);
   const router = useRouter();
   const searchParams = useSearchParams();
   const forecastId = searchParams.get('forecastId');
@@ -48,7 +50,7 @@ function ReasonPageContent() {
     if (typeof window !== 'undefined') {
       const savedEmotions = localStorage.getItem('forecastRecordEmotions');
       if (savedEmotions) {
-      try {
+        try {
           const emotions = JSON.parse(savedEmotions);
           console.log('저장된 감정 데이터:', emotions);
           
@@ -63,11 +65,11 @@ function ReasonPageContent() {
             console.error('현재 단계의 감정 데이터를 찾을 수 없습니다.');
             setError('감정 데이터를 찾을 수 없습니다.');
           }
-      } catch (error) {
-        console.error('감정 데이터 파싱 오류:', error);
+        } catch (error) {
+          console.error('감정 데이터 파싱 오류:', error);
           setError('감정 데이터를 불러오는데 실패했습니다.');
-      }
-    } else {
+        }
+      } else {
         console.error('저장된 감정 데이터가 없습니다.');
         setError('감정 데이터를 찾을 수 없습니다.');
       }
@@ -75,7 +77,15 @@ function ReasonPageContent() {
   }, [searchParams]);
 
   const handleBack = () => {
-    window.history.back();
+    const steps = ['morning', 'afternoon', 'evening'];
+    const currentIndex = steps.indexOf(currentStep);
+    const prevStep = steps[currentIndex - 1];
+    
+    if (prevStep) {
+      router.push(`/insert-after?step=${prevStep}&forecastId=${searchParams.get('forecastId')}&date=${searchParams.get('date')}&timeZone=${searchParams.get('timeZone')}`);
+    } else {
+      window.history.back();
+    }
   };
 
   const handleNext = async () => {
@@ -88,26 +98,17 @@ function ReasonPageContent() {
       setIsLoading(true);
       setError(null);
 
-      const forecastDate = searchParams.get('date') || new Date().toISOString().split('T')[0];
-      const originalTimeZone = searchParams.get('timeZone');
-      const currentTimeZone = TIME_PERIODS[currentStep].label;
-      
-      console.log('디버깅 정보:', {
-        currentStep,
-        originalTimeZone,
-        currentTimeZone,
-        forecastDate,
-        forecastId
-      });
-      
-      // 현재 단계의 예보 기록 생성
+      const date = searchParams.get('date');
+      const timeZone = searchParams.get('timeZone');
+
+      // 예보 기록 생성
       const recordData = {
-        forecastId: Number(forecastId),
-        childId: selectedChild.id,
+        forecastId: parseInt(forecastId),
         emotionTypeId: currentEmotion.emotion.id,
-        date: forecastDate,
-        timeZone: originalTimeZone || currentTimeZone,
-        memo: reason.trim()
+        memo: reason.trim(),
+        childId: selectedChild.id,
+        date: date,
+        timeZone: timeZone
       };
 
       console.log(`${currentStep} 예보 기록 생성:`, recordData);
@@ -132,31 +133,17 @@ function ReasonPageContent() {
       const nextStep = steps[currentIndex + 1];
 
       if (nextStep) {
-        // localStorage에서 모든 forecastId 가져오기
-        let allForecastIds = {};
-        if (typeof window !== 'undefined') {
-          const savedForecastIds = localStorage.getItem('allForecastIds');
-          if (savedForecastIds) {
-            allForecastIds = JSON.parse(savedForecastIds);
-          }
-        }
-        
-        // 다음 단계의 올바른 forecastId 사용
-        const nextForecastId = allForecastIds[nextStep as keyof typeof allForecastIds] || forecastId;
-        const nextTimeZone = TIME_PERIODS[nextStep as keyof typeof TIME_PERIODS].label;
-        
-        console.log('다음 단계 이동:', {
-          currentStep,
-          nextStep,
-          currentForecastId: forecastId,
-          nextForecastId,
-          nextTimeZone
-        });
-        
-        router.push(`/insert-after?step=${nextStep}&forecastId=${nextForecastId}&date=${searchParams.get('date')}&timeZone=${nextTimeZone}`);
+        router.push(`/insert-after?step=${nextStep}&forecastId=${forecastId}&date=${date}&timeZone=${timeZone}`);
       } else {
-        // 모든 단계 완료
-        setShowCompletionModal(true);
+        // 모든 단계 완료 - 결과 팝업 표시
+        const savedEmotions = localStorage.getItem('forecastRecordEmotions');
+        if (savedEmotions) {
+          const emotions = JSON.parse(savedEmotions);
+          setAllEmotions(emotions);
+          setShowResultPopup(true);
+        } else {
+          router.push('/home');
+        }
       }
     } catch (error) {
       console.error('예보 기록 생성 실패:', error);
@@ -186,7 +173,7 @@ function ReasonPageContent() {
           <div className="text-center">
             <p className="text-gray-600">감정 데이터를 찾을 수 없습니다.</p>
             <button 
-              onClick={() => router.push('/baby')}
+              onClick={() => router.push('/insert-after')}
               className="mt-4 px-4 py-2 bg-[#FF6F71] text-white rounded-lg"
             >
               돌아가기
@@ -199,98 +186,83 @@ function ReasonPageContent() {
 
   return (
     <div className="container">
-      <div className="min-h-screen flex flex-col bg-white text-black overflow-hidden">
-        <div className="flex-1 flex flex-col px-4 pt-10 pb-5">
-          <div className="w-full max-w-sm mx-auto">
-            <button className="mb-4 cursor-pointer" onClick={handleBack}>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-          </div>
-          
-          <div className="flex flex-col items-start justify-start flex-1 w-full max-w-sm mx-auto">
-            <div className="text-xs text-gray-400 mb-2">
-              {searchParams.get('date') || new Date().toISOString().split('T')[0]} {TIME_PERIODS[currentStep].label}
-            </div>
-            <div className="text-xl sm:text-2xl font-bold leading-tight whitespace-pre-line mb-6">
-              {TIME_PERIODS[currentStep].text}{`\n`}느꼈나요?
-            </div>
-            
-            {error && (
-              <div className="w-full mb-4 text-sm text-red-500 text-center">
-                {error}
-              </div>
-            )}
-            
-            <div className="w-full flex-1 flex flex-col">
-              <div className="relative flex-1">
-                <textarea
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  placeholder="어떤 일 때문에 이런 감정을 느꼈나요?"
-                  className="w-full h-full min-h-[200px] p-4 border-2 border-gray-200 rounded-xl resize-none focus:border-[#FF6F71] focus:outline-none transition-all duration-300 text-base leading-relaxed placeholder-gray-400"
-                  maxLength={500}
-                />
-                <div className="absolute bottom-4 right-4 text-xs text-gray-400">
-                  {reason.length}/500
-                </div>
-              </div>
-              <div className="mt-3 text-sm text-gray-500 text-center">
-                🫶 자세히 적을수록 더 좋아요 (선택사항)
-              </div>
-            </div>
-          </div>
+      <div className="h-screen flex flex-col px-4 pt-6 pb-4 bg-white text-black">
+        
+        <div className="w-full max-w-sm mx-auto mb-2">
+          <button className="cursor-pointer" onClick={handleBack}>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
         </div>
         
-        <div className="px-4 pb-5">
+        <div className="flex flex-col items-start justify-start flex-1 w-full max-w-sm mx-auto">
+          
+          {/* 결과 팝업 */}
+          <EmotionResultPopup
+            isVisible={showResultPopup}
+            onClose={() => {
+              setShowResultPopup(false);
+              localStorage.removeItem('forecastRecordEmotions'); // 저장된 감정 데이터 정리
+              router.push('/home'); // 홈으로 이동
+            }}
+            emotions={allEmotions}
+          />
+          
+          <div className="text-xs text-gray-400 mb-1">{new Date().toLocaleDateString('ko-KR')} {TIME_PERIODS[currentStep].label}</div>
+          <div className="text-xl sm:text-2xl font-bold leading-tight whitespace-pre-line mb-4">
+            {TIME_PERIODS[currentStep].text}{`\n`}느꼈나요?
+          </div>
+          
           <motion.div
-            key="final-button"
             initial="hidden"
             animate="visible"
+            exit="exit"
             variants={fadeInOutVariants}
-            className="flex flex-col items-center w-full max-w-sm mx-auto"
+            className="w-full flex-1 flex flex-col"
           >
+            <div className="relative flex-1">
+              <textarea
+                id="reason"
+                className="w-full h-full min-h-[400px] p-4 border-2 border-gray-200 rounded-xl resize-none focus:border-[#FF6F71] focus:outline-none transition-all duration-300 text-base leading-relaxed placeholder-gray-400"
+                placeholder="어떤 일 때문에 이런 감정을 느꼈나요?"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                maxLength={500}
+                onKeyDown={(e) => {
+                  // 메모 단계에서는 엔터키 동작하지 않음
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                  }
+                }}
+              />
+              <div className="absolute bottom-4 right-4 text-xs text-gray-400">
+                {reason.length}/500
+              </div>
+            </div>
+            <div className="mt-3 text-sm text-gray-500 text-center">
+              🫶 자세히 적을수록 더 좋아요 (선택사항)
+            </div>
+          </motion.div>
+
+          <div className="flex flex-col items-center w-full max-w-sm mt-8">
             <Button
-              className={`flex w-full items-center justify-center gap-1 rounded-lg bg-[#FF6F71] text-white py-3 text-lg font-semibold transition-opacity ${!isLoading ? '' : 'opacity-50 cursor-not-allowed'}`}
-              disabled={isLoading}
               onClick={handleNext}
+              disabled={!isComplete || isLoading}
+              className="w-full"
             >
               {isLoading ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  처리 중...
+                </>
               ) : (
                 getButtonText()
               )}
             </Button>
-          </motion.div>
-        </div>
-      </div>
-      
-      {/* 완료 모달 */}
-      {showCompletionModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 mx-4 max-w-sm w-full text-center">
-            <div className="text-6xl mb-4">🎉</div>
-            <h2 className="text-xl font-bold text-gray-800 mb-2">완료!</h2>
-            <p className="text-gray-600 mb-6">
-              오늘 하루의 예보 기록을 모두 작성했어요.
-            </p>
-            <button
-              onClick={() => {
-                // localStorage 정리
-                if (typeof window !== 'undefined') {
-                  localStorage.removeItem('forecastRecordEmotions');
-                }
-                setShowCompletionModal(false);
-                router.push('/baby');
-              }}
-              className="w-full bg-[#FF6F71] hover:bg-[#e55a5c] text-white font-medium py-3 px-6 rounded-lg transition-colors"
-            >
-              홈으로 가기
-            </button>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -300,8 +272,8 @@ export default function ReasonPage() {
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
-          <p className="text-gray-600">로딩 중...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF6F71] mx-auto mb-4"></div>
+          <p className="text-gray-600">페이지를 불러오는 중...</p>
         </div>
       </div>
     }>
