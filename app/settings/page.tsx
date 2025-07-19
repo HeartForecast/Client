@@ -11,11 +11,26 @@ export default function Settings() {
   const { isChildMode, selectedChild, exitChildMode, enterChildMode } = useChild();
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setIsLoading(true);
     try {
-      clearAuthState();
-      router.push('/');
+      const response = await fetch('/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+
+      });
+
+      if (response.ok) {
+        // 로컬 스토리지 정리
+        localStorage.removeItem('selectedChild');
+        localStorage.removeItem('isChildMode');
+        router.push('/');
+      } else {
+        console.error('로그아웃 실패');
+      }
     } catch (error) {
       console.error('로그아웃 중 오류 발생:', error);
     } finally {
