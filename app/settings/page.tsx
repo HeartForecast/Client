@@ -16,7 +16,7 @@ function SettingsContent() {
   const handleLogout = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/logout', {
+      const response = await fetch('/api/logout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
