@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Button from "../../components/Button";
 import { useChild } from "../../contexts/ChildContext";
 import EmotionResultPopup from "../../components/EmotionResultPopup";
+import { getCurrentDate } from "../../utils/dateUtils";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -255,7 +256,7 @@ function ReasonPageContent() {
             emotions={allEmotions}
           />
           
-          <div className="text-xs text-gray-400 mb-2">{new Date().toLocaleDateString('ko-KR')} {TIME_PERIODS[currentStep].label}</div>
+          <div className="text-xs text-gray-400 mb-2">{getCurrentDate()} {TIME_PERIODS[currentStep].label}</div>
           <div className="text-2xl font-bold leading-tight whitespace-pre-line mb-8">
             {TIME_PERIODS[currentStep].text}{`\n`}느꼈나요?
           </div>
@@ -293,18 +294,10 @@ function ReasonPageContent() {
           className="flex flex-col items-center w-full max-w-sm mx-auto mt-auto mb-4"
         >
           <Button
-            className={`flex w-full items-center justify-center gap-1 rounded-lg bg-[#FF6F71] text-white py-3 text-lg font-semibold text-gray-900 mb-4 transition-opacity ${!isLoading ? '' : 'opacity-50 cursor-not-allowed'}`}
-            disabled={isLoading}
+            className="flex w-full items-center justify-center gap-1 rounded-lg bg-[#FF6F71] text-white py-3 text-lg font-semibold text-gray-900 mb-4"
             onClick={handleNext}
           >
-            {isLoading ? (
-              <div className="flex items-center gap-2">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                처리 중...
-              </div>
-            ) : (
-              getButtonText()
-            )}
+            {getButtonText()}
           </Button>
         </motion.div>
         </div>
