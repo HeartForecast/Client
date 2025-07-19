@@ -10,34 +10,47 @@ function SettingsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isChildMode, selectedChild, exitChildMode, enterChildMode } = useChild();
-  const [isLoading, setIsLoading] = useState(false);
   const [fromPage, setFromPage] = useState('/home');
 
-  const handleLogout = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch('/api/logout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-
-      });
-
-      if (response.ok) {
-        // 로컬 스토리지 정리
-        localStorage.removeItem('selectedChild');
-        localStorage.removeItem('isChildMode');
-        router.push('/');
-      } else {
-        console.error('로그아웃 실패');
-      }
-    } catch (error) {
-      console.error('로그아웃 중 오류 발생:', error);
-    } finally {
-      setIsLoading(false);
-    }
+  const handleLogout = () => {
+    // 클라이언트에서 직접 관련 정보 삭제
+    console.log('🔐 클라이언트 로그아웃 시작');
+    
+    // 인증 관련 정보 삭제
+    clearAuthState();
+    
+    // 자녀 관련 정보 삭제
+    localStorage.removeItem('selectedChild');
+    localStorage.removeItem('isChildMode');
+    localStorage.removeItem('childRelations');
+    
+    // 예보 관련 임시 데이터 삭제
+    localStorage.removeItem('forecastEmotions');
+    localStorage.removeItem('forecastRecordEmotions');
+    
+    // 기타 관련 데이터 삭제
+    localStorage.removeItem('diaryData');
+    localStorage.removeItem('forecastData');
+    
+    // 쿠키 삭제
+    const deleteCookie = (name: string) => {
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${window.location.hostname};`;
+    };
+    
+    // 일반적인 인증 쿠키들 삭제
+    deleteCookie('JSESSIONID');
+    deleteCookie('access_token');
+    deleteCookie('refresh_token');
+    deleteCookie('auth_token');
+    deleteCookie('session');
+    deleteCookie('token');
+    
+    console.log('✅ 클라이언트 로그아웃 완료 - 모든 관련 데이터와 쿠키 삭제됨');
+    
+    // 홈페이지로 이동
+    router.push('/');
   };
 
   const handleModeToggle = () => {
@@ -163,10 +176,9 @@ function SettingsContent() {
               </div>
               <button
                 onClick={handleLogout}
-                disabled={isLoading}
-                className="px-4 py-2 bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white font-medium rounded-lg transition-colors text-sm"
+                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-colors text-sm"
               >
-                {isLoading ? '로그아웃 중...' : '로그아웃'}
+                로그아웃
               </button>
             </div>
           </div>
