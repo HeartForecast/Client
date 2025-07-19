@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Container from "../components/Container"
 import NavigationBar from "../components/NavigationBar"
+import HeaderBar from "../components/HeaderBar"
 import Toast from "../components/Toast"
 import { useChild } from "../contexts/ChildContext"
 
@@ -398,8 +399,16 @@ export default function ChildListPage() {
       </div>
 
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
+        {/* 상단바 */}
+        <div className="flex items-end justify-between w-full rounded-lg px-2 mb-6">
+          <HeaderBar 
+            childName="아이 관리"
+            showChildListButton={false}
+            showSettingsButton={true}
+          />
+        </div>
+        
         <div className="w-full mb-8">
-          <span className="text-gray-500 font-medium text-sm">아이 관리</span>
           <h1 className="text-2xl font-semibold mb-1">등록된 아이 목록</h1>
           <p className="text-sm text-gray-600">
             총 {childrenData.length}명의 아이가 등록되어 있습니다.

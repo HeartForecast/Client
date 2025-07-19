@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Container from "../components/Container"
 import NavigationBar from "../components/NavigationBar"
+import HeaderBar from "../components/HeaderBar"
 import Toast from "../components/Toast"
 import { useChild } from "../contexts/ChildContext"
 import { 
@@ -386,8 +387,14 @@ export default function StatsPage() {
         onClose={hideToast}
       />
       <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4 pb-24">
-        <div className="flex items-center gap-3 rounded-lg px-3 py-2 mb-6">
-          <span className="text-gray-900 font-semibold text-2xl">{childName}의 통계</span>
+        {/* 상단바 */}
+        <div className="flex items-end justify-between w-full rounded-lg px-2 mb-6">
+          <HeaderBar 
+            childName={childName}
+            inviteCode={selectedChild?.inviteCode}
+            showChildListButton={false}
+            showSettingsButton={true}
+          />
         </div>
 
         {/* 로딩 상태 */}

@@ -50,7 +50,7 @@ export default function HeaderBar({
         {showChildListButton && (
           <button
             onClick={handleChildListClick}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors ml-2"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors ml-2 flex items-center justify-center"
             title="아이 목록"
           >
             <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -62,7 +62,7 @@ export default function HeaderBar({
       {showSettingsButton && (
         <button
           onClick={handleSettingsClick}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-center"
           title="설정"
         >
           <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
