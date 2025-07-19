@@ -1,15 +1,17 @@
 'use client'
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Container from '../components/Container';
 import { useChild } from '../contexts/ChildContext';
 import { clearAuthState } from '../auth/index';
 
 export default function Settings() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isChildMode, selectedChild, exitChildMode, enterChildMode } = useChild();
   const [isLoading, setIsLoading] = useState(false);
+  const [fromPage, setFromPage] = useState('/home');
 
   const handleLogout = async () => {
     setIsLoading(true);
@@ -55,8 +57,16 @@ export default function Settings() {
     }
   };
 
+  // URL 쿼리 파라미터에서 원래 페이지 정보 가져오기
+  useEffect(() => {
+    const from = searchParams.get('from');
+    if (from) {
+      setFromPage(decodeURIComponent(from));
+    }
+  }, [searchParams]);
+
   const handleBackToHome = () => {
-    router.push('/home');
+    router.push(fromPage);
   };
 
   return (

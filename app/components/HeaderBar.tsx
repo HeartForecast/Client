@@ -34,7 +34,8 @@ export default function HeaderBar({
     if (onSettingsClick) {
       onSettingsClick();
     } else {
-      router.push('/settings');
+      const currentPath = window.location.pathname;
+      router.push(`/settings?from=${encodeURIComponent(currentPath)}`);
     }
   };
 
