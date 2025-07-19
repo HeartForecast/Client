@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, Suspense } from "react";
+import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "../components/Button";
 import { useChild } from "../contexts/ChildContext";
@@ -74,46 +75,53 @@ function InsertPageContent() {
 
   const isEmotionSelected = selectedEmotion !== null;
 
+  const fadeInOutVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+    exit: { opacity: 0, y: -10, transition: { duration: 0.3 } },
+  };
+
   return (
     <div className="container">
-      <div className="min-h-screen flex flex-col bg-white text-black">
-        <div className="flex-1 flex flex-col px-4 pt-10 pb-5">
-          {/* 로고 */}
-          <div className="flex justify-center mb-4 w-full">
-            <div className="flex items-center gap-2">
-              <img src="/logo_not_title.svg" alt="HeartForecast" className="w-10 h-10" />
-            </div>
+      <div className="h-screen flex flex-col px-4 pt-6 pb-3 bg-white text-black">
+        
+        <div className="w-full max-w-sm mx-auto mb-2">
+          <button className="cursor-pointer" onClick={handleBack}>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        </div>
+        
+        <div className="flex flex-col items-start justify-start flex-1 w-full max-w-sm mx-auto">
+          <div className="text-xs text-gray-400 mb-2">{getCurrentDate()} {TIME_PERIODS[currentStep].label}</div>
+          <div className="text-2xl font-bold leading-tight whitespace-pre-line mb-5">
+            {TIME_PERIODS[currentStep].text}{`\n`}느낄까요?
           </div>
           
-          <div className="w-full max-w-sm mx-auto">
-            <button className="mb-4 cursor-pointer" onClick={handleBack}>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-          </div>
-          <div className="flex flex-col items-start justify-start flex-grow w-full max-w-sm mx-auto mt-4">
-            <div className="text-xs text-gray-400 mb-2">{getCurrentDate()} {TIME_PERIODS[currentStep].label}</div>
-            <div className="text-2xl font-bold leading-tight whitespace-pre-line mb-8">
-              {TIME_PERIODS[currentStep].text}{`\n`}느낄까요?
-            </div>
-            
+          <div className="w-full flex-grow">
             <EmotionSelector
               onEmotionSelect={handleEmotionSelect}
               selectedEmotion={selectedEmotion}
             />
-
-            <div className="w-full mt-8">
-              <Button
-                onClick={handleNext}
-                disabled={!isEmotionSelected || isLoading}
-                className="w-full"
-              >
-                {isLoading ? '처리 중...' : '다음'}
-              </Button>
-            </div>
           </div>
         </div>
+        
+        <motion.div
+          key="final-button"
+          initial="hidden"
+          animate="visible"
+          variants={fadeInOutVariants}
+          className="flex flex-col items-center w-full max-w-sm mx-auto mt-auto mb-9"
+        >
+          <Button
+            onClick={handleNext}
+            disabled={!isEmotionSelected || isLoading}
+            className={`w-full transition-opacity ${!isEmotionSelected ? 'opacity-50' : ''}`}
+          >
+            {isLoading ? '처리 중...' : '다음'}
+          </Button>
+        </motion.div>
       </div>
     </div>
   );
