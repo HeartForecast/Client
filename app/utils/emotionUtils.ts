@@ -38,6 +38,9 @@ export interface EmotionTypeData {
 export const fetchEmotionType = async (emotionTypeId: number): Promise<EmotionTypeData | null> => {
   try {
     const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    console.log(`📡 fetchEmotionType 호출: emotionTypeId = ${emotionTypeId}`);
+    console.log(`📡 API URL: ${apiBaseUrl}/api/emotionTypes/${emotionTypeId}`);
+    
     const response = await fetch(`${apiBaseUrl}/api/emotionTypes/${emotionTypeId}`, {
       method: 'GET',
       credentials: 'include',
@@ -47,15 +50,21 @@ export const fetchEmotionType = async (emotionTypeId: number): Promise<EmotionTy
       }
     });
 
+    console.log(`📡 감정 타입 API 응답 상태: ${response.status} ${response.statusText}`);
+
     if (response.ok) {
       const data = await response.json();
+      console.log(`✅ 감정 타입 API 응답 데이터:`, data);
+      console.log(`✅ 감정 타입 이미지:`, data.image);
       return data;
     } else {
-      console.log('감정 타입 API 실패:', response.status);
+      console.log('❌ 감정 타입 API 실패:', response.status);
+      const errorText = await response.text();
+      console.log('❌ 에러 응답:', errorText);
       return null;
     }
   } catch (error) {
-    console.error('감정 타입 API 오류:', error);
+    console.error('❌ 감정 타입 API 오류:', error);
     return null;
   }
 }; 

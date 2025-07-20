@@ -239,13 +239,29 @@ export default function EmotionResultPopup({ isVisible, onClose, emotions }: Emo
           </motion.div>
         </motion.div>
         
-        {/* 종료 버튼 */}
+        {/* 버튼 */}
         <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2">
           <button
-            onClick={handleClose}
-            className="bg-white bg-opacity-20 hover:bg-opacity-30 text-black font-medium py-3 px-6 rounded-full transition-all duration-300 backdrop-blur-sm border border-white border-opacity-30"
+            onClick={() => {
+              // 감정 데이터를 URL 파라미터로 전달하여 피드백 페이지로 이동
+              const emotionData = emotions.map(emotion => ({
+                timeSlot: emotion.step === 'afternoon' ? 'lunch' : emotion.step === 'evening' ? 'dinner' : 'morning',
+                forecastEmotion: emotion.emotion.name, // 실제로는 예보 데이터가 필요하지만 현재는 기록 데이터 사용
+                actualEmotion: emotion.emotion.name,
+                actualEmotionImage: emotion.emotion.image,
+                memo: emotion.memo
+              }));
+              
+              const dataParam = encodeURIComponent(JSON.stringify({
+                emotionData,
+                aiFeedback: null // AI가 생성할 예정
+              }));
+              
+              router.push(`/feedback?data=${dataParam}`);
+            }}
+            className="bg-[#FF6F71] hover:bg-[#FF5A5C] text-white font-medium py-3 px-6 rounded-full transition-all duration-300 shadow-lg"
           >
-            돌아가기
+            감정 이야기 듣기
           </button>
         </div>
       </motion.div>
