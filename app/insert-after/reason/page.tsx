@@ -280,7 +280,7 @@ function ReasonPageContent() {
             <div className="relative">
               <textarea
                 id="reason"
-                className="w-full h-90 p-4 border-2 border-gray-200 rounded-xl resize-none focus:border-[#FF6F71] focus:outline-none transition-all duration-300 text-base leading-relaxed placeholder-gray-400"
+                className="w-full h-64 p-4 border-2 border-gray-200 rounded-xl resize-none focus:border-[#FF6F71] focus:outline-none transition-all duration-300 text-base leading-relaxed placeholder-gray-400"
                 placeholder="어떤 일 때문에 이런 감정을 느꼈나요?"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
@@ -306,7 +306,7 @@ function ReasonPageContent() {
           initial="hidden"
           animate="visible"
           variants={fadeInOutVariants}
-          className="flex flex-col items-center w-full max-w-sm mx-auto mt-auto mb-4"
+          className="flex flex-col items-center w-full max-w-sm mx-auto mt-6 mb-4"
         >
           <Button
             className="flex w-full items-center justify-center gap-1 rounded-lg bg-[#FF6F71] text-white py-3 text-lg font-semibold text-gray-900 mb-4"
