@@ -57,6 +57,7 @@ export default function EmotionForecastPopup({ isOpen, onClose, forecasts }: Emo
   const router = useRouter();
   const [dragDirection, setDragDirection] = useState<'left' | 'right' | null>(null);
   const [hasSwiped, setHasSwiped] = useState(false);
+  const [slideDirection, setSlideDirection] = useState<'left' | 'right' | null>(null);
 
   const handleClose = () => {
     onClose();
@@ -112,10 +113,12 @@ export default function EmotionForecastPopup({ isOpen, onClose, forecasts }: Emo
     
     if (info.offset.x > threshold) {
       // 오른쪽으로 드래그 - 이전 슬라이드
+      setSlideDirection('right');
       setCurrentIndex((prev) => (prev - 1 + forecasts.length) % forecasts.length);
       setHasSwiped(true);
     } else if (info.offset.x < -threshold) {
       // 왼쪽으로 드래그 - 다음 슬라이드
+      setSlideDirection('left');
       setCurrentIndex((prev) => (prev + 1) % forecasts.length);
       setHasSwiped(true);
     }
@@ -146,9 +149,15 @@ export default function EmotionForecastPopup({ isOpen, onClose, forecasts }: Emo
           {/* Slide Container */}
           <motion.div
             key={currentIndex}
-            initial={{ x: 300, opacity: 0 }}
+            initial={{ 
+              x: slideDirection === 'left' ? 300 : slideDirection === 'right' ? -300 : 0, 
+              opacity: 0 
+            }}
             animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -300, opacity: 0 }}
+            exit={{ 
+              x: slideDirection === 'left' ? -300 : slideDirection === 'right' ? 300 : 0, 
+              opacity: 0 
+            }}
             transition={{ 
               type: "spring", 
               stiffness: 300, 
