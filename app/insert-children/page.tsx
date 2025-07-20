@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import Button from '../components/Button';
 import { createChild } from '../auth';
 import { ChildCreateRequest } from '../types/api';
+import { useChild } from '../contexts/ChildContext';
 
 export default function Register() {
   const [currentDisplayStep, setCurrentDisplayStep] = useState(1); 
@@ -22,6 +23,7 @@ export default function Register() {
   const healthStatusRef = useRef<HTMLInputElement>(null);
   const nameAdvanceTimeout = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
+  const { setSelectedChild } = useChild();
 
   useEffect(() => {
     switch (currentDisplayStep) {
@@ -89,6 +91,29 @@ export default function Register() {
 
       if (response.success) {
         console.log('아이 생성 성공!');
+        
+        // 생성된 아이 정보로 상태 업데이트
+        if (response.data && response.data.id) {
+          const birthYear = new Date(formattedDob).getFullYear();
+          const thisYear = new Date().getFullYear();
+          const age = thisYear - birthYear;
+
+          const newChild = {
+            id: response.data.id,
+            name: name.trim(),
+            age,
+            registeredDate: new Date().toLocaleDateString('ko-KR'),
+            inviteCode: '',
+          };
+
+          setSelectedChild(newChild);
+          
+          // localStorage에 저장
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('selectedChild', JSON.stringify(newChild));
+          }
+        }
+        
         router.push('/home');
       } else {
         setError(response.error || '아이 생성에 실패했습니다.');
