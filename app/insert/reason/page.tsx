@@ -261,7 +261,7 @@ function ReasonPageContent() {
           initial="hidden"
           animate="visible"
           variants={fadeInOutVariants}
-          className="flex flex-col items-center w-full max-w-sm mx-auto mt-6 mb-4"
+          className="flex flex-col items-center w-full max-w-sm mx-auto mt-2 mb-4"
         >
           <Button
             className="flex w-full items-center justify-center gap-1 rounded-lg bg-[#FF6F71] text-white py-3 text-lg font-semibold text-gray-900 mb-4"

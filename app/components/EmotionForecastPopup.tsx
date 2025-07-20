@@ -136,7 +136,7 @@ export default function EmotionForecastPopup({ isOpen, onClose, forecasts }: Emo
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-                  className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-md flex items-center justify-center z-50 p-4"
+                  className="fixed inset-0 bg-black bg-opacity-20 backdrop-blur-sm flex items-center justify-center z-50 p-4"
         >
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
