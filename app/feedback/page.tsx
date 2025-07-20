@@ -14,6 +14,7 @@ interface TimeSlotEmotion {
   forecastEmotion: string;
   actualEmotion: string;
   actualEmotionImage?: string;
+  actualEmotionType?: string;
   memo?: string;
 }
 
@@ -68,7 +69,6 @@ function FeedbackPageContent() {
     return messages.length > 0 ? messages : [cleanText];
   };
 
-  // 채팅 메시지 생성
   const generateChatMessages = (feedbackText: string, emotion: string): ChatMessage[] => {
     const messages = splitFeedbackIntoMessages(feedbackText);
     return messages.map((text, index) => ({
@@ -147,15 +147,13 @@ function FeedbackPageContent() {
     }
 
       try {
-        // URL 파라미터에서 날짜 가져오기
         const dateParam = searchParams.get('date');
         let targetDate = dateParam;
 
         if (!targetDate) {
-          // URL 파라미터가 없으면 오늘 날짜의 데이터를 가져오기 (한국 시간대)
           const now = new Date();
-          const koreaTime = new Date(now.getTime() + (9 * 60 * 60 * 1000)); // UTC+9 (한국 시간)
-          targetDate = koreaTime.toISOString().split('T')[0]; // 오늘 날짜 (YYYY-MM-DD)
+          const koreaTime = new Date(now.getTime() + (9 * 60 * 60 * 1000));
+          targetDate = koreaTime.toISOString().split('T')[0];
         }
 
         try {
@@ -175,7 +173,6 @@ function FeedbackPageContent() {
             setAiFeedback(newAiFeedback);
           }
         } catch (error) {
-          // 에러 처리
         }
       } finally {
         setIsLoading(false);
@@ -197,21 +194,15 @@ function FeedbackPageContent() {
 
   const getEmotionGlowColor = () => {
     const currentData = emotionData.find(d => d.timeSlot === currentTimeSlot);
-    const emotion = currentData?.actualEmotion || '기쁜';
+    const emotionType = currentData?.actualEmotionType || '중립';
     
-    const positiveEmotions = ['기쁜', '행복한', '즐거운', '설레는', '기대되는', '감사한', '만족스러운'];
-    const neutralEmotions = ['평온한', '그저 그런', '피곤한', '지루한'];
-    const negativeEmotions = ['외로운', '슬픈', '짜증나는', '고민되는', '두려운', '무서운', '놀란', '화난', '불안한', '걱정되는'];
+    const emotionTypeColors = {
+      '긍정': 'from-[#FF6F71]/10 to-[#FF8E8F]/10',
+      '중립': 'from-[#FFD93D]/10 to-[#FFE55C]/10', 
+      '부정': 'from-[#4A90E2]/10 to-[#5BA0F2]/10'
+    };
     
-    if (positiveEmotions.includes(emotion)) {
-      return 'from-[#FF6F71]/10 to-[#FF8E8F]/10';
-    } else if (neutralEmotions.includes(emotion)) {
-      return 'from-[#FFD93D]/10 to-[#FFE55C]/10';
-    } else if (negativeEmotions.includes(emotion)) {
-      return 'from-[#4A90E2]/10 to-[#5BA0F2]/10';
-    } else {
-      return 'from-[#FF6F71]/10 to-[#FF8E8F]/10';
-    }
+    return emotionTypeColors[emotionType as keyof typeof emotionTypeColors] || emotionTypeColors['중립'];
   };
 
   const handleTimeSlotChange = (timeSlot: 'morning' | 'lunch' | 'dinner') => {

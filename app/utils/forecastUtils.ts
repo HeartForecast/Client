@@ -1,9 +1,7 @@
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-// fetchEmotionType 함수 import
-import { fetchEmotionType } from './emotionUtils';
+import { fetchEmotionType, EmotionTypeData } from './emotionUtils';
 
-// 예보 데이터 타입
 export interface ForecastData {
   id: number;
   date: string;
@@ -15,7 +13,6 @@ export interface ForecastData {
   memo?: string;
 }
 
-// 기록 데이터 타입
 export interface RecordData {
   id: number;
   forecastId: number;
@@ -28,7 +25,6 @@ export interface RecordData {
   memo?: string;
 }
 
-// 시간대별 예보 데이터 가져오기
 export async function getForecastsByDate(date: string, childId: number): Promise<ForecastData[]> {
   try {
     const url = `${apiBaseUrl}/api/forecasts/${childId}/${date}`;
@@ -98,7 +94,6 @@ export async function getForecastsByDate(date: string, childId: number): Promise
   }
 }
 
-// 시간대별 기록 데이터 가져오기
 export async function getRecordsByDate(date: string, childId: number): Promise<RecordData[]> {
   try {
     const url = `${apiBaseUrl}/api/forecastRecords/${childId}/${date}`;
@@ -168,21 +163,18 @@ export async function getRecordsByDate(date: string, childId: number): Promise<R
   }
 }
 
-// 시간대별 매핑
 export const timeZoneMapping: Record<string, string> = {
   'morning': '아침',
   'afternoon': '점심', 
   'evening': '저녁'
 };
 
-// 시간대별 매핑 (역방향)
 export const timeZoneReverseMapping: Record<string, string> = {
   '아침': 'morning',
   '점심': 'afternoon', 
   '저녁': 'evening'
 };
 
-// AI 피드백 API 요청 타입
 export interface AIFeedbackRequest {
   childHealthInfo: string;
   morningForecast: {
@@ -251,7 +243,6 @@ export async function getAIFeedback(requestData: AIFeedbackRequest): Promise<str
   }
 }
 
-// AI 피드백 데이터 생성
 export async function generateAIFeedbackData(
   forecasts: ForecastData[], 
   records: RecordData[],
@@ -261,6 +252,8 @@ export async function generateAIFeedbackData(
     timeSlot: 'morning' | 'lunch' | 'dinner';
     forecastEmotion: string;
     actualEmotion: string;
+    actualEmotionImage?: string;
+    actualEmotionType?: string;
     memo?: string;
   }>;
   aiFeedback: {
@@ -277,7 +270,6 @@ export async function generateAIFeedbackData(
     memo?: string;
   }> = [];
 
-  // 각 시간대별로 예보와 기록 데이터 매칭
   const timeSlots = ['morning', 'afternoon', 'evening'] as const;
   
   for (const timeSlot of timeSlots) {
@@ -294,7 +286,6 @@ export async function generateAIFeedbackData(
     if (forecast && record) {
       console.log(`✅ ${timeSlot} 시간대 데이터 매칭 성공`);
       
-      // 감정 타입 정보 가져오기
       console.log(`📡 예보 감정 타입 API 호출: emotionTypeId = ${forecast.emotionTypeId}`);
       const forecastEmotionType = await fetchEmotionType(forecast.emotionTypeId);
       console.log(`📡 예보 감정 타입 결과:`, forecastEmotionType);
@@ -303,42 +294,25 @@ export async function generateAIFeedbackData(
       const recordEmotionType = await fetchEmotionType(record.emotionTypeId);
       console.log(`📡 기록 감정 타입 결과:`, recordEmotionType);
       
-      // 기본 이미지 매핑 (임시)
-      const getDefaultImage = (emotionName: string) => {
-        const emotionToImage: { [key: string]: string } = {
-          '기쁜': '/icon/기쁜 - big.svg',
-          '행복한': '/icon/행복한 - big.svg',
-          '즐거운': '/icon/즐거운 - big.svg',
-          '설레는': '/icon/설레는 - big.svg',
-          '기대되는': '/icon/기대되는 - big.svg',
-          '감사한': '/icon/감사한 - big.svg',
-          '만족스러운': '/icon/만족스러운 - big.svg',
-          '평온한': '/icon/평온한 - big.svg',
-          '그저 그런': '/icon/그저 그런 - big.svg',
-          '외로운': '/icon/외로운 - big.svg',
-          '슬픈': '/icon/슬픈 - big.svg',
-          '짜증나는': '/icon/짜증나는 - big.svg',
-          '고민되는': '/icon/고민되는 - big.svg',
-          '두려운': '/icon/두려운 - big.svg',
-          '무서운': '/icon/두려운 - big.svg',
-          '놀란': '/icon/놀란 - big.svg',
-          '피곤한': '/icon/그저 그런 - big.svg',
-          '지루한': '/icon/그저 그런 - big.svg',
-          '화난': '/icon/짜증나는 - big.svg',
-          '불안한': '/icon/두려운 - big.svg',
-          '걱정되는': '/icon/고민되는 - big.svg'
-        };
-        return emotionToImage[emotionName] || '/icon/기쁜 - big.svg';
+      const getEmotionImage = (emotionType: EmotionTypeData | null, emotionName: string, fallbackImage?: string) => {
+        if (emotionType?.image) {
+          return emotionType.image;
+        }
+        if (fallbackImage) {
+          return fallbackImage;
+        }
+        return '/icon/기쁜 - big.svg';
       };
 
       const actualEmotionName = recordEmotionType?.name || record.emotionName || '기쁜';
-      const actualEmotionImage = recordEmotionType?.image || record.emotionImage || getDefaultImage(actualEmotionName);
+      const actualEmotionImage = getEmotionImage(recordEmotionType, actualEmotionName, record.emotionImage);
       
       const emotionItem = {
         timeSlot: (timeSlot === 'afternoon' ? 'lunch' : timeSlot === 'evening' ? 'dinner' : 'morning') as 'morning' | 'lunch' | 'dinner',
         forecastEmotion: forecastEmotionType?.name || forecast.emotionName || '알 수 없음',
         actualEmotion: actualEmotionName,
         actualEmotionImage: actualEmotionImage,
+        actualEmotionType: recordEmotionType?.type || '중립',
         memo: record.memo
       };
       console.log(`✅ ${timeSlot} 감정 데이터 매핑 완료:`, emotionItem);
@@ -349,20 +323,19 @@ export async function generateAIFeedbackData(
     }
   }
 
-  // AI API 요청 데이터 구성
   const requestData: AIFeedbackRequest = {
     childHealthInfo,
     morningForecast: {
       emotion: emotionData.find(d => d.timeSlot === 'morning')?.forecastEmotion || '',
-      memo: '' // 예보 메모는 현재 구조에서 별도로 저장되지 않음
+      memo: ''
     },
     lunchForecast: {
       emotion: emotionData.find(d => d.timeSlot === 'lunch')?.forecastEmotion || '',
-      memo: '' // 예보 메모는 현재 구조에서 별도로 저장되지 않음
+      memo: ''
     },
     eveningForecast: {
       emotion: emotionData.find(d => d.timeSlot === 'dinner')?.forecastEmotion || '',
-      memo: '' // 예보 메모는 현재 구조에서 별도로 저장되지 않음
+      memo: ''
     },
     morningForecastRecord: {
       emotion: emotionData.find(d => d.timeSlot === 'morning')?.actualEmotion || '',
@@ -379,15 +352,12 @@ export async function generateAIFeedbackData(
   };
 
   try {
-    // AI API 호출
     const aiFeedbackText = await getAIFeedback(requestData);
     console.log('🤖 AI 피드백 원본 텍스트:', aiFeedbackText);
     
-    // AI 응답을 시간대별로 파싱
     let aiFeedback;
     
     if (aiFeedbackText.includes('[아침]') || aiFeedbackText.includes('[점심]') || aiFeedbackText.includes('[저녁]')) {
-      // 시간대별로 구분된 피드백인 경우
       const feedbackParts = aiFeedbackText.split('\n\n');
       console.log('🤖 피드백 파트:', feedbackParts);
       
@@ -397,7 +367,6 @@ export async function generateAIFeedbackData(
         dinner: feedbackParts.find(part => part.startsWith('[저녁]')) || `[저녁]\n${aiFeedbackText}`
       };
     } else {
-      // 단일 피드백인 경우 각 시간대에 동일하게 적용
       aiFeedback = {
         morning: `[아침]\n${aiFeedbackText}`,
         lunch: `[점심]\n${aiFeedbackText}`,
@@ -410,7 +379,6 @@ export async function generateAIFeedbackData(
   } catch (error) {
     console.error('AI 피드백 생성 실패:', error);
     
-    // AI API 실패 시 기본 피드백 생성
     const aiFeedback = {
       morning: `[아침]\n아침에는 ${emotionData.find(d => d.timeSlot === 'morning')?.forecastEmotion || '걱정'}될 거라고 생각했는데, 실제로는 ${emotionData.find(d => d.timeSlot === 'morning')?.actualEmotion || '무서움'}을 느꼈구나. ${emotionData.find(d => d.timeSlot === 'morning')?.memo ? emotionData.find(d => d.timeSlot === 'morning')?.memo + ' 때문에 ' : ''}${emotionData.find(d => d.timeSlot === 'morning')?.actualEmotion || '무서움'}을 느끼는 건 정말 당연한 일이야. ${emotionData.find(d => d.timeSlot === 'morning')?.actualEmotion || '무서웠을'} 텐데도 잘 견뎌줘서 정말 대단해! 괜찮아, 용감하게 잘 해냈어.`,
       lunch: `[점심]\n점심에는 ${emotionData.find(d => d.timeSlot === 'lunch')?.forecastEmotion || '피곤'}할 거라고 예보했지만, ${emotionData.find(d => d.timeSlot === 'lunch')?.memo ? emotionData.find(d => d.timeSlot === 'lunch')?.memo + ' 때문에 ' : ''}${emotionData.find(d => d.timeSlot === 'lunch')?.actualEmotion || '짜증'}이 났구나. ${emotionData.find(d => d.timeSlot === 'lunch')?.memo ? emotionData.find(d => d.timeSlot === 'lunch')?.memo + '는 ' : '오래 기다리는 건'} 정말 지루하고 힘들 수 있어서 ${emotionData.find(d => d.timeSlot === 'lunch')?.actualEmotion || '짜증'}이 나는 건 당연한 마음이야. 힘들었을 텐데도 잘 참아줘서 고마워! 다음번에는 기다리는 동안 작은 그림을 그리거나 숨 고르기를 해보는 건 어떨까?`,
