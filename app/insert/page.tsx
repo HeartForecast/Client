@@ -126,7 +126,7 @@ function InsertPageContent() {
             disabled={!isEmotionSelected || isLoading}
             className={`w-full transition-opacity ${!isEmotionSelected ? 'opacity-50' : ''}`}
           >
-            {isLoading ? '처리 중...' : '다음'}
+            {isLoading ? '처리 중...' : '다음으로'}
           </Button>
         </motion.div>
       </div>
