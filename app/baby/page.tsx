@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Container from "../components/Container"
 import { useChild } from "../contexts/ChildContext"
 import { 
@@ -34,11 +34,14 @@ import ErrorMessage from "../components/ErrorMessage"
 import EmptyState from "../components/EmptyState"
 import TimeSlotSelector from "../components/TimeSlotSelector"
 import DiaryCard from "../components/DiaryCard"
+import EmotionForecastPopup from "../components/EmotionForecastPopup"
+import EmotionResultPopup from "../components/EmotionResultPopup"
 
 // 공통 타입 사용
 
 export default function Present() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { selectedChild, isLoading } = useChild()
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot>('morning')
@@ -46,8 +49,35 @@ export default function Present() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [forecastData, setForecastData] = useState<Record<string, any>>({})
+  const [showForecastPopup, setShowForecastPopup] = useState(false)
+  const [showRecordPopup, setShowRecordPopup] = useState(false)
+  const [popupEmotions, setPopupEmotions] = useState<any[]>([])
 
-
+  // URL 파라미터 확인하여 팝업 표시
+  useEffect(() => {
+    const showForecast = searchParams.get('showForecastPopup')
+    const showRecord = searchParams.get('showRecordPopup')
+    
+    if (showForecast === 'true') {
+      const savedEmotions = localStorage.getItem('forecastEmotions')
+      if (savedEmotions) {
+        const emotions = JSON.parse(savedEmotions)
+        setPopupEmotions(emotions)
+        setShowForecastPopup(true)
+        // URL에서 파라미터 제거
+        router.replace('/baby')
+      }
+    } else if (showRecord === 'true') {
+      const savedEmotions = localStorage.getItem('forecastRecordEmotions')
+      if (savedEmotions) {
+        const emotions = JSON.parse(savedEmotions)
+        setPopupEmotions(emotions)
+        setShowRecordPopup(true)
+        // URL에서 파라미터 제거
+        router.replace('/baby')
+      }
+    }
+  }, [searchParams, router])
 
   const isTomorrow = (date: Date) => {
     const tomorrow = new Date();
@@ -523,6 +553,32 @@ export default function Present() {
       
       {/* 하단 여백 */}
       <div className="h-8"></div>
+      
+      {/* 예보 결과 팝업 */}
+      <EmotionForecastPopup
+        isOpen={showForecastPopup}
+        onClose={() => {
+          setShowForecastPopup(false);
+          localStorage.removeItem('forecastEmotions'); // 저장된 감정 데이터 정리
+        }}
+        forecasts={popupEmotions.map((emotion: any) => ({
+          timeSlot: emotion.step,
+          emotion: emotion.emotion.name,
+          temperature: emotion.emotion.temp,
+          image: emotion.emotion.image,
+          category: emotion.category
+        }))}
+      />
+
+      {/* 예보 기록 결과 팝업 */}
+      <EmotionResultPopup
+        isVisible={showRecordPopup}
+        onClose={() => {
+          setShowRecordPopup(false);
+          localStorage.removeItem('forecastRecordEmotions'); // 저장된 감정 데이터 정리
+        }}
+        emotions={popupEmotions}
+      />
       
     </Container>
   )

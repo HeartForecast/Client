@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "../../components/Button";
 import { useChild } from "../../contexts/ChildContext";
-import EmotionResultPopup from "../../components/EmotionResultPopup";
+
 import { getCurrentDate } from "../../utils/dateUtils";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -35,8 +35,7 @@ function ReasonPageContent() {
   const [reason, setReason] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showResultPopup, setShowResultPopup] = useState(false);
-  const [allEmotions, setAllEmotions] = useState<any[]>([]);
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const forecastId = searchParams.get('forecastId');
@@ -204,9 +203,9 @@ function ReasonPageContent() {
       if (nextStep) {
         router.push(`/insert-after?step=${nextStep}&forecastId=${forecastId}&date=${forecastData.date}&timeZone=${TIME_PERIODS[nextStep as keyof typeof TIME_PERIODS].label}`);
       } else {
-        // 모든 단계 완료 - 결과 팝업 표시
-        setAllEmotions(allEmotionData);
-        setShowResultPopup(true);
+        // 모든 단계 완료 - baby 페이지로 이동 후 팝업 표시
+        // URL 파라미터로 팝업 표시 여부 전달
+        router.push('/baby?showRecordPopup=true');
       }
     } catch (error) {
       console.error('예보 기록 생성 실패:', error);
@@ -260,16 +259,6 @@ function ReasonPageContent() {
         </div>
         
         <div className="flex flex-col items-start justify-start flex-1 w-full max-w-sm mx-auto">
-          
-          {/* 결과 팝업 */}
-          <EmotionResultPopup
-            isVisible={showResultPopup}
-            onClose={() => {
-              setShowResultPopup(false);
-              localStorage.removeItem('forecastRecordEmotions'); // 저장된 감정 데이터 정리
-            }}
-            emotions={allEmotions}
-          />
           
           <div className="text-xs text-gray-400 mb-2">{getCurrentDate()} {TIME_PERIODS[currentStep].label}</div>
           <div className="text-2xl font-bold leading-tight whitespace-pre-line mb-8">
