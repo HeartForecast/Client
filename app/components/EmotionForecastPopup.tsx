@@ -57,6 +57,7 @@ export default function EmotionForecastPopup({ isOpen, onClose, forecasts }: Emo
   const router = useRouter();
   const [dragDirection, setDragDirection] = useState<'left' | 'right' | null>(null);
   const [hasSwiped, setHasSwiped] = useState(false);
+  const [slideDirection, setSlideDirection] = useState<'left' | 'right' | null>(null);
 
   const handleClose = () => {
     onClose();
@@ -112,10 +113,12 @@ export default function EmotionForecastPopup({ isOpen, onClose, forecasts }: Emo
     
     if (info.offset.x > threshold) {
       // 오른쪽으로 드래그 - 이전 슬라이드
+      setSlideDirection('right');
       setCurrentIndex((prev) => (prev - 1 + forecasts.length) % forecasts.length);
       setHasSwiped(true);
     } else if (info.offset.x < -threshold) {
       // 왼쪽으로 드래그 - 다음 슬라이드
+      setSlideDirection('left');
       setCurrentIndex((prev) => (prev + 1) % forecasts.length);
       setHasSwiped(true);
     }
@@ -133,8 +136,7 @@ export default function EmotionForecastPopup({ isOpen, onClose, forecasts }: Emo
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-md flex items-center justify-center z-50 p-4"
-          onClick={handleClose}
+                  className="fixed inset-0 bg-black bg-opacity-20 backdrop-blur-sm flex items-center justify-center z-50 p-4"
         >
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
@@ -147,9 +149,15 @@ export default function EmotionForecastPopup({ isOpen, onClose, forecasts }: Emo
           {/* Slide Container */}
           <motion.div
             key={currentIndex}
-            initial={{ x: 300, opacity: 0 }}
+            initial={{ 
+              x: slideDirection === 'left' ? 300 : slideDirection === 'right' ? -300 : 0, 
+              opacity: 0 
+            }}
             animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -300, opacity: 0 }}
+            exit={{ 
+              x: slideDirection === 'left' ? -300 : slideDirection === 'right' ? 300 : 0, 
+              opacity: 0 
+            }}
             transition={{ 
               type: "spring", 
               stiffness: 300, 
@@ -225,6 +233,16 @@ export default function EmotionForecastPopup({ isOpen, onClose, forecasts }: Emo
           )}
           </motion.div>
         </motion.div>
+        
+        {/* 종료 버튼 */}
+        <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2">
+          <button
+            onClick={handleClose}
+            className="bg-white bg-opacity-20 hover:bg-opacity-30 text-black font-medium py-3 px-6 rounded-full transition-all duration-300 backdrop-blur-sm border border-white border-opacity-30"
+          >
+            돌아가기
+          </button>
+        </div>
       </motion.div>
     </AnimatePresence>
   );

@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "../../components/Button";
 import { useChild } from "../../contexts/ChildContext";
-import EmotionForecastPopup from "../../components/EmotionForecastPopup";
+
 import { getCurrentDate } from "../../utils/dateUtils";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -36,8 +36,6 @@ function ReasonPageContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
-  const [showResultPopup, setShowResultPopup] = useState(false);
-  const [allEmotions, setAllEmotions] = useState<any[]>([]);
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -148,12 +146,11 @@ function ReasonPageContent() {
       if (nextStep) {
         router.push(`/insert?step=${nextStep}`);
       } else {
-        // 모든 단계 완료 - 결과 팝업 표시
+        // 모든 단계 완료 - baby 페이지로 이동 후 팝업 표시
         const savedEmotions = localStorage.getItem('forecastEmotions');
         if (savedEmotions) {
-          const emotions = JSON.parse(savedEmotions);
-          setAllEmotions(emotions);
-          setShowResultPopup(true);
+          // URL 파라미터로 팝업 표시 여부 전달
+          router.push('/baby?showForecastPopup=true');
         } else {
           setShowCompletionModal(true);
         }
@@ -211,21 +208,6 @@ function ReasonPageContent() {
         
         <div className="flex flex-col items-start justify-start flex-1 w-full max-w-sm mx-auto">
           
-          {/* 결과 팝업 */}
-          <EmotionForecastPopup
-            isOpen={showResultPopup}
-            onClose={() => {
-              setShowResultPopup(false);
-              localStorage.removeItem('forecastEmotions'); // 저장된 감정 데이터 정리
-            }}
-            forecasts={allEmotions.map((emotion: any) => ({
-              timeSlot: emotion.step,
-              emotion: emotion.emotion.name,
-              temperature: emotion.emotion.temp,
-              image: emotion.emotion.image,
-              category: emotion.category
-            }))}
-          />
           <div className="text-xs text-gray-400 mb-2">{getCurrentDate()} {TIME_PERIODS[currentStep].label}</div>
           <div className="text-2xl font-bold leading-tight whitespace-pre-line mb-8">
             {TIME_PERIODS[currentStep].text}{`\n`}느낄 것 같나요?
@@ -243,7 +225,7 @@ function ReasonPageContent() {
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 placeholder="어떤 일 때문에 이런 감정을 느낄 거같아요?"
-                className="w-full h-90 p-4 border-2 border-gray-200 rounded-xl resize-none focus:border-[#FF6F71] focus:outline-none transition-all duration-300 text-base leading-relaxed placeholder-gray-400"
+                className="w-full h-64 p-4 border-2 border-gray-200 rounded-xl resize-none focus:border-[#FF6F71] focus:outline-none transition-all duration-300 text-base leading-relaxed placeholder-gray-400"
                 maxLength={500}
               />
               <div className="absolute bottom-4 right-4 text-xs text-gray-400">
@@ -261,7 +243,7 @@ function ReasonPageContent() {
           initial="hidden"
           animate="visible"
           variants={fadeInOutVariants}
-          className="flex flex-col items-center w-full max-w-sm mx-auto mt-auto mb-4"
+          className="flex flex-col items-center w-full max-w-sm mx-auto mt-2 mb-20"
         >
           <Button
             className="flex w-full items-center justify-center gap-1 rounded-lg bg-[#FF6F71] text-white py-3 text-lg font-semibold text-gray-900 mb-4"

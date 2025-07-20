@@ -119,14 +119,14 @@ function InsertPageContent() {
           initial="hidden"
           animate="visible"
           variants={fadeInOutVariants}
-          className="flex flex-col items-center w-full max-w-sm mx-auto mt-auto mb-9"
+          className="flex flex-col items-center w-full max-w-sm mx-auto mt-auto mb-20"
         >
           <Button
             onClick={handleNext}
             disabled={!isEmotionSelected || isLoading}
             className={`w-full transition-opacity ${!isEmotionSelected ? 'opacity-50' : ''}`}
           >
-            {isLoading ? '처리 중...' : '다음'}
+            {isLoading ? '처리 중...' : '다음으로'}
           </Button>
         </motion.div>
       </div>
