@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Container from "../components/Container"
 import { useChild } from "../contexts/ChildContext"
@@ -39,7 +39,7 @@ import EmotionResultPopup from "../components/EmotionResultPopup"
 
 // 공통 타입 사용
 
-export default function Present() {
+function BabyPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { selectedChild, isLoading } = useChild()
@@ -582,4 +582,19 @@ export default function Present() {
       
     </Container>
   )
+}
+
+export default function Present() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p className="text-gray-600">로딩 중...</p>
+        </div>
+      </div>
+    }>
+      <BabyPageContent />
+    </Suspense>
+  );
 } 
