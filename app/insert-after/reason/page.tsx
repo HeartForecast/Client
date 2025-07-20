@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "../../components/Button";
 import { useChild } from "../../contexts/ChildContext";
-import EmotionForecastPopup from "../../components/EmotionForecastPopup";
+import EmotionResultPopup from "../../components/EmotionResultPopup";
 import { getCurrentDate } from "../../utils/dateUtils";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -174,6 +174,28 @@ function ReasonPageContent() {
 
       console.log(`✅ ${currentStep} 예보 기록 생성 완료 - ${new Date().toLocaleString('ko-KR')}`);
 
+      // 현재 단계의 감정 데이터에 메모 추가
+      const currentEmotionData = {
+        step: currentStep,
+        emotion: currentEmotion.emotion,
+        category: currentEmotion.category,
+        memo: reason.trim()
+      };
+
+      // localStorage에서 기존 데이터 가져오기
+      let allEmotionData = [];
+      if (typeof window !== 'undefined') {
+        const existingData = localStorage.getItem('forecastRecordEmotions');
+        if (existingData) {
+          allEmotionData = JSON.parse(existingData);
+        }
+        
+        // 현재 단계 데이터 업데이트
+        allEmotionData = allEmotionData.filter((data: any) => data.step !== currentStep);
+        allEmotionData.push(currentEmotionData);
+        localStorage.setItem('forecastRecordEmotions', JSON.stringify(allEmotionData));
+      }
+
       // 다음 단계로 이동
       const steps = ['morning', 'afternoon', 'evening'];
       const currentIndex = steps.indexOf(currentStep);
@@ -183,14 +205,8 @@ function ReasonPageContent() {
         router.push(`/insert-after?step=${nextStep}&forecastId=${forecastId}&date=${forecastData.date}&timeZone=${TIME_PERIODS[nextStep as keyof typeof TIME_PERIODS].label}`);
       } else {
         // 모든 단계 완료 - 결과 팝업 표시
-        const savedEmotions = localStorage.getItem('forecastRecordEmotions');
-        if (savedEmotions) {
-          const emotions = JSON.parse(savedEmotions);
-          setAllEmotions(emotions);
-          setShowResultPopup(true);
-        } else {
-          router.push('/home');
-        }
+        setAllEmotions(allEmotionData);
+        setShowResultPopup(true);
       }
     } catch (error) {
       console.error('예보 기록 생성 실패:', error);
@@ -246,19 +262,13 @@ function ReasonPageContent() {
         <div className="flex flex-col items-start justify-start flex-1 w-full max-w-sm mx-auto">
           
           {/* 결과 팝업 */}
-          <EmotionForecastPopup
-            isOpen={showResultPopup}
+          <EmotionResultPopup
+            isVisible={showResultPopup}
             onClose={() => {
               setShowResultPopup(false);
               localStorage.removeItem('forecastRecordEmotions'); // 저장된 감정 데이터 정리
             }}
-            forecasts={allEmotions.map((emotion: any) => ({
-              timeSlot: emotion.step,
-              emotion: emotion.emotion.name,
-              temperature: emotion.emotion.temp,
-              image: emotion.emotion.image,
-              category: emotion.category
-            }))}
+            emotions={allEmotions}
           />
           
           <div className="text-xs text-gray-400 mb-2">{getCurrentDate()} {TIME_PERIODS[currentStep].label}</div>
