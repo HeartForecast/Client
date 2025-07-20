@@ -117,7 +117,7 @@ function DeleteModal({ isOpen, childId, childName, onClose, onDeleteRelation, on
 
 export default function ChildListPage() {
   const router = useRouter()
-  const { selectedChild, setSelectedChild, isChildMode, autoSelectFirstChild } = useChild();
+  const { selectedChild, setSelectedChild, isChildMode, autoSelectFirstChild, removeChild } = useChild();
   const [activeTab, setActiveTab] = useState('childList')
   const [openMenuId, setOpenMenuId] = useState<number | null>(null)
   const [childrenData, setChildrenData] = useState<ChildData[]>([])
@@ -247,13 +247,8 @@ export default function ChildListPage() {
         throw new Error(`관계 삭제 실패: ${response.status}`)
       }
 
-      // 삭제된 아이가 현재 선택된 아이인지 확인
-      if (selectedChild?.id === childId) {
-        setSelectedChild(null);
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('selectedChild');
-        }
-      }
+      // ChildContext에서 아이 제거
+      removeChild(childId);
 
       setChildrenData(prev => prev.filter(child => child.id !== childId))
       showToast('돌봄관계가 삭제되었습니다.', 'success')
@@ -282,13 +277,8 @@ export default function ChildListPage() {
         throw new Error(`아이 삭제 실패: ${response.status}`)
       }
 
-      // 삭제된 아이가 현재 선택된 아이인지 확인
-      if (selectedChild?.id === childId) {
-        setSelectedChild(null);
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('selectedChild');
-        }
-      }
+      // ChildContext에서 아이 제거
+      removeChild(childId);
 
       setChildrenData(prev => prev.filter(child => child.id !== childId))
       showToast('아이가 완전히 삭제되었습니다.', 'success')

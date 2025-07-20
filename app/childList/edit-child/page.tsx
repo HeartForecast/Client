@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Container from "../../components/Container"
 import Toast from "../../components/Toast"
+import { useChild } from "../../contexts/ChildContext"
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL
 
@@ -22,6 +23,7 @@ function EditChildPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const childId = searchParams.get('id');
+  const { selectedChild, updateChild } = useChild();
 
   const [name, setName] = useState('');
   const [dob, setDob] = useState('');
@@ -134,6 +136,18 @@ function EditChildPageContent() {
 
       showToast('아이 정보가 성공적으로 수정되었습니다!', 'success');
       setIsSaving(false);
+      
+      // 수정된 아이가 현재 선택된 아이인지 확인하고 로컬 스토리지 업데이트
+      if (selectedChild?.id === parseInt(childId)) {
+        const birthYear = new Date(dob).getFullYear();
+        const thisYear = new Date().getFullYear();
+        const age = thisYear - birthYear;
+
+        updateChild(parseInt(childId), {
+          name: name,
+          age: age,
+        });
+      }
       
       // 성공 후 잠시 대기 후 페이지 이동
       setTimeout(() => {

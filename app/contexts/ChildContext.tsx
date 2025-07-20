@@ -19,6 +19,8 @@ interface ChildContextType {
   enterChildMode: (child: ChildData) => void;
   exitChildMode: () => void;
   autoSelectFirstChild: () => Promise<void>;
+  removeChild: (childId: number) => void;
+  updateChild: (childId: number, updates: Partial<ChildData>) => void;
 }
 
 const ChildContext = createContext<ChildContextType | undefined>(undefined);
@@ -226,6 +228,27 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const removeChild = (childId: number) => {
+    // 삭제된 아이가 현재 선택된 아이인지 확인
+    if (selectedChild?.id === childId) {
+      setSelectedChild(null);
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('selectedChild');
+      }
+    }
+  };
+
+  const updateChild = (childId: number, updates: Partial<ChildData>) => {
+    // 업데이트된 아이가 현재 선택된 아이인지 확인
+    if (selectedChild?.id === childId) {
+      const updatedChild = { ...selectedChild, ...updates };
+      setSelectedChild(updatedChild);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('selectedChild', JSON.stringify(updatedChild));
+      }
+    }
+  };
+
   return (
     <ChildContext.Provider value={{
       selectedChild,
@@ -235,7 +258,9 @@ export function ChildProvider({ children }: { children: React.ReactNode }) {
       setSelectedChild,
       enterChildMode,
       exitChildMode,
-      autoSelectFirstChild
+      autoSelectFirstChild,
+      removeChild,
+      updateChild
     }}>
       {children}
     </ChildContext.Provider>
