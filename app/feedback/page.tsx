@@ -37,7 +37,7 @@ const timeSlotInfo = {
   dinner: { label: '저녁' }
 };
 
-export default function FeedbackPage() {
+function FeedbackPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { selectedChild } = useChild();
@@ -389,4 +389,21 @@ export default function FeedbackPage() {
       </div>
     </Container>
   );
-} 
+}
+
+export default function FeedbackPage() {
+  return (
+    <Suspense fallback={
+      <Container>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF6F71] mx-auto mb-4"></div>
+            <p className="text-gray-600">로딩 중...</p>
+          </div>
+        </div>
+      </Container>
+    }>
+      <FeedbackPageContent />
+    </Suspense>
+  );
+}
