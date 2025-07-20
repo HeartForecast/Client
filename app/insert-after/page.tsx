@@ -132,7 +132,7 @@ function InsertAfterPageContent() {
           initial="hidden"
           animate="visible"
           variants={fadeInOutVariants}
-          className="flex flex-col items-center w-full max-w-sm mx-auto mt-auto mb-9"
+          className="flex flex-col items-center w-full max-w-sm mx-auto mt-auto mb-15"
         >
           <Button
             onClick={handleNext}
