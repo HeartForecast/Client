@@ -40,7 +40,7 @@ export default function ParentNavigationBar({ activeTab = "감정비교", onTabC
   };
 
   return (
-    <div className="w-full bg-white py-3 mt-auto">
+    <div className="w-full max-w-md mx-auto bg-white py-3 mt-auto">
       <div className="flex justify-around items-center w-full max-w-sm mx-auto">
         {tabs.map((tab) => (
           <button
