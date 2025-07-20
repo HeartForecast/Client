@@ -65,7 +65,7 @@ export default function EmotionResultPopup({ isVisible, onClose, emotions }: Emo
 
   const handleClose = () => {
     onClose();
-    router.push('/home');
+    router.push('/baby');
   };
 
   useEffect(() => {
@@ -139,7 +139,6 @@ export default function EmotionResultPopup({ isVisible, onClose, emotions }: Emo
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-md flex items-center justify-center z-50 p-4"
-        onClick={handleClose}
       >
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
@@ -230,6 +229,16 @@ export default function EmotionResultPopup({ isVisible, onClose, emotions }: Emo
           )}
           </motion.div>
         </motion.div>
+        
+        {/* 종료 버튼 */}
+        <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2">
+          <button
+            onClick={handleClose}
+            className="bg-white bg-opacity-20 hover:bg-opacity-30 text-black font-medium py-3 px-6 rounded-full transition-all duration-300 backdrop-blur-sm border border-white border-opacity-30"
+          >
+            돌아가기
+          </button>
+        </div>
       </motion.div>
     </AnimatePresence>
   );
